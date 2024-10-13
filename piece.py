@@ -40,7 +40,7 @@ def initialiser() -> list:
     cyan = Piece("cyan",
     [[0, 1],
     [1, 1]])
-    cyanblue = Piece("cyanblue",
+    skyblue = Piece("cadetblue2",
     [[1, 1, 1],
     [1, 0, 0],
     [1, 0, 0]])
@@ -57,4 +57,4 @@ def initialiser() -> list:
     pink = Piece("pink",
     [[1, 1, 0, 0],
      [0, 1, 1, 1]])
-    return [red, orange, yellow, lime, green, white, cyan, cyanblue, blue, purple, darkred, pink]
+    return [red, orange, yellow, lime, green, white, cyan, skyblue, blue, purple, darkred, pink]

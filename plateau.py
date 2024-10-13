@@ -14,11 +14,11 @@ class Plateau:
         # Création de la grille de jeu
         self.create_board()
         
-        # Boutons de contrôle
-        self.create_controls()
-        
         # Liste des étapes de l'algorithme
         self.steps = []  # Ce sera la liste des placements des pièces (à implémenter)
+        
+        # Boutons de contrôle
+        self.create_controls()
     
     def create_board(self):
         for row in range(ROWS):
@@ -43,10 +43,17 @@ class Plateau:
         
         reset_button = tk.Button(control_frame, text="Début", command=self.reset_board)
         reset_button.pack(side=tk.LEFT)
+        
+        # Curseur pour sélectionner les étapes
+        self.step_slider = tk.Scale(control_frame, from_=0, to=0, orient=tk.HORIZONTAL, command=self.slider_update)
+        self.step_slider.pack(side=tk.LEFT)
+    
+    def update_slider(self):
+        self.step_slider.config(to=len(self.steps) - 1)
     
     def next_step(self):
         # Logique pour avancer d'une étape dans l'algorithme
-        if self.current_step < len(self.steps):
+        if self.current_step < len(self.steps) - 1:
             self.current_step += 1
             self.update_board()
 
@@ -58,7 +65,7 @@ class Plateau:
 
     def go_to_end(self):
         # Aller directement à la dernière étape
-        self.current_step = len(self.steps)
+        self.current_step = len(self.steps) - 1
         self.update_board()
 
     def reset_board(self):
@@ -70,20 +77,33 @@ class Plateau:
         # Logique pour mettre à jour l'affichage du plateau en fonction de l'étape actuelle
         for row in range(ROWS):
             for col in range(COLS):
-                self.grid[row][col].config(bg="white")  # Reset all cells to white
+                self.grid[row][col].config(bg="grey")  # Reset all cells to white
 
         if self.current_step < len(self.steps):
             for piece, position in self.steps[self.current_step]:
                 self.place_piece(piece, position)
+        self.update_slider()
 
     def place_piece(self, piece, position):
         """Place a piece on the board at the given position."""
+        if not self.check_valid_move(piece, position):
+            return
         for i, row in enumerate(piece.forme):
             for j, cell in enumerate(row):
                 if cell:
                     self.grid[position[0] + i][position[1] + j].config(bg=piece.couleur)
+                    
+    def slider_update(self, value):
+        self.current_step = int(value)
+        self.update_board()
 
-# Lancement de l'interface
-root = tk.Tk()
-game = Plateau(root)
-root.mainloop()
+    def check_valid_move(self, piece, position):
+        """Check if a piece can be placed at the given position."""
+        for i, row in enumerate(piece.forme):
+            for j, cell in enumerate(row):
+                if cell:
+                    if not (0 <= position[0] + i < ROWS and 0 <= position[1] + j < COLS):
+                        return False
+                    if self.grid[position[0] + i][position[1] + j].cget("bg") != "white":
+                        return False
+        return True
