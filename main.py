@@ -4,6 +4,10 @@ from piece import Piece
 from plateau import Plateau
 from tkinter import messagebox, filedialog 
 import json
+import numpy as np
+import time
+import itertools
+
 PIECE_COLORS = {
     "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
     "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
@@ -18,24 +22,22 @@ class IQPuzzlerInterface:
 
         self.selected_piece = None
         self.rotation_index = 0
+        self.solution = None
+        self.plateau = Plateau()
 
         self.team_label = tk.Label(self.root, text="IA41 Projet - Antoine & Traïan", font=("Arial", 10))
         self.team_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)
 
-        # Plateau
         self.plateau_frame = tk.Frame(self.root)
         self.plateau_frame.grid(row=0, column=0, padx=10, pady=10)
         self.cases = [[None for _ in range(11)] for _ in range(5)]
         self.init_plateau()
-        self.plateau = Plateau()
 
-        # pieces
         self.pieces_frame = tk.Frame(self.root)
         self.pieces_frame.grid(row=1, column=0, padx=10, pady=10)
         self.pieces = {}
         self.load_pieces()
 
-        # Boutons
         self.controls_frame = tk.Frame(self.root)
         self.controls_frame.grid(row=2, column=0, padx=10, pady=10, sticky="w")
         self.rotate_button = tk.Button(self.controls_frame, text="Rotate", command=self.rotate_piece)
@@ -49,14 +51,12 @@ class IQPuzzlerInterface:
         self.load_button = tk.Button(self.controls_frame, text="Load Board", command=self.charger_plateau)
         self.load_button.grid(row=0, column=4, padx=5)
 
-        # algo info
         self.info_frame = tk.Frame(self.root)
         self.info_frame.grid(row=3, column=0, padx=10, pady=10)
         self.info_label = tk.Label(self.info_frame, text="Informations sur l'algorithme", font=("Arial", 14))
         self.info_label.pack()
         self.info_text = tk.Text(self.info_frame, width=80, height=5, state="disabled")
         self.info_text.pack()
-        self.update_info("Détails de l'algorithme et du processus ici...")
 
         self.placed_pieces = {}
 
@@ -254,10 +254,43 @@ class IQPuzzlerInterface:
 
 
     def start_resolution(self):
-        """Start the algorithm to solve the puzzle."""
-        messagebox.showinfo("Start", "Lancement de l'algorithme du GOAT Knuth")
-        
-        self.exporter_grille()
+        """Démarre l'algorithme pour résoudre le puzzle et affiche la solution."""
+        self.solution = []  # Initialiser self.solution comme une liste vide
+
+        fixed_pieces = {}
+        for piece_name, info in self.placed_pieces.items():
+            fixed_pieces[piece_name] = {
+                'variante_index': info['variante_index'],
+                'position': info['position']
+            }
+
+        plateau_copy = Plateau()
+        plateau_copy.plateau = np.copy(self.plateau.plateau)
+
+        algo = AlgorithmX(plateau_copy, self.pieces, fixed_pieces, update_callback=self.update_stats)
+        solutions = algo.solve()
+
+        if solutions:
+            self.solution = solutions[0]  # Mettre à jour avec la première solution trouvée
+            algo.print_solution()
+            self.afficher_solution()
+        else:
+            print("Aucune solution trouvée.")
+
+    def afficher_solution(self):
+        """Affiche la solution trouvée sur le plateau graphique."""
+        if not self.solution:
+            return
+
+        # Vider le plateau avant d'afficher la solution
+        self.reset_board()
+
+        for sol in self.solution:
+            piece = sol['piece']
+            color = PIECE_COLORS.get(piece.nom, "gray")  # Couleur de la pièce
+            for cell in sol['cells_covered']:
+                i, j = cell
+                self.cases[i][j].configure(bg=color)  # Colorer la case
 
     def exporter_grille(self):
         print("Grille :")
@@ -265,6 +298,259 @@ class IQPuzzlerInterface:
         for row in self.plateau.plateau:
             print("    ", row.tolist(), ",")
         print("]")
+
+    def update_stats(self, stats):
+        """Met à jour les informations dans l'interface et affiche les placements en cours."""
+        elapsed_time = stats["time"]
+        calculs = stats["calculs"]
+        placements_testes = stats["placements_testes"]
+        solution = stats["solution"]
+
+        num_solutions = len(self.solution) if self.solution else 0
+
+        info_text = (
+            f"Temps écoulé: {elapsed_time:.2f} s\n"
+            f"Calculs effectués: {calculs}\n"
+            f"Placements testés: {placements_testes}\n"
+            f"Nombre de solutions trouvées: {num_solutions}\n"
+        )
+        self.info_text.config(state="normal")
+        self.info_text.delete("1.0", tk.END)
+        self.info_text.insert("1.0", info_text)
+        self.info_text.config(state="disabled")
+
+        self.reset_board()
+        for sol in solution:
+            piece = sol['piece']
+            color = PIECE_COLORS.get(piece.nom, "gray")
+            for cell in sol['cells_covered']:
+                i, j = cell
+                self.cases[i][j].configure(bg=color)
+
+        self.root.update()
+
+
+    def reset_board_visuellement(self):
+        """Efface le plateau et réinitialise toutes les cases visuellement."""
+        for i in range(5):
+            for j in range(11):
+                self.cases[i][j].configure(bg="white")
+
+class AlgorithmX:
+    def __init__(self, plateau, pieces, fixed_pieces=None, update_callback=None):
+        self.plateau = plateau
+        self.pieces = pieces
+        self.solutions = []
+        self.fixed_pieces = fixed_pieces if fixed_pieces else {}
+        self.update_callback = update_callback
+
+        self.calculs = 0
+        self.placements_testes = 0
+        self.start_time = time.time()
+
+    def solve(self):
+        matrix, header = self.create_constraint_matrix()
+        solution = []
+        self.algorithm_x(matrix, header, solution)
+        return self.solutions
+
+    def create_constraint_matrix(self):
+        num_cells = self.plateau.lignes * self.plateau.colonnes
+        num_pieces = len(self.pieces)
+        total_columns = num_cells + num_pieces
+
+        header = ['C{}'.format(i) for i in range(num_cells)] + [piece.nom for piece in self.pieces.values()]
+
+        matrix = []
+        used_pieces = set(self.fixed_pieces.keys())
+
+        for piece in self.pieces.values():
+            if piece.nom in used_pieces:
+                continue
+
+            for variante_index, variante in enumerate(piece.variantes):
+                for i in range(self.plateau.lignes):
+                    for j in range(self.plateau.colonnes):
+                        position = (i, j)
+                        if self.plateau.peut_placer(variante, position):
+                            row = [0] * total_columns
+                            cells_covered = []
+                            for vi in range(variante.shape[0]):
+                                for vj in range(variante.shape[1]):
+                                    if variante[vi, vj] == 1:
+                                        cell_index = (i + vi) * self.plateau.colonnes + (j + vj)
+                                        row[cell_index] = 1
+                                        cells_covered.append((i + vi, j + vj))
+                            piece_index = num_cells + list(self.pieces.keys()).index(piece.nom)
+                            row[piece_index] = 1
+                            matrix.append({
+                                'row': row,
+                                'piece': piece,
+                                'variante_index': variante_index,
+                                'position': position,
+                                'cells_covered': cells_covered
+                            })
+
+        for piece_name, info in self.fixed_pieces.items():
+            piece = self.pieces[piece_name]
+            variante_index = info['variante_index']
+            position = info['position']
+            variante = piece.variantes[variante_index]
+
+            row = [0] * total_columns
+            cells_covered = []
+            for vi in range(variante.shape[0]):
+                for vj in range(variante.shape[1]):
+                    if variante[vi, vj] == 1:
+                        cell_index = (position[0] + vi) * self.plateau.colonnes + (position[1] + vj)
+                        row[cell_index] = 1
+                        cells_covered.append((position[0] + vi, position[1] + vj))
+            piece_index = num_cells + list(self.pieces.keys()).index(piece_name)
+            row[piece_index] = 1
+            matrix.insert(0, {
+                'row': row,
+                'piece': piece,
+                'variante_index': variante_index,
+                'position': position,
+                'cells_covered': cells_covered,
+                'fixed': True
+            })
+
+        return matrix, header
+
+    def algorithm_x(self, matrix, header, solution):
+        if not any(row['row'] for row in matrix):
+            if self.validate_solution(solution):
+                self.solutions.append(solution.copy())
+            return
+
+        counts = [0] * len(header)
+        for row in matrix:
+            for idx, val in enumerate(row['row']):
+                if val == 1:
+                    counts[idx] += 1
+
+        counts = [count if any(row['row'][idx] == 1 for row in matrix) else float('inf') for idx, count in enumerate(counts)]
+        min_count = min(counts)
+        if min_count == float('inf'):
+            return
+
+        column = counts.index(min_count)
+        rows_to_cover = [row for row in matrix if row['row'][column] == 1]
+
+        for row in rows_to_cover:
+            solution.append(row)
+            self.placements_testes += 1
+            self.update_interface(solution)
+
+            columns_to_remove = [idx for idx, val in enumerate(row['row']) if val == 1]
+            new_matrix = []
+            for r in matrix:
+                if r == row:
+                    continue
+                if all(r['row'][idx] == 0 for idx in columns_to_remove):
+                    new_matrix.append(r)
+
+            if not self.has_unfillable_voids(solution):
+                self.algorithm_x(new_matrix, header, solution)
+
+            solution.pop()
+            self.calculs += 1
+
+    def has_unfillable_voids(self, solution):
+        """Vérifie si le plateau contient des zones vides impossibles à remplir avec les pièces restantes."""
+        plateau_temp = np.copy(self.plateau.plateau)
+        for sol in solution:
+            for cell in sol['cells_covered']:
+                i, j = cell
+                plateau_temp[i, j] = 1  
+
+        empty_zones = self.get_empty_zones(plateau_temp)
+
+        remaining_pieces = set(self.pieces.keys()) - set(sol['piece'].nom for sol in solution)
+        remaining_sizes = [np.count_nonzero(self.pieces[piece_name].forme_base) for piece_name in remaining_pieces]
+
+        for zone in empty_zones:
+            zone_size = len(zone)
+            possible = False
+            for i in range(1, len(remaining_sizes)+1):
+                for combo in itertools.combinations(remaining_sizes, i):
+                    if sum(combo) == zone_size:
+                        possible = True
+                        break
+                if possible:
+                    break
+            if not possible:
+                return True 
+        return False 
+
+    def get_empty_zones(self, plateau_temp):
+        """Retourne une liste des zones vides contiguës sur le plateau."""
+        visited = set()
+        empty_zones = []
+        for i in range(self.plateau.lignes):
+            for j in range(self.plateau.colonnes):
+                if plateau_temp[i, j] == 0 and (i, j) not in visited:
+                    zone = self.explore_zone(plateau_temp, i, j, visited)
+                    empty_zones.append(zone)
+        return empty_zones
+
+    def explore_zone(self, plateau_temp, i, j, visited):
+        """Explore une zone vide contiguë et retourne la liste de ses cellules."""
+        queue = [(i, j)]
+        visited.add((i, j))
+        zone = [(i, j)]
+
+        while queue:
+            ci, cj = queue.pop(0)
+            for ni, nj in [(ci+1, cj), (ci-1, cj), (ci, cj+1), (ci, cj-1)]:
+                if (0 <= ni < self.plateau.lignes and 0 <= nj < self.plateau.colonnes
+                        and plateau_temp[ni, nj] == 0 and (ni, nj) not in visited):
+                    visited.add((ni, nj))
+                    queue.append((ni, nj))
+                    zone.append((ni, nj))
+        return zone
+
+    def update_interface(self, solution):
+        if self.update_callback:
+            elapsed_time = time.time() - self.start_time
+            stats = {
+                "time": elapsed_time,
+                "calculs": self.calculs,
+                "placements_testes": self.placements_testes,
+                "solution": solution
+            }
+            self.update_callback(stats)
+
+    def validate_solution(self, solution):
+        pieces_used = set()
+        cells_covered = set()
+
+        for sol in solution:
+            piece_name = sol['piece'].nom
+            if piece_name in pieces_used:
+                return False
+            pieces_used.add(piece_name)
+
+            for cell in sol['cells_covered']:
+                if cell in cells_covered:
+                    return False
+                cells_covered.add(cell)
+
+        all_pieces_used = len(pieces_used) == len(self.pieces)
+        full_board_covered = len(cells_covered) == (self.plateau.lignes * self.plateau.colonnes)
+        return all_pieces_used and full_board_covered
+
+    def print_solution(self):
+        if not self.solutions:
+            print("Aucune solution trouvée.")
+            return
+        print("Solution trouvée :")
+        for sol in self.solutions[0]:
+            piece = sol['piece']
+            position = sol['position']
+            print(f"Placer la pièce {piece.nom} en position {position} avec la variante {sol['variante_index']}")
+
 
 
 if __name__ == "__main__":
