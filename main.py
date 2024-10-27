@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 from piece import Piece
 from plateau import Plateau
-
+from tkinter import messagebox, filedialog 
+import json
 PIECE_COLORS = {
     "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
     "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
@@ -13,13 +14,13 @@ class IQPuzzlerInterface:
     def __init__(self, root):
         self.root = root
         self.root.title("IQ Puzzler Pro Solver")
-        self.root.geometry("700x620") 
+        self.root.geometry("700x720") 
 
         self.selected_piece = None
         self.rotation_index = 0
 
         self.team_label = tk.Label(self.root, text="IA41 Projet - Antoine & Traïan", font=("Arial", 10))
-        self.team_label.grid(row=4, column=0, sticky="w", padx=10, pady=5)
+        self.team_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)
 
         # Plateau
         self.plateau_frame = tk.Frame(self.root)
@@ -43,6 +44,10 @@ class IQPuzzlerInterface:
         self.start_button.grid(row=0, column=1, padx=5)
         self.reset_button = tk.Button(self.controls_frame, text="Reset Board", command=self.reset_board)
         self.reset_button.grid(row=0, column=2, padx=5)
+        self.save_button = tk.Button(self.controls_frame, text="Save Board", command=self.sauvegarder_plateau)
+        self.save_button.grid(row=0, column=3, padx=5)
+        self.load_button = tk.Button(self.controls_frame, text="Load Board", command=self.charger_plateau)
+        self.load_button.grid(row=0, column=4, padx=5)
 
         # algo info
         self.info_frame = tk.Frame(self.root)
@@ -53,11 +58,10 @@ class IQPuzzlerInterface:
         self.info_text.pack()
         self.update_info("Détails de l'algorithme et du processus ici...")
 
-        
         self.placed_pieces = {}
 
     def init_plateau(self):
-        """Initialize the game grid in the interface."""
+        """Initialise la grille du jeu dans l'interface."""
         for i in range(5):
             for j in range(11):
                 case = tk.Label(self.plateau_frame, width=4, height=2, borderwidth=1, relief="solid", bg="white")
@@ -66,17 +70,19 @@ class IQPuzzlerInterface:
                 self.cases[i][j] = case
 
     def afficher_plateau(self):
-        """Update the visual board with the pieces' positions."""
+        """Met à jour le plateau visuel avec les positions des pièces."""
         for i in range(5):
             for j in range(11):
                 color = "white"
-                for piece_name, (variante, pos) in self.placed_pieces.items():
-                    if (i, j) in pos:
+                for piece_name, data in self.placed_pieces.items():
+                    positions = data['positions']
+                    if (i, j) in positions:
                         color = PIECE_COLORS[piece_name]
+                        break
                 self.cases[i][j].configure(bg=color)
 
     def load_pieces(self):
-        """Load pieces definitions into the interface and create preview for each."""
+        """Charge les définitions des pièces dans l'interface et crée un aperçu pour chacune."""
         piece_definitions = [
             ("red", [[1, 1, 1, 1], [0, 0, 0, 1]]),
             ("orange", [[0, 1, 0], [1, 1, 1], [1, 0, 0]]),
@@ -97,7 +103,7 @@ class IQPuzzlerInterface:
             self.create_piece_button_with_preview(piece_name, idx)
 
     def create_piece_button_with_preview(self, piece_name, idx):
-        """Create a button for each piece with a graphical preview in a 6x2 grid."""
+        """Crée un bouton pour chaque pièce avec un aperçu graphique dans une grille 6x2."""
         row, col = divmod(idx, 6)
         frame = tk.Frame(self.pieces_frame)
         frame.grid(row=row, column=col, padx=5, pady=5)
@@ -114,7 +120,7 @@ class IQPuzzlerInterface:
         self.update_piece_preview(piece_name)
 
     def update_piece_preview(self, piece_name):
-        """Update the graphical preview of the piece with its current rotation."""
+        """Met à jour l'aperçu graphique de la pièce avec sa rotation actuelle."""
         piece = self.pieces[piece_name]
         canvas = piece.preview_canvas
         canvas.delete("all")  
@@ -130,7 +136,7 @@ class IQPuzzlerInterface:
                     canvas.create_rectangle(x0, y0, x1, y1, fill=color)
 
     def select_piece(self, piece_name):
-        """Select a piece and reset its rotation index."""
+        """Sélectionne une pièce et réinitialise son index de rotation."""
         if self.selected_piece == piece_name:
             self.deselect_piece()
             return
@@ -142,7 +148,7 @@ class IQPuzzlerInterface:
         self.update_piece_preview(piece_name)
 
     def deselect_piece(self):
-        """Deselect the current piece."""
+        """Désélectionne la pièce actuelle."""
         if self.selected_piece:
             self.pieces[self.selected_piece].button.config(relief="raised")
             self.update_piece_preview(self.selected_piece)
@@ -150,26 +156,41 @@ class IQPuzzlerInterface:
             self.rotation_index = 0
 
     def rotate_piece(self):
-        """Rotate the selected piece if one is selected and update its preview."""
+        """Fait pivoter la pièce sélectionnée si une pièce est sélectionnée et met à jour son aperçu."""
         if self.selected_piece:
             self.rotation_index = (self.rotation_index + 1) % len(self.pieces[self.selected_piece].variantes)
             self.update_piece_preview(self.selected_piece)
 
     def handle_grid_click(self, i, j):
-        """Handle clicks on the game grid for placement or removal of pieces."""
+        """Gère les clics sur la grille du jeu pour le placement ou le retrait des pièces."""
         if self.selected_piece:
-            variante = self.pieces[self.selected_piece].variantes[self.rotation_index]
+            piece = self.pieces[self.selected_piece]
+            variante = piece.variantes[self.rotation_index]
             if self.plateau.peut_placer(variante, (i, j)):
-                self.plateau.placer_piece(self.pieces[self.selected_piece], self.rotation_index, (i, j))
-                self.placed_pieces[self.selected_piece] = (variante, [(i + dx, j + dy) for dx, row in enumerate(variante) for dy, val in enumerate(row) if val == 1])
-                self.pieces[self.selected_piece].button.config(state="disabled")
+                self.plateau.placer_piece(piece, self.rotation_index, (i, j))
+                positions = [(i + dx, j + dy) for dx, row in enumerate(variante) for dy, val in enumerate(row) if val == 1]
+                self.placed_pieces[self.selected_piece] = {
+                    'variante_index': self.rotation_index,
+                    'position': (i, j),
+                    'positions': positions
+                }
+                piece.button.config(state="disabled")
                 self.deselect_piece()
                 self.afficher_plateau()
             else:
                 messagebox.showerror("Erreur", "Impossible de placer la pièce ici.")
+        else:
+            for piece_name, data in self.placed_pieces.items():
+                if (i, j) in data['positions']:
+                    piece = self.pieces[piece_name]
+                    self.plateau.retirer_piece(piece, data['variante_index'], data['position'])
+                    piece.button.config(state="normal")
+                    del self.placed_pieces[piece_name]
+                    self.afficher_plateau()
+                    break
 
     def reset_board(self):
-        """Clear the board and reset all placed pieces."""
+        """Efface le plateau et réinitialise toutes les pièces placées."""
         self.plateau = Plateau()
         self.placed_pieces.clear()
         for piece in self.pieces.values():
@@ -177,16 +198,73 @@ class IQPuzzlerInterface:
         self.afficher_plateau()
 
     def update_info(self, text):
-        """Update the info text in the algorithm section."""
+        """Met à jour le texte d'information dans la section de l'algorithme."""
         self.info_text.config(state="normal")
         self.info_text.delete("1.0", tk.END)
         self.info_text.insert("1.0", text)
         self.info_text.config(state="disabled")
 
+    def sauvegarder_plateau(self):
+        """Sauvegarde l'état actuel du plateau dans un fichier."""
+        fichier = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("Fichiers JSON", "*.json")])
+        if fichier:
+            data = {
+                'placed_pieces': {}
+            }
+            for piece_name, info in self.placed_pieces.items():
+                data['placed_pieces'][piece_name] = {
+                    'variante_index': info['variante_index'],
+                    'position': info['position']
+                }
+            with open(fichier, 'w') as f:
+                json.dump(data, f)
+            messagebox.showinfo("Sauvegarde", "Plateau sauvegardé avec succès.")
+
+    def charger_plateau(self):
+        """Charge un état de plateau depuis un fichier."""
+        fichier = filedialog.askopenfilename(filetypes=[("Fichiers JSON", "*.json")])
+        if fichier:
+            with open(fichier, 'r') as f:
+                data = json.load(f)
+
+            self.reset_board()
+
+            for piece_name, info in data.get('placed_pieces', {}).items():
+                if piece_name in self.pieces:
+                    piece = self.pieces[piece_name]
+                    variante_index = info['variante_index']
+                    position = tuple(info['position'])
+                    variante = piece.variantes[variante_index]
+
+                    if self.plateau.peut_placer(variante, position):
+                        self.plateau.placer_piece(piece, variante_index, position)
+                        positions = [(position[0] + dx, position[1] + dy)
+                                     for dx, row in enumerate(variante)
+                                     for dy, val in enumerate(row) if val == 1]
+                        self.placed_pieces[piece_name] = {
+                            'variante_index': variante_index,
+                            'position': position,
+                            'positions': positions
+                        }
+                        piece.button.config(state="disabled")
+                    else:
+                        messagebox.showerror("Erreur", f"Impossible de placer la pièce {piece_name} lors du chargement.")
+            self.afficher_plateau()
+            messagebox.showinfo("Chargement", "Plateau chargé avec succès.")
+
+
     def start_resolution(self):
         """Start the algorithm to solve the puzzle."""
-        messagebox.showinfo("Start", "Lancement de l'algorithme de résolution.")
-        # Appel à l'algorithme de résolution (à implémenter)
+        messagebox.showinfo("Start", "Lancement de l'algorithme du GOAT Knuth")
+        
+        self.exporter_grille()
+
+    def exporter_grille(self):
+        print("Grille :")
+        print("plateau = [")
+        for row in self.plateau.plateau:
+            print("    ", row.tolist(), ",")
+        print("]")
 
 
 if __name__ == "__main__":
