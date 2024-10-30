@@ -5,6 +5,7 @@ from piece import Piece
 from plateau import Plateau
 import numpy as np
 from algo_x_knuth import AlgorithmX
+import csv
 
 PIECE_COLORS = {
     "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
@@ -63,6 +64,9 @@ class IQPuzzlerInterface:
         self.info_label.pack()
         self.info_text = tk.Text(self.info_frame, width=80, height=5, state="disabled")
         self.info_text.pack()
+
+        self.export_button = tk.Button(self.controls_frame, text="Export Solution", command=self.export_solutions)
+        self.export_button.grid(row=0, column=8, padx=5)
 
         self.placed_pieces = {}
         self.algo = AlgorithmX(Plateau(), self.pieces, {}, update_callback=self.update_stats)
@@ -357,3 +361,79 @@ class IQPuzzlerInterface:
         for i in range(5):
             for j in range(11):
                 self.cases[i][j].configure(bg="white")
+
+    def export_solutions(self):
+        if not self.algo.solution_steps:
+            messagebox.showinfo("Information", "Aucune solution à exporter.")
+            return
+
+        fichier = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("Fichiers CSV", "*.csv")])
+        if not fichier:
+            return
+
+        fixed_pieces_names = set(self.placed_pieces.keys())
+
+        with open(fichier, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            header = ['Posx', 'Posy']
+            header += ['Piece1pos{}'.format(i) for i in range(16)]
+            header += ['InitPos{}'.format(i) for i in range(55)]
+            header += ['FinalPos{}'.format(i) for i in range(55)]
+            writer.writerow(header)
+
+            for step_index in range(1, len(self.algo.solution_steps)):
+                step = self.algo.solution_steps[step_index]
+                previous_step = self.algo.solution_steps[step_index - 1]
+
+                current_pieces = set([sol['piece'].nom for sol in step])
+                previous_pieces = set([sol['piece'].nom for sol in previous_step])
+
+                current_pieces -= fixed_pieces_names
+                previous_pieces -= fixed_pieces_names
+
+                new_pieces = current_pieces - previous_pieces
+
+                if not new_pieces:
+                    continue 
+
+                new_piece_name = new_pieces.pop()
+                new_piece_sol = next(sol for sol in step if sol['piece'].nom == new_piece_name)
+
+                posx, posy = new_piece_sol['position']
+
+                piece_matrix = np.zeros((4, 4), dtype=int)
+                variante = new_piece_sol['piece'].variantes[new_piece_sol['variante_index']]
+                shape = variante.shape
+                for i in range(shape[0]):
+                    for j in range(shape[1]):
+                        if variante[i, j]:
+                            piece_matrix[i, j] = 1
+                piece_matrix_flat = piece_matrix.flatten()
+
+                init_board = np.zeros((5, 11), dtype=int)
+                for sol in previous_step:
+                    if sol['piece'].nom in fixed_pieces_names:
+                        continue 
+                    for cell in sol['cells_covered']:
+                        i, j = cell
+                        init_board[i, j] = 1
+                init_board_flat = init_board.flatten()
+
+                final_board = np.zeros((5, 11), dtype=int)
+                for sol in step:
+                    if sol['piece'].nom in fixed_pieces_names:
+                        continue
+                    for cell in sol['cells_covered']:
+                        i, j = cell
+                        final_board[i, j] = 1
+                final_board_flat = final_board.flatten()
+
+                row = [posx, posy]
+                row += piece_matrix_flat.tolist()
+                row += init_board_flat.tolist()
+                row += final_board_flat.tolist()
+
+                writer.writerow(row)
+
+        messagebox.showinfo("Exportation", "solutions exported")
+
