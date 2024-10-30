@@ -34,11 +34,10 @@ class AlgorithmX:
         self.invalid_placements = {}
         self._stop = False
 
+        self.solution_steps = []
+
     def stop(self):
         self._stop = True
-
-    def resume(self):
-        self._stop = False
 
     def solve(self):
         self._stop = False
@@ -115,6 +114,7 @@ class AlgorithmX:
         if not any(row['row'] for row in matrix):
             if self.validate_solution(solution):
                 self.solutions.append(solution.copy())
+                self.solution_steps.append(solution.copy())  
                 return True 
             return False
 
@@ -138,6 +138,7 @@ class AlgorithmX:
             if self._stop:
                 return False
             solution.append(row)
+            self.solution_steps.append(solution.copy())  
             self.placements_testes += 1
 
             self.update_interface(solution)
@@ -155,6 +156,7 @@ class AlgorithmX:
                     return True
 
             solution.pop()
+            self.solution_steps.pop()
             self.calculs += 1
         return False
 

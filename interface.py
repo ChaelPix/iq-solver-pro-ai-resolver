@@ -51,6 +51,12 @@ class IQPuzzlerInterface:
         self.load_button = tk.Button(self.controls_frame, text="Load Board", command=self.charger_plateau)
         self.load_button.grid(row=0, column=5, padx=5)
 
+        self.current_step = 0
+        self.next_button = tk.Button(self.controls_frame, text="Next Step", command=self.next_step)
+        self.next_button.grid(row=0, column=7, padx=5)
+        self.prev_button = tk.Button(self.controls_frame, text="Previous Step", command=self.prev_step)
+        self.prev_button.grid(row=0, column=6, padx=5)
+
         self.info_frame = tk.Frame(self.root)
         self.info_frame.grid(row=3, column=0, padx=10, pady=10)
         self.info_label = tk.Label(self.info_frame, text="Informations sur l'algorithme", font=("Arial", 14))
@@ -243,6 +249,37 @@ class IQPuzzlerInterface:
             self.afficher_plateau()
             messagebox.showinfo("Chargement", "Plateau chargé avec succès.")
 
+    def afficher_solution_finale(self):
+        """Affiche la solution complète, c'est-à-dire la dernière étape."""
+        if not self.algo.solution_steps:
+            return
+        self.current_step = len(self.algo.solution_steps) - 1
+        self.afficher_etape(self.current_step)
+
+    def afficher_etape(self, step_index):
+        """Affiche une étape spécifique de la solution."""
+        self.reset_board_visuellement()
+        step = self.algo.solution_steps[step_index]
+        
+        for sol in step:
+            piece = sol['piece']
+            color = PIECE_COLORS.get(piece.nom, "gray")
+            for cell in sol['cells_covered']:
+                i, j = cell
+                self.cases[i][j].configure(bg=color)
+        self.root.update()
+
+    def next_step(self):
+        """Affiche l'étape suivante si disponible."""
+        if self.current_step < len(self.algo.solution_steps) - 1:
+            self.current_step += 1
+            self.afficher_etape(self.current_step)
+
+    def prev_step(self):
+        """Affiche l'étape précédente si disponible."""
+        if self.current_step > 0:
+            self.current_step -= 1
+            self.afficher_etape(self.current_step)
 
     def start_resolution(self):
         self.solution = [] 
@@ -263,7 +300,7 @@ class IQPuzzlerInterface:
         if solutions:
             self.solution = solutions[0] 
             self.algo.print_solution()
-            self.afficher_solution()
+            self.afficher_solution_finale()
         else:
             print("Aucune solution trouvée.")
 
