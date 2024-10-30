@@ -42,12 +42,14 @@ class IQPuzzlerInterface:
         self.rotate_button.grid(row=0, column=0, padx=5)
         self.start_button = tk.Button(self.controls_frame, text="Start", command=self.start_resolution)
         self.start_button.grid(row=0, column=1, padx=5)
+        self.start_button = tk.Button(self.controls_frame, text="Stop", command=self.stop)
+        self.start_button.grid(row=0, column=2, padx=5)
         self.reset_button = tk.Button(self.controls_frame, text="Reset Board", command=self.reset_board)
-        self.reset_button.grid(row=0, column=2, padx=5)
+        self.reset_button.grid(row=0, column=3, padx=5)
         self.save_button = tk.Button(self.controls_frame, text="Save Board", command=self.sauvegarder_plateau)
-        self.save_button.grid(row=0, column=3, padx=5)
+        self.save_button.grid(row=0, column=4, padx=5)
         self.load_button = tk.Button(self.controls_frame, text="Load Board", command=self.charger_plateau)
-        self.load_button.grid(row=0, column=4, padx=5)
+        self.load_button.grid(row=0, column=5, padx=5)
 
         self.info_frame = tk.Frame(self.root)
         self.info_frame.grid(row=3, column=0, padx=10, pady=10)
@@ -57,7 +59,10 @@ class IQPuzzlerInterface:
         self.info_text.pack()
 
         self.placed_pieces = {}
+        self.algo = AlgorithmX(Plateau(), self.pieces, {}, update_callback=self.update_stats)
 
+    def stop(self):
+        self.algo.stop()
 
     def init_plateau(self):
         for i in range(5):
@@ -252,12 +257,12 @@ class IQPuzzlerInterface:
         plateau_copy = Plateau()
         plateau_copy.plateau = np.copy(self.plateau.plateau)
 
-        algo = AlgorithmX(plateau_copy, self.pieces, fixed_pieces, update_callback=self.update_stats)
-        solutions = algo.solve()
+        self.algo = AlgorithmX(plateau_copy, self.pieces, fixed_pieces, update_callback=self.update_stats)
+        solutions = self.algo.solve()
 
         if solutions:
             self.solution = solutions[0] 
-            algo.print_solution()
+            self.algo.print_solution()
             self.afficher_solution()
         else:
             print("Aucune solution trouvée.")

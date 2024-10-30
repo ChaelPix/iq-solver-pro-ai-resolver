@@ -32,8 +32,16 @@ class AlgorithmX:
 
         self.zone_cache = {}
         self.invalid_placements = {}
+        self._stop = False
+
+    def stop(self):
+        self._stop = True
+
+    def resume(self):
+        self._stop = False
 
     def solve(self):
+        self._stop = False
         matrix, header = self.create_constraint_matrix()
         solution = []
         self.algorithm_x(matrix, header, solution)
@@ -102,6 +110,8 @@ class AlgorithmX:
         return matrix, header
 
     def algorithm_x(self, matrix, header, solution):
+        if self._stop:
+            return False
         if not any(row['row'] for row in matrix):
             if self.validate_solution(solution):
                 self.solutions.append(solution.copy())
@@ -125,6 +135,8 @@ class AlgorithmX:
         rows_to_cover.sort(key=lambda r: -np.count_nonzero(r['piece'].forme_base))
 
         for row in rows_to_cover:
+            if self._stop:
+                return False
             solution.append(row)
             self.placements_testes += 1
 
@@ -147,6 +159,8 @@ class AlgorithmX:
         return False
 
     def algorithm_x_parallel(self, matrix, header, solution):
+        if self._stop:
+            return False
         if not any(row['row'] for row in matrix):
             if self.validate_solution(solution):
                 self.solutions.append(solution.copy())
