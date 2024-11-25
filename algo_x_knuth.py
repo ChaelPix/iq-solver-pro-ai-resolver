@@ -3,6 +3,8 @@ import numpy as np
 import time
 from multiprocessing import Process, Manager
 from puzzlesolver_base import *
+import threading
+import queue
 
 class AlgorithmX(PuzzleSolverBase):
     """
@@ -536,14 +538,15 @@ class AlgorithmX(PuzzleSolverBase):
 
     def algorithm_x_parallel(self, matrix, header, solution):
         """
-        Version parallèle de l'algorithme X pour exploiter les capacités multi-processus.
+        Version parallèle de l'algorithme X utilisant des threads pour éviter les problèmes avec tkinter.
 
-        ### Remarque :
-        - Cette version utilise le module `multiprocessing` pour traiter plusieurs branches de l'arbre de recherche en parallèle.
-        - Utile pour les puzzles complexes avec un grand nombre de possibilités.
+        Paramètres :
+            - matrix : matrice de contraintes actuelle
+            - header : liste des noms de colonnes
+            - solution : liste des placements choisis jusqu'à présent
         """
         if self._stop:
-            return False
+            return
 
         if self.is_solution_complete(matrix, solution):
             return
@@ -554,38 +557,47 @@ class AlgorithmX(PuzzleSolverBase):
 
         rows_to_cover = self.select_rows_covering_column(matrix, column)
 
-        processes = []
-        manager = Manager()
-        shared_solutions = manager.list()
+        # File de tâches pour collecter les solutions trouvées par les threads
+        self.solution_queue = queue.Queue()
+        threads = []
 
         for row in rows_to_cover:
-            p = Process(target=self.process_branch, args=(row, matrix, header, solution, shared_solutions))
-            p.start()
-            processes.append(p)
+            thread = threading.Thread(target=self.process_branch, args=(row, matrix, header, solution))
+            thread.start()
+            threads.append(thread)
 
-        for p in processes:
-            p.join()
+        # Stocker les threads pour un arrêt ultérieur
+        self.threads = threads
 
-        # Ajoute toutes les solutions trouvées par les branches
-        self.solutions.extend(shared_solutions)
+        # Attendre que tous les threads se terminent
+        for thread in threads:
+            thread.join()
 
-    def process_branch(self, row, matrix, header, solution, shared_solutions):
+        # Récupérer les solutions trouvées
+        while not self.solution_queue.empty():
+            sol = self.solution_queue.get()
+            self.solutions.append(sol)
+
+    def process_branch(self, row, matrix, header, solution):
         """
-        Traite une branche de l'algorithme en parallèle.
+        Traite une branche de l'algorithme en utilisant des threads.
 
-        ### Étapes :
-        1. Copie locale de la solution actuelle.
-        2. Ajoute la ligne à la solution locale.
-        3. Réduit la matrice.
-        4. Appelle récursivement l'algorithme X.
-        5. Si une solution est trouvée, l'ajoute à la liste partagée des solutions.
+        Paramètres :
+            - row : ligne sélectionnée pour cette branche
+            - matrix : matrice de contraintes actuelle
+            - header : liste des noms de colonnes
+            - solution : liste des placements choisis jusqu'à présent
         """
         local_solution = solution.copy()
         self.try_row_in_solution(row, local_solution)
         new_matrix = self.remove_conflicting_rows_and_columns(matrix, row)
 
         if not self.has_unfillable_voids(local_solution):
-            if self.algorithm_x(new_matrix, header, local_solution):
-                shared_solutions.append(local_solution)
+            self.algorithm_x(new_matrix, header, local_solution)
+            # Vérifier si une solution a été trouvée
+            if self.solutions:
+                # Ajouter la solution à la file de tâches
+                self.solution_queue.put(local_solution.copy())
+
         self.backtrack(local_solution)
 

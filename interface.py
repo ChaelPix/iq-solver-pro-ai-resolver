@@ -6,7 +6,7 @@ from plateau import Plateau
 import numpy as np
 from algo_x_knuth import AlgorithmX
 import csv
-
+import threading
 PIECE_COLORS = {
     "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
     "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
@@ -70,9 +70,14 @@ class IQPuzzlerInterface:
 
         self.placed_pieces = {}
         self.algo = AlgorithmX(Plateau(), self.pieces, {}, update_callback=self.update_stats)
+        self.isRunning = False
 
     def stop(self):
+        self.isRunning = False
         self.algo.stop()
+        if hasattr(self.algo, 'threads'):
+            for thread in self.algo.threads:
+                thread.join()
 
     def init_plateau(self):
         for i in range(5):
@@ -286,7 +291,7 @@ class IQPuzzlerInterface:
             self.afficher_etape(self.current_step)
 
     def start_resolution(self):
-        self.solution = [] 
+        self.solution = []
 
         fixed_pieces = {}
         for piece_name, info in self.placed_pieces.items():
@@ -297,16 +302,27 @@ class IQPuzzlerInterface:
 
         plateau_copy = Plateau()
         plateau_copy.plateau = np.copy(self.plateau.plateau)
-
+        self.isRunning = True  # Indiquer que l'algorithme est en cours d'exécution
         self.algo = AlgorithmX(plateau_copy, self.pieces, fixed_pieces, update_callback=self.update_stats)
-        solutions = self.algo.solve()
 
-        if solutions:
-            self.solution = solutions[0] 
-            self.algo.print_solution()
-            self.afficher_solution_finale()
-        else:
-            print("Aucune solution trouvée.")
+        # Créer un thread pour exécuter l'algorithme
+        def run_algorithm():
+            self.algo.solve()
+            self.isRunning = False  # Indiquer que l'algorithme a terminé
+
+        threading.Thread(target=run_algorithm).start()
+
+        # Démarrer les mises à jour périodiques de l'interface
+        self.update_interface_periodically()
+
+
+    def update_interface_periodically(self):
+        if(not self.isRunning):
+            return None
+        # Mettre à jour l'interface ici si nécessaire
+        self.update_stats_in_interface()
+        # Re-planifier cette méthode après 100 ms
+        self.root.after(50, self.update_interface_periodically)
 
     def afficher_solution(self):
         if not self.solution:
@@ -329,38 +345,43 @@ class IQPuzzlerInterface:
         print("]")
 
     def update_stats(self, stats):
-        elapsed_time = stats["time"]
-        calculs = stats["calculs"]
-        placements_testes = stats["placements_testes"]
-        solution = stats["solution"]
+        self.latest_stats = stats
 
-        info_text = (
-            f"Temps écoulé: {elapsed_time:.2f} s\n"
-            f"Calculs effectués: {calculs}\n"
-            f"Placements testés: {placements_testes}\n"
-            f"Nombre de solutions trouvées: {len(self.solution)}\n"
-        )
-        self.info_text.config(state="normal")
-        self.info_text.delete("1.0", tk.END)
-        self.info_text.insert("1.0", info_text)
-        self.info_text.config(state="disabled")
+    def update_stats_in_interface(self):
+        if hasattr(self, 'latest_stats'):
+            stats = self.latest_stats
+            elapsed_time = stats["time"]
+            calculs = stats["calculs"]
+            placements_testes = stats["placements_testes"]
+            solution = stats["solution"]
 
-        self.reset_board()
-        for sol in solution:
-            piece = sol['piece']
-            color = PIECE_COLORS.get(piece.nom, "gray")
-            for cell in sol['cells_covered']:
-                i, j = cell
-                self.cases[i][j].configure(bg=color)
+            info_text = (
+                f"Temps écoulé: {elapsed_time:.2f} s\n"
+                f"Calculs effectués: {calculs}\n"
+                f"Placements testés: {placements_testes}\n"
+                f"Nombre de solutions trouvées: {len(self.algo.solutions)}\n"
+            )
+            self.info_text.config(state="normal")
+            self.info_text.delete("1.0", tk.END)
+            self.info_text.insert("1.0", info_text)
+            self.info_text.config(state="disabled")
 
-        self.root.update()
-
+            # Mettre à jour le plateau visuellement si nécessaire
+            if solution:
+                self.reset_board_visuellement()
+                for sol in solution:
+                    piece = sol['piece']
+                    color = PIECE_COLORS.get(piece.nom, "gray")
+                    for cell in sol['cells_covered']:
+                        i, j = cell
+                        self.cases[i][j].configure(bg=color)
 
     def reset_board_visuellement(self):
         """Efface le plateau et réinitialise toutes les cases visuellement."""
         for i in range(5):
             for j in range(11):
                 self.cases[i][j].configure(bg="white")
+    
 
     def export_solutions(self):
         if not self.algo.solution_steps:
