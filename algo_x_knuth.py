@@ -2,275 +2,277 @@ import itertools
 import numpy as np
 import time
 from multiprocessing import Process, Manager
+from puzzlesolver_base import *
 
-class AlgorithmX:
+class AlgorithmX(PuzzleSolverBase):
     """
-    classe pour gérer l'algorithme x de résolution de couverture exacte en utilisant une matrice de contraintes
+    Classe pour gérer l'algorithme X de résolution de couverture exacte.
+
+    ### Objectif de l'algorithme
+    - Trouver une combinaison de placements de pièces qui couvre entièrement le plateau sans chevauchement.
+    - Représentation du problème avec une matrice de contraintes :
+        - **Lignes** : chaque ligne représente une façon possible de placer une pièce sur le plateau.
+        - **Colonnes** : chaque colonne représente une contrainte à satisfaire (par exemple, couvrir une cellule spécifique du plateau ou utiliser une pièce spécifique).
+
+    ### Flux général de résolution
+    1. **Création de la matrice de contraintes** à partir des pièces et du plateau (`create_constraint_matrix`).
+    2. **Lancement de l'algorithme X** pour explorer les possibilités de placement (`algorithm_x` ou `algorithm_x_parallel`).
+    3. **Collecte des solutions** trouvées qui satisfont toutes les contraintes.
+
+    ### Exemple de matrice de contraintes pour IQ Puzzler Pro
+
+    Supposons un plateau simplifié 2x2 et deux pièces A et B :
+
+    - **Pièce A** : forme 1x2 (horizontal).
+    - **Pièce B** : forme 2x1 (vertical).
+
+    Les positions possibles sur le plateau pour chaque pièce sont :
+
+    - **Pièce A** :
+        - Position 1 : couvre cellules (0,0) et (0,1).
+        - Position 2 : couvre cellules (1,0) et (1,1).
+    - **Pièce B** :
+        - Position 1 : couvre cellules (0,0) et (1,0).
+        - Position 2 : couvre cellules (0,1) et (1,1).
+
+    La matrice de contraintes serait :
+
+    |     | Cellule (0,0) | Cellule (0,1) | Cellule (1,0) | Cellule (1,1) | Pièce A | Pièce B |
+    |-----|---------------|---------------|---------------|---------------|---------|---------|
+    | L1  |       1       |       1       |       0       |       0       |    1    |    0    |
+    | L2  |       0       |       0       |       1       |       1       |    1    |    0    |
+    | L3  |       1       |       0       |       1       |       0       |    0    |    1    |
+    | L4  |       0       |       1       |       0       |       1       |    0    |    1    |
+
+    Chaque ligne représente une option de placement d'une pièce, et les 1 indiquent les contraintes satisfaites par cette option.
     """
 
     def __init__(self, plateau, pieces, fixed_pieces=None, update_callback=None):
-        """
-        initialise l'algorithme avec le plateau, les pièces et les options de configuration fixe
-
-        paramètres :
-            - plateau : objet représentant le plateau de jeu (grille)
-            - pieces : dictionnaire des pièces à placer avec leurs variantes (rotations, symétries)
-            - fixed_pieces : pièces déjà fixées sur le plateau (optionnel)
-            - update_callback : fonction de rappel pour mettre à jour l'interface pendant la résolution (optionnel)
-        """
-        self.plateau = plateau  # le plateau de jeu
-        self.pieces = pieces  # les pièces disponibles
-        self.solutions = []  # liste des solutions trouvées
-        self.fixed_pieces = fixed_pieces if fixed_pieces else {}  # pièces fixées sur le plateau
-        self.update_callback = update_callback  # fonction pour mettre à jour l'interface
-
-        self.calculs = 0  # compteur de calculs effectués
-        self.placements_testes = 0  # compteur de placements testés
-        self.start_time = time.time()  # temps de démarrage de l'algorithme
-
-        self.zone_cache = {}  # cache pour les zones vides déjà calculées
-        self.invalid_placements = {}  # placements invalides déjà identifiés
-        self._stop = False  # indicateur pour arrêter l'algorithme
-
-        self.solution_steps = []  # étapes de la solution en cours
-
-    def stop(self):
-        """
-        stoppe le processus de résolution
-        """
-        self._stop = True
+        super().__init__(plateau, pieces, fixed_pieces, update_callback)
+        self.solutions = []  # Liste des solutions trouvées
+        self.zone_cache = {}  # Cache pour les zones vides déjà analysées
+        self.invalid_placements = {}  # Cache des placements invalides
+        self.solution_steps = []  # Historique des étapes de construction des solutions
 
     def solve(self):
         """
-        démarre la résolution en créant la matrice de contraintes et en lançant l'algorithme
+        Point d'entrée principal pour résoudre le puzzle.
 
-        retourne :
-            - self.solutions : liste des solutions trouvées
+        ### Étapes principales :
+        1. **Création de la matrice de contraintes** (`create_constraint_matrix`).
+        2. **Lancement de l'algorithme X** (`algorithm_x_parallel` pour une version multi-processus ou `algorithm_x`).
+        3. **Retour des solutions trouvées.
+
+        ### Pseudo-code :
+        ```
+        Initialiser la matrice de contraintes
+        Initialiser une liste vide pour la solution en cours
+        Appeler l'algorithme X avec la matrice et la solution
+        ```
         """
         self._stop = False
-        matrix, header = self.create_constraint_matrix()  # création de la matrice de contraintes
-        solution = []  # initialisation de la solution
-        self.algorithm_x(matrix, header, solution)  # lancement de l'algorithme x
+        # Étape 1 : Création de la matrice de contraintes
+        matrix, header = self.create_constraint_matrix()
+        
+        # Étape 2 : Lancement de l'algorithme de recherche
+        solution = []
+        self.algorithm_x(matrix, header, solution)
+        
+        # Étape 3 : Retour des solutions trouvées
         return self.solutions
 
-    def create_constraint_matrix(self):
-        """
-        crée la matrice de contraintes pour chaque variante possible de chaque pièce
-
-        retourne :
-            - matrix : matrice de contraintes avec chaque ligne représentant une option de placement
-            - header : liste des noms de colonnes, couvrant chaque cellule du plateau et chaque pièce
-        """
-        num_cells = self.plateau.lignes * self.plateau.colonnes  # nombre total de cellules du plateau
-        num_pieces = len(self.pieces)  # nombre total de pièces
-        total_columns = num_cells + num_pieces  # total des colonnes (cellules + pièces)
-
-        # création de l'en-tête des colonnes (cellules du plateau et pièces)
-        header = ['C{}'.format(i) for i in range(num_cells)] + [piece.nom for piece in self.pieces.values()]
-        matrix = []  # initialisation de la matrice de contraintes
-        used_pieces = set(self.fixed_pieces.keys())  # pièces déjà utilisées (fixées)
-        # liste des pièces non fixées, triées par nombre de variantes pour optimiser la recherche
-        pieces_non_fixees = [piece for piece in self.pieces.values() if piece.nom not in used_pieces]
-        pieces_non_fixees.sort(key=lambda p: len(p.variantes))
-
-        # pour chaque pièce non fixée
-        for piece in pieces_non_fixees:
-            # pour chaque variante de la pièce (rotation, symétrie)
-            for variante_index, variante in enumerate(piece.variantes):
-                # pour chaque position possible sur le plateau
-                for i in range(self.plateau.lignes):
-                    for j in range(self.plateau.colonnes):
-                        position = (i, j)
-                        # vérifie si la variante peut être placée à cette position
-                        if self.plateau.peut_placer(variante, position):
-                            row = [0] * total_columns  # initialise une ligne de la matrice
-                            cells_covered = []  # liste des cellules couvertes par cette variante
-                            # parcourt les cellules de la variante
-                            for vi in range(variante.shape[0]):
-                                for vj in range(variante.shape[1]):
-                                    if variante[vi, vj] == 1:
-                                        # calcule l'index de la cellule sur le plateau
-                                        cell_index = (i + vi) * self.plateau.colonnes + (j + vj)
-                                        row[cell_index] = 1  # marque la cellule comme couverte
-                                        cells_covered.append((i + vi, j + vj))  # ajoute la cellule à la liste
-                            # marque la pièce comme utilisée dans cette ligne
-                            piece_index = num_cells + list(self.pieces.keys()).index(piece.nom)
-                            row[piece_index] = 1
-                            # ajoute la ligne à la matrice
-                            matrix.append({
-                                'row': row,
-                                'piece': piece,
-                                'variante_index': variante_index,
-                                'position': position,
-                                'cells_covered': cells_covered
-                            })
-
-        # pour les pièces fixées, on les ajoute en début de matrice
-        for piece_name, info in self.fixed_pieces.items():
-            piece = self.pieces[piece_name]
-            variante_index = info['variante_index']
-            position = info['position']
-            variante = piece.variantes[variante_index]
-
-            row = [0] * total_columns  # initialise une ligne de la matrice
-            cells_covered = []  # liste des cellules couvertes par cette variante
-            # parcourt les cellules de la variante
-            for vi in range(variante.shape[0]):
-                for vj in range(variante.shape[1]):
-                    if variante[vi, vj] == 1:
-                        # calcule l'index de la cellule sur le plateau
-                        cell_index = (position[0] + vi) * self.plateau.colonnes + (position[1] + vj)
-                        row[cell_index] = 1  # marque la cellule comme couverte
-                        cells_covered.append((position[0] + vi, position[1] + vj))  # ajoute la cellule à la liste
-            # marque la pièce comme utilisée dans cette ligne
-            piece_index = num_cells + list(self.pieces.keys()).index(piece_name)
-            row[piece_index] = 1
-            # insère la ligne au début de la matrice pour prioriser les pièces fixées
-            matrix.insert(0, {
-                'row': row,
-                'piece': piece,
-                'variante_index': variante_index,
-                'position': position,
-                'cells_covered': cells_covered,
-                'fixed': True
-            })
-
-        return matrix, header
-
+    # --- Méthodes principales de l'algorithme ---
+    
     def algorithm_x(self, matrix, header, solution):
         """
-        implémente l'algorithme x pour trouver une solution de couverture exacte
+        Algorithme X (version séquentielle) pour la résolution du problème.
 
-        paramètres :
-            - matrix : matrice de contraintes actuelle
-            - header : liste des noms de colonnes
-            - solution : liste des placements choisis jusqu'à présent
+        ### Pseudo-code :
+        ```
+        Si toutes les contraintes sont satisfaites (matrice vide) :
+            Vérifier la validité de la solution
+            Ajouter la solution valide à la liste des solutions trouvées
+            Retourner True
 
-        retourne :
-            - True si une solution est trouvée, False sinon
+        Sélectionner la contrainte avec le moins d'options disponibles (colonne avec minimum de 1).
+
+        Pour chaque ligne qui couvre cette contrainte :
+            Ajouter la ligne à la solution
+            Réduire la matrice en supprimant les colonnes couvertes et les lignes conflictuelles
+            Appeler récursivement l'algorithme X
+            Si une solution est trouvée, arrêter la recherche
+            Sinon, effectuer un backtracking (retirer la ligne de la solution)
+        ```
         """
         if self._stop:
             return False
-        # si la matrice est vide, toutes les contraintes sont satisfaites
-        if not any(row['row'] for row in matrix):
-            if self.validate_solution(solution):  # vérifie si la solution est valide
-                self.solutions.append(solution.copy())  # ajoute la solution aux solutions trouvées
-                self.solution_steps.append(solution.copy())  # enregistre l'étape de la solution
-                return True
+
+        # Vérifie si toutes les contraintes sont satisfaites
+        if self.is_solution_complete(matrix, solution):
+            return True
+
+        # Sélectionne la colonne avec le moins d'options
+        column = self.select_column_with_fewest_options(matrix)
+        if column is None:
             return False
 
-        # compte le nombre d'options pour chaque colonne (minimum de contraintes)
-        counts = [0] * len(header)
-        for row in matrix:
-            for idx, val in enumerate(row['row']):
-                if val == 1:
-                    counts[idx] += 1
+        # Récupère toutes les lignes couvrant cette contrainte
+        rows_to_cover = self.select_rows_covering_column(matrix, column)
 
-        # ignore les colonnes déjà couvertes
-        counts = [count if any(row['row'][idx] == 1 for row in matrix) else float('inf') for idx, count in enumerate(counts)]
-        min_count = min(counts)
-        if min_count == float('inf'):
-            return False
-
-        # choisit la colonne avec le moins d'options
-        column = counts.index(min_count)
-        # sélectionne les lignes qui couvrent cette colonne
-        rows_to_cover = [row for row in matrix if row['row'][column] == 1]
-
-        # trie les lignes pour optimiser la recherche (pièces les plus grandes en premier)
-        rows_to_cover.sort(key=lambda r: -np.count_nonzero(r['piece'].forme_base))
-
-        # pour chaque ligne possible
         for row in rows_to_cover:
             if self._stop:
                 return False
-            solution.append(row)  # ajoute la ligne à la solution
-            self.solution_steps.append(solution.copy())  # enregistre l'étape
-            self.placements_testes += 1  # incrémente le compteur
 
-            self.update_interface(solution)  # met à jour l'interface si nécessaire
+            # Ajoute la ligne à la solution actuelle
+            self.try_row_in_solution(row, solution)
 
-            # détermine les colonnes à supprimer
-            columns_to_remove = [idx for idx, val in enumerate(row['row']) if val == 1]
-            new_matrix = []
-            # construit la nouvelle matrice en excluant les lignes en conflit
-            for r in matrix:
-                if r == row:
-                    continue
-                if all(r['row'][idx] == 0 for idx in columns_to_remove):
-                    new_matrix.append(r)
+            # Réduit la matrice en excluant les conflits
+            new_matrix = self.remove_conflicting_rows_and_columns(matrix, row)
 
-            # vérifie s'il n'y a pas de zones vides impossibles à remplir
+            # Appelle récursivement l'algorithme
             if not self.has_unfillable_voids(solution):
-                if self.algorithm_x(new_matrix, header, solution):  # appel récursif
+                if self.algorithm_x(new_matrix, header, solution):
                     return True
 
-            solution.pop()  # retire la ligne de la solution
-            self.solution_steps.pop()
-            self.calculs += 1  # incrémente le compteur de calculs
+            # Backtracking si la solution n'est pas trouvée
+            self.backtrack(solution)
         return False
 
-    def algorithm_x_parallel(self, matrix, header, solution):
-        """
-        version parallèle de l'algorithme x pour exploiter le multiprocesseur
+    # --- Méthodes pour la matrice de contraintes ---
 
-        paramètres :
-            - matrix : matrice de contraintes actuelle
-            - header : liste des noms de colonnes
-            - solution : liste des placements choisis jusqu'à présent
+    def create_constraint_matrix(self):
         """
-        if self._stop:
-            return False
+        Crée une matrice de contraintes pour représenter toutes les options de placement de pièces.
+
+        ### Explication détaillée
+
+        - **Contraintes (colonnes)** :
+            - Chaque cellule du plateau doit être couverte exactement une fois.
+            - Chaque pièce doit être utilisée exactement une fois.
+
+        - **Options (lignes)** :
+            - Chaque ligne représente une façon spécifique de placer une variante d'une pièce à une position donnée.
+
+        ### Exemple pour IQ Puzzler Pro simplifié
+
+        Supposons un plateau 2x2 avec les pièces suivantes :
+
+        - **Pièce A** (1x2) : peut être placée horizontalement en (0,0) ou (1,0).
+        - **Pièce B** (2x1) : peut être placée verticalement en (0,0) ou (0,1).
+
+        **Colonnes** :
+
+        - Cellules : C0 (0,0), C1 (0,1), C2 (1,0), C3 (1,1)
+        - Pièces : A, B
+
+        **Lignes (options de placement)** :
+
+        - **Ligne 1** : Pièce A en (0,0)
+            - Couvre C0 et C1, utilise A.
+        - **Ligne 2** : Pièce A en (1,0)
+            - Couvre C2 et C3, utilise A.
+        - **Ligne 3** : Pièce B en (0,0)
+            - Couvre C0 et C2, utilise B.
+        - **Ligne 4** : Pièce B en (0,1)
+            - Couvre C1 et C3, utilise B.
+
+        La matrice de contraintes est alors construite en mettant des 1 là où une option satisfait une contrainte.
+        """
+        total_columns, header = self.calculate_total_columns_and_create_header()
+        matrix = []
+        pieces_non_fixees = self.get_non_fixed_pieces()
+
+        # Ajoute les variantes des pièces non fixées
+        for piece in pieces_non_fixees:
+            self.add_piece_variants_to_matrix(piece, total_columns, matrix)
+
+        # Ajoute les pièces fixées
+        self.add_fixed_pieces_to_matrix(total_columns, matrix)
+        return matrix, header
+
+    # --- Méthodes auxiliaires explicitées ---
+
+    def is_solution_complete(self, matrix, solution):
+        """
+        Vérifie si toutes les contraintes sont satisfaites.
+
+        ### Exemple d'état valide :
+        - **Matrice vide** : toutes les contraintes (colonnes) sont couvertes.
+        - **Solution complète** : contient les placements des pièces couvrant exactement le plateau.
+        """
         if not any(row['row'] for row in matrix):
             if self.validate_solution(solution):
                 self.solutions.append(solution.copy())
-            return
+                self.solution_steps.append(solution.copy())
+                return True
+        return False
 
-        counts = [0] * len(header)
+    def select_column_with_fewest_options(self, matrix):
+        """
+        Sélectionne la contrainte (colonne) avec le moins de lignes (options) disponibles.
+
+        ### Exemple :
+        Si la matrice contient les colonnes C0, C1, C2 avec les comptes suivants :
+
+        - C0 : 3 options
+        - C1 : 2 options
+        - C2 : 1 option
+
+        Alors, la colonne C2 sera sélectionnée car elle a le moins d'options.
+        """
+        if not matrix:  # Si la matrice est vide, on retourne None
+            return None
+        counts = [0] * len(matrix[0]['row'])
         for row in matrix:
             for idx, val in enumerate(row['row']):
                 if val == 1:
                     counts[idx] += 1
-
-        counts = [count if any(row['row'][idx] == 1 for row in matrix) else float('inf') for idx, count in enumerate(counts)]
+        counts = [count if count > 0 else float('inf') for count in counts]
         min_count = min(counts)
         if min_count == float('inf'):
-            return
-
+            return None
         column = counts.index(min_count)
-        rows_to_cover = [row for row in matrix if row['row'][column] == 1]
+        return column
 
-        rows_to_cover.sort(key=lambda r: -np.count_nonzero(r['piece'].forme_base))
-
-        processes = []
-        for row in rows_to_cover:
-            p = Process(target=self.process_branch, args=(row, matrix, header, solution))
-            p.start()
-            processes.append(p)
-
-        for p in processes:
-            p.join()
-
-    def process_branch(self, row, matrix, header, solution):
+    def select_rows_covering_column(self, matrix, column):
         """
-        traite une branche de l'algorithme en parallèle
+        Récupère toutes les lignes qui couvrent une contrainte donnée.
 
-        paramètres :
-            - row : ligne sélectionnée pour cette branche
-            - matrix : matrice de contraintes actuelle
-            - header : liste des noms de colonnes
-            - solution : liste des placements choisis jusqu'à présent
+        ### Exemple :
+        Pour la colonne C2, les lignes qui ont un 1 à l'index correspondant à C2 sont sélectionnées.
+
+        - **Supposons** que les lignes 1 et 3 couvrent C2.
+        """
+        rows_to_cover = [row for row in matrix if row['row'][column] == 1]
+        rows_to_cover.sort(key=lambda r: -np.count_nonzero(r['piece'].forme_base))
+        return rows_to_cover
+
+    def try_row_in_solution(self, row, solution):
+        """
+        Ajoute une ligne à la solution actuelle.
+
+        ### Exemple :
+        Si la ligne représente le placement de la pièce A en position (1, 2), elle est ajoutée à la solution.
         """
         solution.append(row)
-        piece_name = row['piece'].nom
-        variante_index = row['variante_index']
-        position = row['position']
-        key = (piece_name, variante_index, position)
+        self.solution_steps.append(solution.copy())
+        self.placements_testes += 1
+        self.update_interface(solution)
 
-        if key in self.invalid_placements:
-            solution.pop()
-            return
+    def remove_conflicting_rows_and_columns(self, matrix, row):
+        """
+        Réduit la matrice en supprimant les colonnes couvertes par la ligne sélectionnée et les lignes en conflit.
 
+        ### Étapes :
+        1. **Déterminer les colonnes à supprimer** : celles où la ligne a des 1.
+        2. **Construire la nouvelle matrice** en excluant :
+            - Les lignes qui ont des 1 dans les colonnes à supprimer (conflits).
+            - La ligne actuelle (déjà dans la solution).
+
+        ### Exemple :
+        - **Colonnes à supprimer** : indices des 1 dans la ligne sélectionnée.
+        - **Nouvelles lignes** : celles qui n'ont pas de 1 dans ces colonnes.
+        """
         columns_to_remove = [idx for idx, val in enumerate(row['row']) if val == 1]
         new_matrix = []
         for r in matrix:
@@ -278,169 +280,312 @@ class AlgorithmX:
                 continue
             if all(r['row'][idx] == 0 for idx in columns_to_remove):
                 new_matrix.append(r)
+        return new_matrix
 
-        if not self.has_unfillable_voids(solution):
-            self.algorithm_x_parallel(new_matrix, header, solution)
-        else:
-            self.invalid_placements[key] = True
+    def backtrack(self, solution):
+        """
+        Effectue le backtracking en retirant la dernière ligne de la solution.
 
+        ### Exemple :
+        Si l'ajout de la pièce B en position (0,1) ne mène pas à une solution, on la retire de la solution actuelle.
+        """
         solution.pop()
+        self.solution_steps.pop()
+        self.calculs += 1
+
+    # --- Méthodes pour la création de la matrice de contraintes ---
+
+    def calculate_total_columns_and_create_header(self):
+        """
+        Calcule le nombre total de colonnes et crée l'en-tête des colonnes.
+
+        ### Exemple :
+        Pour un plateau 2x2 (4 cellules) et 2 pièces (A, B), le total des colonnes est 6 :
+
+        - 4 colonnes pour les cellules : C0, C1, C2, C3.
+        - 2 colonnes pour les pièces : A, B.
+        """
+        num_cells = self.plateau.lignes * self.plateau.colonnes
+        num_pieces = len(self.pieces)
+        total_columns = num_cells + num_pieces
+        header = ['C{}'.format(i) for i in range(num_cells)] + [piece.nom for piece in self.pieces.values()]
+        return total_columns, header
+
+    def get_non_fixed_pieces(self):
+        """
+        Récupère la liste des pièces non fixées, triées par nombre de variantes.
+
+        ### Exemple :
+        Si les pièces A et B sont disponibles et que B est fixée, cette méthode retournera [A].
+        """
+        used_pieces = set(self.fixed_pieces.keys())
+        pieces_non_fixees = [piece for piece in self.pieces.values() if piece.nom not in used_pieces]
+        pieces_non_fixees.sort(key=lambda p: len(p.variantes))
+        return pieces_non_fixees
+
+    def add_piece_variants_to_matrix(self, piece, total_columns, matrix):
+        """
+        Ajoute toutes les variantes d'une pièce non fixée à la matrice de contraintes.
+
+        ### Étapes :
+        1. Pour chaque variante de la pièce.
+        2. Pour chaque position valide sur le plateau.
+        3. Créer une ligne représentant ce placement (`create_row_for_variant_placement`).
+        """
+        num_cells = self.plateau.lignes * self.plateau.colonnes
+        for variante_index, variante in enumerate(piece.variantes):
+            for position in self.get_valid_positions_for_variant(variante):
+                row_data = self.create_row_for_variant_placement(piece, variante_index, variante, position, total_columns, num_cells)
+                matrix.append(row_data)
+
+    def get_valid_positions_for_variant(self, variante):
+        """
+        Génère toutes les positions valides pour une variante sur le plateau.
+
+        ### Exemple :
+        Pour une variante de taille 1x2 sur un plateau 2x2, les positions valides sont (0,0) et (1,0).
+        """
+        for i in range(self.plateau.lignes):
+            for j in range(self.plateau.colonnes):
+                position = (i, j)
+                if self.plateau.peut_placer(variante, position):
+                    yield position
+
+    def create_row_for_variant_placement(self, piece, variante_index, variante, position, total_columns, num_cells):
+        """
+        Crée une ligne de la matrice de contraintes pour un placement spécifique d'une variante.
+
+        ### Paramètres :
+        - **piece** : l'objet pièce en cours.
+        - **variante_index** : l'index de la variante utilisée.
+        - **variante** : la forme de la variante (numpy array).
+        - **position** : la position (i, j) sur le plateau.
+        - **total_columns** : nombre total de colonnes dans la matrice.
+        - **num_cells** : nombre total de cellules du plateau.
+
+        ### Exemple :
+        Supposons que nous ayons une pièce 'A' avec une variante en forme de ligne horizontale de taille 1x2,
+        et que nous voulons la placer en position (0, 0) sur un plateau 2x2.
+
+        - **Cellules couvertes** : (0,0) et (0,1).
+        - **Indices des cellules** : 0 et 1.
+        - **Index de la pièce 'A'** : 4 (après les indices des cellules).
+
+        La ligne créée aura des 1 aux indices 0, 1 et 4.
+        """
+        row = [0] * total_columns
+        cells_covered = []
+        for vi in range(variante.shape[0]):
+            for vj in range(variante.shape[1]):
+                if variante[vi, vj] == 1:
+                    cell_index = (position[0] + vi) * self.plateau.colonnes + (position[1] + vj)
+                    row[cell_index] = 1
+                    cells_covered.append((position[0] + vi, position[1] + vj))
+        piece_index = num_cells + list(self.pieces.keys()).index(piece.nom)
+        row[piece_index] = 1
+        row_data = {
+            'row': row,
+            'piece': piece,
+            'variante_index': variante_index,
+            'position': position,
+            'cells_covered': cells_covered
+        }
+        return row_data
+
+    def add_fixed_pieces_to_matrix(self, total_columns, matrix):
+        """
+        Ajoute les pièces fixées au début de la matrice de contraintes.
+
+        ### Étapes :
+        1. Pour chaque pièce fixée, créer une ligne représentant son placement spécifique.
+        2. Insérer cette ligne au début de la matrice pour prioriser ces placements.
+        """
+        num_cells = self.plateau.lignes * self.plateau.colonnes
+        for piece_name, info in self.fixed_pieces.items():
+            piece = self.pieces[piece_name]
+            variante_index = info['variante_index']
+            position = info['position']
+            variante = piece.variantes[variante_index]
+            row_data = self.create_row_for_fixed_piece(piece, variante_index, variante, position, total_columns, num_cells)
+            matrix.insert(0, row_data)
+
+    def create_row_for_fixed_piece(self, piece, variante_index, variante, position, total_columns, num_cells):
+        """
+        Crée une ligne de la matrice de contraintes pour une pièce fixée.
+
+        ### Exemple :
+        Si la pièce 'B' est fixée en position (0,1) avec une variante verticale, cette méthode créera une ligne
+        avec des 1 aux indices correspondant aux cellules couvertes et à la pièce 'B'.
+        """
+        row = [0] * total_columns
+        cells_covered = []
+        for vi in range(variante.shape[0]):
+            for vj in range(variante.shape[1]):
+                if variante[vi, vj] == 1:
+                    cell_index = (position[0] + vi) * self.plateau.colonnes + (position[1] + vj)
+                    row[cell_index] = 1
+                    cells_covered.append((position[0] + vi, position[1] + vj))
+        piece_index = num_cells + list(self.pieces.keys()).index(piece.nom)
+        row[piece_index] = 1
+        row_data = {
+            'row': row,
+            'piece': piece,
+            'variante_index': variante_index,
+            'position': position,
+            'cells_covered': cells_covered,
+            'fixed': True
+        }
+        return row_data
+
+    # --- Méthodes pour vérifier les zones vides non comblables ---
 
     def has_unfillable_voids(self, solution):
         """
-        vérifie s'il existe des zones vides impossibles à remplir avec les pièces restantes
+        Vérifie s'il existe des zones vides impossibles à remplir avec les pièces restantes.
 
-        paramètres :
-            - solution : liste des placements choisis jusqu'à présent
+        ### Étapes :
+        1. Marquer sur un plateau temporaire les cellules couvertes par la solution actuelle.
+        2. Identifier les zones vides restantes.
+        3. Pour chaque zone vide, vérifier si la somme des tailles des pièces restantes peut la combler exactement.
 
-        retourne :
-            - True si des zones vides non comblables sont détectées, False sinon
+        ### Exemple :
+        Si une zone vide de taille 3 est détectée et qu'il ne reste que des pièces de tailles 2 et 4, alors la zone est non comblable.
         """
-        # copie temporaire du plateau
         plateau_temp = np.copy(self.plateau.plateau)
-        # marque les cellules déjà couvertes par la solution actuelle
         for sol in solution:
             for cell in sol['cells_covered']:
                 i, j = cell
                 plateau_temp[i, j] = 1
 
-        # obtient les zones vides restantes
         empty_zones = self.get_empty_zones(plateau_temp)
-        # pièces restantes à placer
         remaining_pieces = set(self.pieces.keys()) - set(sol['piece'].nom for sol in solution)
-        # tailles des pièces restantes
         remaining_sizes = [np.count_nonzero(self.pieces[piece_name].forme_base) for piece_name in remaining_pieces]
 
-        # pour chaque zone vide
         for zone in empty_zones:
             zone_size = len(zone)
-            # vérifie si la zone a déjà été traitée
             if zone_size in self.zone_cache:
                 if not self.zone_cache[zone_size]:
                     return True
                 else:
                     continue
 
-            possible = False
-            # vérifie si la somme des tailles des pièces restantes peut combler la zone
-            for i in range(1, len(remaining_sizes)+1):
-                for combo in itertools.combinations(remaining_sizes, i):
-                    if sum(combo) == zone_size:
-                        possible = True
-                        break
-                if possible:
-                    break
-            self.zone_cache[zone_size] = possible  # met à jour le cache
+            possible = self.can_fill_zone(zone_size, remaining_sizes)
+            self.zone_cache[zone_size] = possible
             if not possible:
                 return True
         return False
 
     def get_empty_zones(self, plateau_temp):
         """
-        identifie les zones vides du plateau non couvertes par les pièces
+        Identifie les zones vides du plateau non couvertes par les pièces.
 
-        paramètres :
-            - plateau_temp : plateau temporaire avec les cellules couvertes
-
-        retourne :
-            - empty_zones : liste des zones vides identifiées
+        ### Exemple :
+        Si le plateau temporaire a des zones vides de tailles différentes, cette méthode les détectera
+        et les retournera sous forme de listes de coordonnées.
         """
-        visited = set()  # cellules déjà visitées
-        empty_zones = []  # liste des zones vides
-        # parcourt chaque cellule du plateau
+        visited = set()
+        empty_zones = []
         for i in range(self.plateau.lignes):
             for j in range(self.plateau.colonnes):
-                # si la cellule est vide et non visitée
                 if plateau_temp[i, j] == 0 and (i, j) not in visited:
-                    zone = self.explore_zone(plateau_temp, i, j, visited)  # explore la zone
-                    empty_zones.append(zone)  # ajoute la zone à la liste
+                    zone = self.explore_zone(plateau_temp, i, j, visited)
+                    empty_zones.append(zone)
         return empty_zones
 
     def explore_zone(self, plateau_temp, i, j, visited):
         """
-        explore une zone vide adjacente à une cellule donnée
+        Explore une zone vide adjacente à une cellule donnée.
 
-        paramètres :
-            - plateau_temp : plateau temporaire avec les cellules couvertes
-            - i, j : coordonnées de la cellule de départ
-            - visited : ensemble des cellules déjà visitées
-
-        retourne :
-            - zone : liste des cellules appartenant à la zone vide
+        ### Exemple :
+        À partir d'une cellule vide (i, j), cette méthode explore toutes les cellules adjacentes
+        (haut, bas, gauche, droite) qui sont également vides, formant ainsi une zone continue.
         """
-        queue = [(i, j)]  # file d'attente pour le parcours en largeur
-        visited.add((i, j))  # marque la cellule comme visitée
-        zone = [(i, j)]  # initialise la zone
+        queue = [(i, j)]
+        visited.add((i, j))
+        zone = [(i, j)]
 
-        # tant qu'il y a des cellules à explorer
         while queue:
-            ci, cj = queue.pop(0)  # récupère la cellule courante
-            # vérifie les cellules adjacentes (haut, bas, gauche, droite)
+            ci, cj = queue.pop(0)
             for ni, nj in [(ci+1, cj), (ci-1, cj), (ci, cj+1), (ci, cj-1)]:
-                # si la cellule est dans les limites du plateau, vide et non visitée
                 if (0 <= ni < self.plateau.lignes and 0 <= nj < self.plateau.colonnes
                         and plateau_temp[ni, nj] == 0 and (ni, nj) not in visited):
-                    visited.add((ni, nj))  # marque la cellule comme visitée
-                    queue.append((ni, nj))  # ajoute la cellule à la file d'attente
-                    zone.append((ni, nj))  # ajoute la cellule à la zone
+                    visited.add((ni, nj))
+                    queue.append((ni, nj))
+                    zone.append((ni, nj))
         return zone
 
-    def update_interface(self, solution):
+    def can_fill_zone(self, zone_size, remaining_sizes):
         """
-        met à jour l'interface utilisateur avec les informations actuelles de la résolution
+        Vérifie si une zone de taille donnée peut être comblée avec les pièces restantes.
 
-        paramètres :
-            - solution : liste des placements choisis jusqu'à présent
+        ### Exemple :
+        Si la zone a une taille de 5 et que les tailles des pièces restantes sont [2,3,4],
+        cette méthode vérifiera s'il est possible de combiner des pièces pour remplir exactement la zone.
         """
-        if self.update_callback:
-            elapsed_time = time.time() - self.start_time  # calcule le temps écoulé
-            stats = {
-                "time": elapsed_time,
-                "calculs": self.calculs,
-                "placements_testes": self.placements_testes,
-                "solution": solution
-            }
-            self.update_callback(stats)  # appelle la fonction de mise à jour
+        possible = False
+        for i in range(1, len(remaining_sizes) + 1):
+            for combo in itertools.combinations(remaining_sizes, i):
+                if sum(combo) == zone_size:
+                    possible = True
+                    break
+            if possible:
+                break
+        return possible
 
-    def validate_solution(self, solution):
+    # --- Méthode pour l'algorithme parallèle (optionnel) ---
+
+    def algorithm_x_parallel(self, matrix, header, solution):
         """
-        vérifie si la solution actuelle est valide (toutes les pièces placées sans chevauchement)
+        Version parallèle de l'algorithme X pour exploiter les capacités multi-processus.
 
-        paramètres :
-            - solution : liste des placements choisis jusqu'à présent
-
-        retourne :
-            - True si la solution est valide, False sinon
+        ### Remarque :
+        - Cette version utilise le module `multiprocessing` pour traiter plusieurs branches de l'arbre de recherche en parallèle.
+        - Utile pour les puzzles complexes avec un grand nombre de possibilités.
         """
-        pieces_used = set()  # ensemble des pièces utilisées
-        cells_covered = set()  # ensemble des cellules couvertes
+        if self._stop:
+            return False
 
-        # pour chaque placement dans la solution
-        for sol in solution:
-            piece_name = sol['piece'].nom
-            if piece_name in pieces_used:
-                return False  # pièce déjà utilisée
-            pieces_used.add(piece_name)
-
-            # vérifie les cellules couvertes
-            for cell in sol['cells_covered']:
-                if cell in cells_covered:
-                    return False  # cellule déjà couverte
-                cells_covered.add(cell)
-
-        all_pieces_used = len(pieces_used) == len(self.pieces)  # toutes les pièces sont utilisées
-        full_board_covered = len(cells_covered) == (self.plateau.lignes * self.plateau.colonnes)  # le plateau est entièrement couvert
-        return all_pieces_used and full_board_covered
-
-    def print_solution(self):
-        """
-        affiche la première solution trouvée
-        """
-        if not self.solutions:
-            print("aucune solution trouvée.")
+        if self.is_solution_complete(matrix, solution):
             return
-        print("solution trouvée :")
-        for sol in self.solutions[0]:
-            piece = sol['piece']
-            position = sol['position']
-            print(f"placer {piece.nom} : position {position} | variante : {sol['variante_index']}")
+
+        column = self.select_column_with_fewest_options(matrix)
+        if column is None:
+            return
+
+        rows_to_cover = self.select_rows_covering_column(matrix, column)
+
+        processes = []
+        manager = Manager()
+        shared_solutions = manager.list()
+
+        for row in rows_to_cover:
+            p = Process(target=self.process_branch, args=(row, matrix, header, solution, shared_solutions))
+            p.start()
+            processes.append(p)
+
+        for p in processes:
+            p.join()
+
+        # Ajoute toutes les solutions trouvées par les branches
+        self.solutions.extend(shared_solutions)
+
+    def process_branch(self, row, matrix, header, solution, shared_solutions):
+        """
+        Traite une branche de l'algorithme en parallèle.
+
+        ### Étapes :
+        1. Copie locale de la solution actuelle.
+        2. Ajoute la ligne à la solution locale.
+        3. Réduit la matrice.
+        4. Appelle récursivement l'algorithme X.
+        5. Si une solution est trouvée, l'ajoute à la liste partagée des solutions.
+        """
+        local_solution = solution.copy()
+        self.try_row_in_solution(row, local_solution)
+        new_matrix = self.remove_conflicting_rows_and_columns(matrix, row)
+
+        if not self.has_unfillable_voids(local_solution):
+            if self.algorithm_x(new_matrix, header, local_solution):
+                shared_solutions.append(local_solution)
+        self.backtrack(local_solution)
+
