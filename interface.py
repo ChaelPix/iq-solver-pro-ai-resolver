@@ -13,7 +13,7 @@ from ttkbootstrap import Style, Window
 PIECE_COLORS = {
     "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
     "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
-    "blue": "blue", "purple": "purple", "darkred": "darkred", "pink": "pink"
+    "blue": "blue", "purple": "purple", "darkred": "darkred", "pink": "pink", "gray": "gray12", "magenta": "magenta2"
 }
 
 class IQPuzzlerInterface:
@@ -35,7 +35,7 @@ class IQPuzzlerInterface:
 
         self.plateau_frame = tk.Frame(self.root)
         self.plateau_frame.grid(row=0, column=0, padx=10, pady=10)
-        self.cases = [[None for _ in range(11)] for _ in range(5)]
+        self.cases = [[None for _ in range(12)] for _ in range(6)]
         self.init_plateau()
 
         self.pieces_frame = tk.Frame(self.root)
@@ -93,8 +93,8 @@ class IQPuzzlerInterface:
 
 
     def init_plateau(self):
-        for i in range(5):
-            for j in range(11):
+        for i in range(6):
+            for j in range(12):
                 case = tk.Label(self.plateau_frame, width=4, height=2, borderwidth=1, relief="solid", bg="white")
                 case.grid(row=i, column=j)
                 case.bind("<Button-1>", lambda e, x=i, y=j: self.handle_grid_click(x, y))
@@ -139,8 +139,8 @@ class IQPuzzlerInterface:
             self.afficher_plateau()
 
     def afficher_plateau(self):
-        for i in range(5):
-            for j in range(11):
+        for i in range(6):
+            for j in range(12):
                 color = "white"
                 for piece_name, data in self.placed_pieces.items():
                     positions = data['positions']
@@ -157,7 +157,7 @@ class IQPuzzlerInterface:
             self.h_button.config(text="Heur. Desc")
 
     def load_pieces(self):
-        piece_definitions = [
+        '''piece_definitions = [
             ("red", [[1, 1, 1, 1], [0, 0, 0, 1]]),
             ("orange", [[0, 1, 0], [1, 1, 1], [1, 0, 0]]),
             ("yellow", [[1, 1, 1, 1], [0, 1, 0, 0]]),
@@ -170,6 +170,22 @@ class IQPuzzlerInterface:
             ("purple", [[1, 1, 0], [0, 1, 1], [0, 0, 1]]),
             ("darkred", [[0, 1, 1], [1, 1, 0]]),
             ("pink", [[1, 1, 0, 0], [0, 1, 1, 1]])
+        ]'''
+        piece_definitions = [
+            ("red", [[1, 1, 1, 0], [0, 0, 1, 1]]),
+            ("orange", [[0, 1, 0, 0], [1, 1, 1, 1], [0, 0, 0, 1]]),
+            ("yellow", [[1, 1, 1, 0], [1, 0, 1, 1]]),
+            ("lime", [[1, 1, 1]]),
+            ("green", [[1, 0, 0, 0], [1, 1, 1, 1], [1, 0, 0, 0]]),
+            ("skyblue", [[1, 1, 1], [1, 0, 0], [1, 0, 0]]),
+            ("white", [[1, 1, 1], [0, 1, 1]]),
+            ("blue", [[0, 0, 1], [1, 1, 1]]),
+            ("purple", [[1, 1, 1], [1, 1, 0], [1, 0, 0]]),
+            ("cyan", [[1, 1], [1, 1]]),
+            ("darkred", [[1, 1, 1], [1, 1, 1]]),
+            ("gray", [[1, 1, 1, 1, 1],[1, 0, 0, 0, 0]]),
+            ("magenta", [[1, 1, 1, 1],[0, 1, 1, 0]]),
+            ("pink", [[0, 1, 0], [1, 1, 1]]),
         ]
 
         for idx, (piece_name, shape) in enumerate(piece_definitions):
@@ -468,6 +484,6 @@ class IQPuzzlerInterface:
 
     def reset_board_visuellement(self):
         """Efface le plateau et réinitialise toutes les cases visuellement."""
-        for i in range(5):
-            for j in range(11):
+        for i in range(6):
+            for j in range(12):
                 self.cases[i][j].configure(bg="white")
