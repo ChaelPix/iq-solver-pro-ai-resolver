@@ -55,6 +55,7 @@ class AlgorithmX(PuzzleSolverBase):
         self.zone_cache = {}  # Cache pour les zones vides déjà analysées
         self.invalid_placements = {}  # Cache des placements invalides
         self.solution_steps = []  # Historique des étapes de construction des solutions
+        self.nbr_pieces_init = 0  # Nombre de pièces initial placé sur le plateau lors du lancement de la résolution
 
     def solve(self):
         """
@@ -73,6 +74,7 @@ class AlgorithmX(PuzzleSolverBase):
         ```
         """
         self._stop = False
+        self.nbr_pieces_init = len(self.fixed_pieces)  # Set the initial number of fixed pieces
         # Étape 1 : Création de la matrice de contraintes
         matrix, header = self.create_constraint_matrix()
         

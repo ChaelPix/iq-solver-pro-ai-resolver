@@ -286,7 +286,7 @@ class IQPuzzlerInterface:
 
     def prev_step(self):
         """Affiche l'étape précédente si disponible."""
-        if self.current_step > 0:
+        if self.current_step >= self.algo.nbr_pieces_init:
             self.current_step -= 1
             self.afficher_etape(self.current_step)
 
