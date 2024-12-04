@@ -59,7 +59,7 @@ class AlgorithmX(InterfaceBridge):
     Implémente l'algorithme X de Knuth pour résoudre un problème de couverture exacte.
     """
 
-    def __init__(self, plateau, pieces, fixed_pieces=None, update_callback=None):
+    def __init__(self, plateau, pieces, heuristic_ascender, fixed_pieces=None, update_callback=None):
         """
         Initialise l'algorithme avec le plateau et les pièces.
 
@@ -78,9 +78,9 @@ class AlgorithmX(InterfaceBridge):
         self.invalid_placements = {}  # Cache pour les placements invalides.
 
         # Heuristique : poids des pièces pour la priorisation lors du placement.
-        self.piece_weights = self.calculate_piece_weights()
+        self.piece_weights = self.calculate_piece_weights(heuristic_ascender)
 
-    def calculate_piece_weights(self):
+    def calculate_piece_weights(self, heuristic_ascender):
         """
         Calcule les poids des pièces pour l'heuristique de priorisation,
         en donnant plus d'importance aux pièces occupant moins d'espace.
@@ -89,13 +89,27 @@ class AlgorithmX(InterfaceBridge):
         - piece_weights (dict): Dictionnaire des poids pour chaque pièce.
         """
         weights = {}
-        for piece in self.pieces.values():
-            # Plus la pièce occupe peu de cellules, plus son poids est élevé.
-            occupied_cells = np.count_nonzero(piece.forme_base)
-            weight = 1 / occupied_cells if occupied_cells > 0 else float('inf')
-            weights[piece.nom] = weight
-        return weights
 
+        
+        for piece in self.pieces.values():
+            if not hasattr(piece, 'forme_base') or piece.forme_base is None:
+                weights[piece.nom] = float('inf')
+                continue
+
+            occupied_cells = np.count_nonzero(piece.forme_base)
+
+            if occupied_cells == 0:
+                weights[piece.nom] = float('inf')
+            else:
+                if heuristic_ascender:
+                    # Priorisation ascendante : moins de cellules = poids plus élevé.
+                    weights[piece.nom] = 1 / occupied_cells
+                else:
+                    # Priorisation descendante : plus de cellules = poids plus élevé.
+                    weights[piece.nom] = occupied_cells
+
+        return weights
+        
     def solve(self):
         """
         Lance la résolution du problème en utilisant l'algorithme X.

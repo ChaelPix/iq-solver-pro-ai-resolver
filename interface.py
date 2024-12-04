@@ -1,10 +1,14 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox, filedialog
 import json
 from piece import Piece
 from plateau import Plateau
 import numpy as np
 from algo_x_knuth import AlgorithmX
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from ttkbootstrap import Style, Window
 
 PIECE_COLORS = {
     "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
@@ -15,8 +19,11 @@ PIECE_COLORS = {
 class IQPuzzlerInterface:
     def __init__(self, root):
         self.root = root
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+   
         self.root.title("IQ Puzzler Pro Solver")
-        self.root.geometry("700x720") 
+        self.root.geometry("870x900") 
 
         self.selected_piece = None
         self.rotation_index = 0
@@ -36,25 +43,41 @@ class IQPuzzlerInterface:
         self.pieces = {}
         self.load_pieces()
 
-        self.controls_frame = tk.Frame(self.root)
+        self.controls_frame = ttk.Frame(self.root)
         self.controls_frame.grid(row=2, column=0, padx=10, pady=10, sticky="w")
-        self.rotate_button = tk.Button(self.controls_frame, text="Rotate", command=self.rotate_piece)
-        self.rotate_button.grid(row=0, column=0, padx=5)
-        self.start_button = tk.Button(self.controls_frame, text="Start", command=self.start_resolution)
-        self.start_button.grid(row=0, column=1, padx=5)
-        self.reset_button = tk.Button(self.controls_frame, text="Reset Board", command=self.reset_board)
-        self.reset_button.grid(row=0, column=2, padx=5)
-        self.save_button = tk.Button(self.controls_frame, text="Save Board", command=self.sauvegarder_plateau)
-        self.save_button.grid(row=0, column=3, padx=5)
-        self.load_button = tk.Button(self.controls_frame, text="Load Board", command=self.charger_plateau)
-        self.load_button.grid(row=0, column=4, padx=5)
 
-        self.stop_button = tk.Button(self.controls_frame, text="Stop", command=self.stop_resolution)
-        self.stop_button.grid(row=0, column=5, padx=5)
-        self.prev_step_button = tk.Button(self.controls_frame, text="Previous Step", command=self.previous_step)
-        self.prev_step_button.grid(row=0, column=6, padx=5)
-        self.next_step_button = tk.Button(self.controls_frame, text="Next Step", command=self.next_step)
-        self.next_step_button.grid(row=0, column=7, padx=5)
+        # Load and Save buttons
+        self.load_button = ttk.Button(self.controls_frame, text="Load Board", command=self.charger_plateau)
+        self.load_button.grid(row=0, column=0, padx=5)
+
+        self.save_button = ttk.Button(self.controls_frame, text="Save Board", command=self.sauvegarder_plateau)
+        self.save_button.grid(row=0, column=1, padx=5)
+
+        # Rotate button
+        self.rotate_button = ttk.Button(self.controls_frame, text="Rotate", command=self.rotate_piece, bootstyle="primary")
+        self.rotate_button.grid(row=0, column=2, padx=5)
+
+        # Start and Stop buttons
+        self.start_button = ttk.Button(self.controls_frame, text="Start", command=self.start_resolution, bootstyle="success")
+        self.start_button.grid(row=0, column=3, padx=5)
+
+        self.stop_button = ttk.Button(self.controls_frame, text="Stop", command=self.stop_resolution, bootstyle="danger")
+        self.stop_button.grid(row=0, column=4, padx=5)
+
+        # Step navigation buttons
+        self.prev_step_button = ttk.Button(self.controls_frame, text="Previous Step", command=self.previous_step, bootstyle="primary")
+        self.prev_step_button.grid(row=0, column=5, padx=5)
+
+        self.next_step_button = ttk.Button(self.controls_frame, text="Next Step", command=self.next_step, bootstyle="primary")
+        self.next_step_button.grid(row=0, column=6, padx=5)
+
+        # Reset button
+        self.reset_button = ttk.Button(self.controls_frame, text="Reset Board", command=self.reset_board, bootstyle="warning")
+        self.reset_button.grid(row=0, column=7, padx=5)
+
+        self.h_button = ttk.Button(self.controls_frame, text="Heur. Asc", width=8, command=self.change_heuristic)
+        self.h_button.grid(row=1, column=3)
+        self.heuristic_ascender = True
 
         self.info_frame = tk.Frame(self.root)
         self.info_frame.grid(row=3, column=0, padx=10, pady=10)
@@ -126,6 +149,12 @@ class IQPuzzlerInterface:
                         break
                 self.cases[i][j].configure(bg=color)
 
+    def change_heuristic(self):
+        self.heuristic_ascender = not self.heuristic_ascender
+        if self.heuristic_ascender:
+            self.h_button.config(text="Heur. Asc")
+        else:
+            self.h_button.config(text="Heur. Desc")
 
     def load_pieces(self):
         piece_definitions = [
@@ -301,7 +330,14 @@ class IQPuzzlerInterface:
         plateau_copy = Plateau()
         plateau_copy.plateau = np.copy(self.plateau.plateau)
 
-        self.algo = AlgorithmX(plateau_copy, self.pieces, fixed_pieces, update_callback=self.update_stats)
+        self.algo = AlgorithmX(
+            plateau_copy,
+            self.pieces,
+            self.heuristic_ascender, 
+            fixed_pieces,             
+            update_callback=self.update_stats
+        )
+
         solutions = self.algo.solve()
 
         if solutions:
@@ -354,7 +390,6 @@ class IQPuzzlerInterface:
         """
         if hasattr(self, 'algo'):
             self.algo.request_stop()
-            self.update_info("Résolution interrompue par l'utilisateur.")
 
     def next_step(self):
         """
