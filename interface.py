@@ -49,6 +49,13 @@ class IQPuzzlerInterface:
         self.load_button = tk.Button(self.controls_frame, text="Load Board", command=self.charger_plateau)
         self.load_button.grid(row=0, column=4, padx=5)
 
+        self.stop_button = tk.Button(self.controls_frame, text="Stop", command=self.stop_resolution)
+        self.stop_button.grid(row=0, column=5, padx=5)
+        self.prev_step_button = tk.Button(self.controls_frame, text="Previous Step", command=self.previous_step)
+        self.prev_step_button.grid(row=0, column=6, padx=5)
+        self.next_step_button = tk.Button(self.controls_frame, text="Next Step", command=self.next_step)
+        self.next_step_button.grid(row=0, column=7, padx=5)
+
         self.info_frame = tk.Frame(self.root)
         self.info_frame.grid(row=3, column=0, padx=10, pady=10)
         self.info_label = tk.Label(self.info_frame, text="Informations sur l'algorithme", font=("Arial", 14))
@@ -58,6 +65,9 @@ class IQPuzzlerInterface:
 
         self.placed_pieces = {}
 
+        self.solution_steps = []  # Étapes de la solution finale.
+        self.current_step = -1  # Indice de l'étape courante.
+
 
     def init_plateau(self):
         for i in range(5):
@@ -65,7 +75,45 @@ class IQPuzzlerInterface:
                 case = tk.Label(self.plateau_frame, width=4, height=2, borderwidth=1, relief="solid", bg="white")
                 case.grid(row=i, column=j)
                 case.bind("<Button-1>", lambda e, x=i, y=j: self.handle_grid_click(x, y))
+                case.bind("<Enter>", lambda e, x=i, y=j: self.handle_grid_hover_enter(x, y))
+                case.bind("<Leave>", lambda e, x=i, y=j: self.handle_grid_hover_leave(x, y))
+                case.bind("<Button-3>", lambda e: self.rotate_piece())
                 self.cases[i][j] = case
+
+
+    def handle_grid_hover_enter(self, i, j):
+        if self.selected_piece:
+            piece = self.pieces[self.selected_piece]
+            variante = piece.variantes[self.rotation_index]
+            positions = []
+            valid_placement = True
+
+            # Calcul des positions et validation
+            for dx in range(variante.shape[0]):
+                for dy in range(variante.shape[1]):
+                    if variante[dx][dy] == 1:
+                        x, y = i + dx, j + dy
+                        if 0 <= x < 5 and 0 <= y < 11:
+                            if self.plateau.plateau[x][y] == 0:
+                                positions.append((x, y))
+                            else:
+                                valid_placement = False
+                        else:
+                            valid_placement = False
+
+            # Déterminer la couleur à afficher
+            piece_color = PIECE_COLORS.get(self.selected_piece, "gray")
+            hover_color = piece_color if valid_placement else "gray"
+
+            # Appliquer la couleur sur les positions
+            for x, y in positions:
+                self.cases[x][y].configure(bg=hover_color)
+
+
+    def handle_grid_hover_leave(self, i, j):
+        if self.selected_piece:
+            # Réinitialiser l'affichage des cases
+            self.afficher_plateau()
 
     def afficher_plateau(self):
         for i in range(5):
@@ -77,6 +125,7 @@ class IQPuzzlerInterface:
                         color = PIECE_COLORS[piece_name]
                         break
                 self.cases[i][j].configure(bg=color)
+
 
     def load_pieces(self):
         piece_definitions = [
@@ -240,7 +289,7 @@ class IQPuzzlerInterface:
 
 
     def start_resolution(self):
-        self.solution = [] 
+        self.solution = []
 
         fixed_pieces = {}
         for piece_name, info in self.placed_pieces.items():
@@ -252,15 +301,39 @@ class IQPuzzlerInterface:
         plateau_copy = Plateau()
         plateau_copy.plateau = np.copy(self.plateau.plateau)
 
-        algo = AlgorithmX(plateau_copy, self.pieces, fixed_pieces, update_callback=self.update_stats)
-        solutions = algo.solve()
+        self.algo = AlgorithmX(plateau_copy, self.pieces, fixed_pieces, update_callback=self.update_stats)
+        solutions = self.algo.solve()
 
         if solutions:
-            self.solution = solutions[0] 
-            algo.print_solution()
-            self.afficher_solution()
+            self.solution = solutions[0]
+            self.solution_steps = self.algo.get_solution_steps()
+            self.current_step = -1  # Réinitialise avant la première étape
         else:
-            print("Aucune solution trouvée.")
+            self.update_info("Aucune solution trouvée.")
+            # Préserver les placements initiaux
+            self.afficher_plateau()
+
+    def display_current_step(self):
+        """
+        Affiche le plateau à l'étape courante.
+        """
+        self.reset_board_visuellement()
+
+        # Afficher les pièces initialement placées
+        for piece_name, data in self.placed_pieces.items():
+            color = PIECE_COLORS.get(piece_name, "gray")
+            for position in data['positions']:
+                i, j = position
+                self.cases[i][j].configure(bg=color)
+
+        # Appliquer les étapes jusqu'à l'étape courante
+        for step in self.solution_steps[:self.current_step + 1]:
+            piece = step['piece']
+            color = PIECE_COLORS.get(piece.nom, "gray")
+            for cell in step['cells_covered']:
+                i, j = cell
+                self.cases[i][j].configure(bg=color)
+
 
     def afficher_solution(self):
         if not self.solution:
@@ -274,6 +347,35 @@ class IQPuzzlerInterface:
             for cell in sol['cells_covered']:
                 i, j = cell
                 self.cases[i][j].configure(bg=color)
+
+    def stop_resolution(self):
+        """
+        Arrête la résolution en cours.
+        """
+        if hasattr(self, 'algo'):
+            self.algo.request_stop()
+            self.update_info("Résolution interrompue par l'utilisateur.")
+
+    def next_step(self):
+        """
+        Affiche l'étape suivante de la solution.
+        """
+        if self.solution_steps and self.current_step < len(self.solution_steps) - 1:
+            self.current_step += 1
+            self.display_current_step()
+        else:
+            messagebox.showinfo("Info", "C'est la dernière étape.")
+
+    def previous_step(self):
+        """
+        Affiche l'étape précédente de la solution.
+        """
+        if self.solution_steps and self.current_step > 0:
+            self.current_step -= 1
+            self.display_current_step()
+        else:
+            messagebox.showinfo("Info", "C'est la première étape.")
+
 
     def exporter_grille(self):
         print("Grille :")
@@ -292,22 +394,36 @@ class IQPuzzlerInterface:
             f"Temps écoulé: {elapsed_time:.2f} s\n"
             f"Calculs effectués: {calculs}\n"
             f"Placements testés: {placements_testes}\n"
-            f"Nombre de solutions trouvées: {len(self.solution)}\n"
         )
-        self.info_text.config(state="normal")
-        self.info_text.delete("1.0", tk.END)
-        self.info_text.insert("1.0", info_text)
-        self.info_text.config(state="disabled")
+        self.update_info(info_text)
 
-        self.reset_board()
-        for sol in solution:
-            piece = sol['piece']
-            color = PIECE_COLORS.get(piece.nom, "gray")
-            for cell in sol['cells_covered']:
-                i, j = cell
-                self.cases[i][j].configure(bg=color)
+        # Vérifier si l'algorithme est toujours en cours
+        if not self.algo.stop_requested:
+            # Afficher la solution en cours de calcul
+            if solution:
+                self.reset_board_visuellement()
+
+                # Afficher les pièces initialement placées
+                for piece_name, data in self.placed_pieces.items():
+                    color = PIECE_COLORS.get(piece_name, "gray")
+                    for position in data['positions']:
+                        i, j = position
+                        self.cases[i][j].configure(bg=color)
+
+                # Afficher les placements actuels
+                for sol in solution:
+                    piece = sol['piece']
+                    color = PIECE_COLORS.get(piece.nom, "gray")
+                    for cell in sol['cells_covered']:
+                        i, j = cell
+                        self.cases[i][j].configure(bg=color)
+        else:
+            # Ne pas modifier le plateau si l'algorithme est arrêté
+            pass
 
         self.root.update()
+
+
 
 
     def reset_board_visuellement(self):

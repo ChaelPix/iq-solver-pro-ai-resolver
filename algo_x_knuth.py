@@ -3,7 +3,7 @@ import numpy as np
 import time
 from multiprocessing import Process, Manager
 
-class InterfaceManager:
+class InterfaceBridge:
     """
     Classe mère pour la gestion de l'interface et le suivi des statistiques.
     """
@@ -19,6 +19,8 @@ class InterfaceManager:
         self.calculs = 0  # Nombre total de calculs effectués.
         self.placements_testes = 0  # Nombre de placements testés.
         self.start_time = time.time()  # Temps de démarrage de l'algorithme.
+        self.stop_requested = False  # Drapeau pour arrêter l'algorithme.
+        self.solution_steps = []  # Liste pour stocker les étapes de la solution.
 
     def update_interface(self, solution):
         """
@@ -33,11 +35,26 @@ class InterfaceManager:
                 "time": elapsed_time,
                 "calculs": self.calculs,
                 "placements_testes": self.placements_testes,
-                "solution": solution
+                "solution": solution.copy()
             }
             self.update_callback(stats)
 
-class AlgorithmX(InterfaceManager):
+    def request_stop(self):
+        """
+        Demande l'arrêt de l'algorithme.
+        """
+        self.stop_requested = True
+
+    def get_solution_steps(self):
+        """
+        Retourne les étapes de la solution finale.
+
+        Retourne:
+        - solution_steps (list): Liste des placements de pièces dans l'ordre.
+        """
+        return self.solution_steps.copy()
+
+class AlgorithmX(InterfaceBridge):
     """
     Implémente l'algorithme X de Knuth pour résoudre un problème de couverture exacte.
     """
@@ -218,9 +235,13 @@ class AlgorithmX(InterfaceManager):
         Retourne:
         - bool: True si une solution est trouvée, False sinon.
         """
+        if self.stop_requested:
+            return False  # Arrêter l'algorithme si demandé.
+
         if not matrix:
             if self.validate_solution(solution):
                 self.solutions.append(solution.copy())
+                self.solution_steps = solution.copy()  # Stocker les étapes de la solution.
                 return True  # Trouvé une solution complète.
             return False  # Pas de solution valide.
 
@@ -234,6 +255,9 @@ class AlgorithmX(InterfaceManager):
         rows_to_cover = self.prioritize_rows(rows_to_cover)
 
         for row in rows_to_cover:
+            if self.stop_requested:
+                return False  # Arrêter l'algorithme si demandé.
+
             solution.append(row)
             self.placements_testes += 1
 
@@ -249,6 +273,7 @@ class AlgorithmX(InterfaceManager):
             solution.pop()
             self.calculs += 1
         return False  # Pas de solution sur ce chemin.
+
 
     def select_min_column(self, matrix, header):
         """
