@@ -423,12 +423,17 @@ class IQPuzzlerInterface:
         elapsed_time = stats["time"]
         calculs = stats["calculs"]
         placements_testes = stats["placements_testes"]
+        branches_explored = stats.get("branches_explored", 0)
+        branches_pruned = stats.get("branches_pruned", 0)
+        max_recursion_depth = stats.get("max_recursion_depth", 0)
         solution = stats["solution"]
 
         info_text = (
             f"Temps écoulé: {elapsed_time:.2f} s\n"
-            f"Calculs effectués: {calculs}\n"
             f"Placements testés: {placements_testes}\n"
+            f"Branches explorées: {branches_explored}\n"
+            f"Branches coupées: {branches_pruned}\n"
+            f"Profondeur maximale de récursion: {max_recursion_depth}\n"
         )
         self.update_info(info_text)
 

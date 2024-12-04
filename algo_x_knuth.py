@@ -22,6 +22,12 @@ class InterfaceBridge:
         self.stop_requested = False  # Drapeau pour arrêter l'algorithme.
         self.solution_steps = []  # Liste pour stocker les étapes de la solution.
 
+        # Nouvelles statistiques
+        self.branches_explored = 0  # Nombre de branches explorées.
+        self.branches_pruned = 0  # Nombre de branches coupées.
+        self.max_recursion_depth = 0  # Profondeur maximale de récursion.
+        self.current_recursion_depth = 0  # Profondeur actuelle de récursion.
+
     def update_interface(self, solution):
         """
         Met à jour l'interface avec les statistiques actuelles.
@@ -35,7 +41,10 @@ class InterfaceBridge:
                 "time": elapsed_time,
                 "calculs": self.calculs,
                 "placements_testes": self.placements_testes,
-                "solution": solution.copy()
+                "solution": solution.copy(),
+                "branches_explored": self.branches_explored,
+                "branches_pruned": self.branches_pruned,
+                "max_recursion_depth": self.max_recursion_depth
             }
             self.update_callback(stats)
 
@@ -66,6 +75,7 @@ class AlgorithmX(InterfaceBridge):
         Paramètres:
         - plateau (Plateau): Objet représentant le plateau de jeu.
         - pieces (dict): Dictionnaire des pièces disponibles, indexées par leur nom.
+        - heuristic_ascender (bool): Détermine le type d'heuristique à utiliser.
         - fixed_pieces (dict): (Optionnel) Dictionnaire des pièces déjà placées avec leur position et variante.
         - update_callback (function): (Optionnel) Fonction de rappel pour les mises à jour de l'interface.
         """
@@ -89,8 +99,6 @@ class AlgorithmX(InterfaceBridge):
         - piece_weights (dict): Dictionnaire des poids pour chaque pièce.
         """
         weights = {}
-
-        
         for piece in self.pieces.values():
             if not hasattr(piece, 'forme_base') or piece.forme_base is None:
                 weights[piece.nom] = float('inf')
@@ -109,7 +117,7 @@ class AlgorithmX(InterfaceBridge):
                     weights[piece.nom] = occupied_cells
 
         return weights
-        
+
     def solve(self):
         """
         Lance la résolution du problème en utilisant l'algorithme X.
@@ -252,15 +260,23 @@ class AlgorithmX(InterfaceBridge):
         if self.stop_requested:
             return False  # Arrêter l'algorithme si demandé.
 
+        self.branches_explored += 1  # Incrémenter le nombre de branches explorées.
+        self.current_recursion_depth += 1  # Incrémenter la profondeur actuelle.
+        if self.current_recursion_depth > self.max_recursion_depth:
+            self.max_recursion_depth = self.current_recursion_depth  # Mettre à jour la profondeur maximale.
+
         if not matrix:
             if self.validate_solution(solution):
                 self.solutions.append(solution.copy())
                 self.solution_steps = solution.copy()  # Stocker les étapes de la solution.
+                self.current_recursion_depth -= 1  # Décrémenter la profondeur actuelle.
                 return True  # Trouvé une solution complète.
+            self.current_recursion_depth -= 1  # Décrémenter la profondeur actuelle.
             return False  # Pas de solution valide.
 
         column = self.select_min_column(matrix, header)
         if column is None:
+            self.current_recursion_depth -= 1  # Décrémenter la profondeur actuelle.
             return False
 
         rows_to_cover = [row for row in matrix if row['row'][column] == 1]
@@ -270,6 +286,7 @@ class AlgorithmX(InterfaceBridge):
 
         for row in rows_to_cover:
             if self.stop_requested:
+                self.current_recursion_depth -= 1  # Décrémenter la profondeur actuelle.
                 return False  # Arrêter l'algorithme si demandé.
 
             solution.append(row)
@@ -282,12 +299,16 @@ class AlgorithmX(InterfaceBridge):
 
             if not self.has_unfillable_voids(solution):
                 if self.algorithm_x(new_matrix, header, solution):
+                    self.current_recursion_depth -= 1  # Décrémenter la profondeur actuelle.
                     return True  # Solution trouvée.
+            else:
+                self.branches_pruned += 1  # Incrémenter le nombre de branches coupées.
 
             solution.pop()
             self.calculs += 1
-        return False  # Pas de solution sur ce chemin.
 
+        self.current_recursion_depth -= 1  # Décrémenter la profondeur actuelle.
+        return False  # Pas de solution sur ce chemin.
 
     def select_min_column(self, matrix, header):
         """
