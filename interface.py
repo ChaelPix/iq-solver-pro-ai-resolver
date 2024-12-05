@@ -18,10 +18,12 @@ PIECE_COLORS = {
 
 class IQPuzzlerInterface:
     def __init__(self, root):
+        self.version = 2
         self.root = root
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-   
+        self.grid_x = 12
+        self.grid_y = 6
         self.root.title("IQ Puzzler Pro Solver")
         self.root.geometry("870x900") 
 
@@ -35,7 +37,7 @@ class IQPuzzlerInterface:
 
         self.plateau_frame = tk.Frame(self.root)
         self.plateau_frame.grid(row=0, column=0, padx=10, pady=10)
-        self.cases = [[None for _ in range(12)] for _ in range(6)]
+        self.cases = [[None for _ in range(self.grid_x)] for _ in range(self.grid_y)]
         self.init_plateau()
 
         self.pieces_frame = tk.Frame(self.root)
@@ -93,14 +95,14 @@ class IQPuzzlerInterface:
 
 
     def init_plateau(self):
-        for i in range(6):
-            for j in range(12):
+        for i in range(self.grid_y):
+            for j in range(self.grid_x):
                 case = tk.Label(self.plateau_frame, width=4, height=2, borderwidth=1, relief="solid", bg="white")
                 case.grid(row=i, column=j)
                 case.bind("<Button-1>", lambda e, x=i, y=j: self.handle_grid_click(x, y))
                 case.bind("<Enter>", lambda e, x=i, y=j: self.handle_grid_hover_enter(x, y))
                 case.bind("<Leave>", lambda e, x=i, y=j: self.handle_grid_hover_leave(x, y))
-                case.bind("<Button-3>", lambda e: self.rotate_piece())
+                case.bind("<Button-3>", lambda e, x=i, y=j : (self.rotate_piece(), self.afficher_plateau(), self.handle_grid_hover_enter(x, y)))                
                 self.cases[i][j] = case
 
 
@@ -116,7 +118,7 @@ class IQPuzzlerInterface:
                 for dy in range(variante.shape[1]):
                     if variante[dx][dy] == 1:
                         x, y = i + dx, j + dy
-                        if 0 <= x < 5 and 0 <= y < 11:
+                        if 0 <= x < self.grid_y and 0 <= y < self.grid_x:
                             if self.plateau.plateau[x][y] == 0:
                                 positions.append((x, y))
                             else:
@@ -139,8 +141,8 @@ class IQPuzzlerInterface:
             self.afficher_plateau()
 
     def afficher_plateau(self):
-        for i in range(6):
-            for j in range(12):
+        for i in range(self.grid_y):
+            for j in range(self.grid_x):
                 color = "white"
                 for piece_name, data in self.placed_pieces.items():
                     positions = data['positions']
@@ -157,43 +159,45 @@ class IQPuzzlerInterface:
             self.h_button.config(text="Heur. Desc")
 
     def load_pieces(self):
-        '''piece_definitions = [
-            ("red", [[1, 1, 1, 1], [0, 0, 0, 1]]),
-            ("orange", [[0, 1, 0], [1, 1, 1], [1, 0, 0]]),
-            ("yellow", [[1, 1, 1, 1], [0, 1, 0, 0]]),
-            ("lime", [[1, 1, 1], [1, 0, 1]]),
-            ("green", [[1, 1, 1], [0, 1, 0]]),
-            ("white", [[1, 1, 1], [0, 1, 1]]),
-            ("cyan", [[0, 1], [1, 1]]),
-            ("skyblue", [[1, 1, 1], [1, 0, 0], [1, 0, 0]]),
-            ("blue", [[0, 0, 1], [1, 1, 1]]),
-            ("purple", [[1, 1, 0], [0, 1, 1], [0, 0, 1]]),
-            ("darkred", [[0, 1, 1], [1, 1, 0]]),
-            ("pink", [[1, 1, 0, 0], [0, 1, 1, 1]])
-        ]'''
-        piece_definitions = [
-            ("red", [[1, 1, 1, 0], [0, 0, 1, 1]]),
-            ("orange", [[0, 1, 0, 0], [1, 1, 1, 1], [0, 0, 0, 1]]),
-            ("yellow", [[1, 1, 1, 0], [1, 0, 1, 1]]),
-            ("lime", [[1, 1, 1]]),
-            ("green", [[1, 0, 0, 0], [1, 1, 1, 1], [1, 0, 0, 0]]),
-            ("skyblue", [[1, 1, 1], [1, 0, 0], [1, 0, 0]]),
-            ("white", [[1, 1, 1], [0, 1, 1]]),
-            ("blue", [[0, 0, 1], [1, 1, 1]]),
-            ("purple", [[1, 1, 1], [1, 1, 0], [1, 0, 0]]),
-            ("cyan", [[1, 1], [1, 1]]),
-            ("darkred", [[1, 1, 1], [1, 1, 1]]),
-            ("gray", [[1, 1, 1, 1, 1],[1, 0, 0, 0, 0]]),
-            ("magenta", [[1, 1, 1, 1],[0, 1, 1, 0]]),
-            ("pink", [[0, 1, 0], [1, 1, 1]]),
-        ]
-
+        if self.version == 1:
+            piece_definitions = [
+                ("red", [[1, 1, 1, 1], [0, 0, 0, 1]]),
+                ("orange", [[0, 1, 0], [1, 1, 1], [1, 0, 0]]),
+                ("yellow", [[1, 1, 1, 1], [0, 1, 0, 0]]),
+                ("lime", [[1, 1, 1], [1, 0, 1]]),
+                ("green", [[1, 1, 1], [0, 1, 0]]),
+                ("white", [[1, 1, 1], [0, 1, 1]]),
+                ("cyan", [[0, 1], [1, 1]]),
+                ("skyblue", [[1, 1, 1], [1, 0, 0], [1, 0, 0]]),
+                ("blue", [[0, 0, 1], [1, 1, 1]]),
+                ("purple", [[1, 1, 0], [0, 1, 1], [0, 0, 1]]),
+                ("darkred", [[0, 1, 1], [1, 1, 0]]),
+                ("pink", [[1, 1, 0, 0], [0, 1, 1, 1]])
+            ]
+        else:
+            piece_definitions = [
+                ("red", [[1, 1, 1, 0], [0, 0, 1, 1]]),
+                ("orange", [[0, 1, 0, 0], [1, 1, 1, 1], [0, 0, 0, 1]]),
+                ("yellow", [[1, 1, 1, 0], [1, 0, 1, 1]]),
+                ("lime", [[1, 1, 1]]),
+                ("green", [[1, 0, 0, 0], [1, 1, 1, 1], [1, 0, 0, 0]]),
+                ("skyblue", [[1, 1, 1], [1, 0, 0], [1, 0, 0]]),
+                ("white", [[1, 1, 1], [0, 1, 1]]),
+                ("blue", [[0, 0, 1], [1, 1, 1]]),
+                ("purple", [[1, 1, 1], [1, 1, 0], [1, 0, 0]]),
+                ("cyan", [[1, 1], [1, 1]]),
+                ("darkred", [[1, 1, 1], [1, 1, 1]]),
+                ("gray", [[1, 1, 1, 1, 1],[1, 0, 0, 0, 0]]),
+                ("magenta", [[1, 1, 1, 1],[0, 1, 1, 0]]),
+                ("pink", [[0, 1, 0], [1, 1, 1]]),
+            ]
+        self.nbrpieces = len(piece_definitions)
         for idx, (piece_name, shape) in enumerate(piece_definitions):
             self.pieces[piece_name] = Piece(piece_name, shape)
             self.create_piece_button_with_preview(piece_name, idx)
-
+        return len(piece_definitions)
     def create_piece_button_with_preview(self, piece_name, idx):
-        row, col = divmod(idx, 6)
+        row, col = divmod(idx, self.nbrpieces // 2)
         frame = tk.Frame(self.pieces_frame)
         frame.grid(row=row, column=col, padx=5, pady=5)
 
@@ -484,6 +488,6 @@ class IQPuzzlerInterface:
 
     def reset_board_visuellement(self):
         """Efface le plateau et réinitialise toutes les cases visuellement."""
-        for i in range(6):
-            for j in range(12):
+        for i in range(self.grid_y):
+            for j in range(self.grid_x):
                 self.cases[i][j].configure(bg="white")
