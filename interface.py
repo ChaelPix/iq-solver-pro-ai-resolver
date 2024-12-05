@@ -92,7 +92,7 @@ class IQPuzzlerInterface:
 
         self.solution_steps = []  # Étapes de la solution finale.
         self.current_step = -1  # Indice de l'étape courante.
-
+        self.afficher_plateau()
 
     def init_plateau(self):
         for i in range(self.grid_y):
@@ -104,7 +104,6 @@ class IQPuzzlerInterface:
                 case.bind("<Leave>", lambda e, x=i, y=j: self.handle_grid_hover_leave(x, y))
                 case.bind("<Button-3>", lambda e, x=i, y=j : (self.rotate_piece(), self.afficher_plateau(), self.handle_grid_hover_enter(x, y)))                
                 self.cases[i][j] = case
-
 
     def handle_grid_hover_enter(self, i, j):
         if self.selected_piece:
@@ -336,7 +335,6 @@ class IQPuzzlerInterface:
             self.afficher_plateau()
             messagebox.showinfo("Chargement", "Plateau chargé avec succès.")
 
-
     def start_resolution(self):
         self.solution = []
 
@@ -389,7 +387,6 @@ class IQPuzzlerInterface:
             for cell in step['cells_covered']:
                 i, j = cell
                 self.cases[i][j].configure(bg=color)
-
 
     def afficher_solution(self):
         if not self.solution:
@@ -482,9 +479,6 @@ class IQPuzzlerInterface:
             pass
 
         self.root.update()
-
-
-
 
     def reset_board_visuellement(self):
         """Efface le plateau et réinitialise toutes les cases visuellement."""
