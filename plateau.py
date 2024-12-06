@@ -1,7 +1,7 @@
 import numpy as np
 
 class Plateau:
-    def __init__(self, lignes=6, colonnes=12):
+    def __init__(self, lignes=5, colonnes=11):
         self.lignes = lignes  
         self.colonnes = colonnes  
         self.plateau = np.zeros((lignes, colonnes), dtype=int)  

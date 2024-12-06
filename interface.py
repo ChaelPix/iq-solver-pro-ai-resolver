@@ -18,12 +18,16 @@ PIECE_COLORS = {
 
 class IQPuzzlerInterface:
     def __init__(self, root):
-        self.version = 2
+        self.version = 1
         self.root = root
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        self.grid_x = 12
-        self.grid_y = 6
+        if self.version == 1:
+            self.grid_x = 11
+            self.grid_y = 5
+        else:
+            self.grid_x = 12
+            self.grid_y = 6
         self.root.title("IQ Puzzler Pro Solver")
         self.root.geometry("870x900") 
 
