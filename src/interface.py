@@ -456,31 +456,17 @@ class IQPuzzlerInterface:
         # Lancer la résolution dans un thread principal
         self.manager.run()
 
-        # Mettre en place une vérification périodique
-        self.check_resolution_progress()
-
-    def check_resolution_progress(self):
-        """
-        Vérifie périodiquement l'état de la résolution.
-        Si l'algorithme est terminé, affiche la solution finale.
-        Sinon, met à jour les statistiques et planifie une nouvelle vérification.
-        """
-        if self.manager.is_running():
-            # L'algorithme est toujours en cours, mettre à jour les stats
+        solutions = self.manager.get_solutions()
+        if solutions:
+            self.solution = solutions[0]
+            self.solution_steps = self.manager.get_current_solution_steps()
+            self.current_step = -1
             self.update_stats_display()
-            self.root.after(10, self.check_resolution_progress)  # Vérifie à nouveau dans 100ms
         else:
-            # L'algorithme est terminé, afficher la solution finale si trouvée
-            solutions = self.manager.get_solutions()
-            if solutions:
-                self.solution = solutions[0]
-                self.solution_steps = self.manager.get_current_solution_steps()
-                self.current_step = -1
-                self.afficher_solution()  # Affiche directement la solution finale
-                self.update_stats_display()  # Affiche les stats finales
-            else:
-                self.update_info("Aucune solution trouvée.")
-                self.afficher_plateau()
+            self.update_info("Aucune solution trouvée.")
+            self.afficher_plateau()
+
+
 
     def display_current_step(self):
         """
