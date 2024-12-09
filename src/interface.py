@@ -9,11 +9,42 @@ from ttkbootstrap import Style, Window
 from ttkbootstrap.constants import *
 from solve_manager import SolverManager
 import threading
+
+# PIECE_COLORS = {
+#     "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
+#     "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
+#     "blue": "blue", "purple": "purple", "darkred": "darkred", "pink": "pink",
+#     "gray": "gray12", "magenta": "magenta2"
+# }
+
 PIECE_COLORS = {
-    "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
-    "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
-    "blue": "blue", "purple": "purple", "darkred": "darkred", "pink": "pink",
-    "gray": "gray12", "magenta": "magenta2"
+    "gray1": "gray1",
+    "gray2": "gray2",
+    "gray3": "gray3",
+    "gray4": "gray4",
+    "gray5": "gray5",
+    "gray6": "gray6",
+    "gray7": "gray7",
+    "gray8": "gray8",
+    "gray9": "gray9",
+    "gray10": "gray10",
+    "gray11": "gray11",
+    "gray12": "gray12",
+    "gray13": "gray13",
+    "gray14": "gray14",
+    "gray15": "gray15",
+    "gray16": "gray16",
+    "gray17": "gray17",
+    "gray18": "gray18",
+    "gray19": "gray19",
+    "gray20": "gray20",
+    "gray21": "gray21",
+    "gray22": "gray22",
+    "gray23": "gray23",
+    "gray24": "gray24",
+    "gray25": "gray25",
+    "gray26": "gray26",
+    "gray27": "gray27",
 }
 
 
@@ -48,8 +79,8 @@ class IQPuzzlerInterface:
             self.grid_x = 11
             self.grid_y = 5
         else:
-            self.grid_x = 12
-            self.grid_y = 6
+            self.grid_x = 15
+            self.grid_y = 15
 
         self.root.title("IQ Puzzler Pro Solver")
         self.root.geometry("870x900")
@@ -141,7 +172,7 @@ class IQPuzzlerInterface:
 
         for i in range(self.grid_y):
             for j in range(self.grid_x):
-                case = tk.Label(self.plateau_frame, width=4, height=2, borderwidth=1, relief="solid", bg="white")
+                case = tk.Label(self.plateau_frame, width=2, height=1, borderwidth=1, relief="solid", bg="white")
                 case.grid(row=i, column=j)
                 case.bind("<Button-1>", lambda e, x=i, y=j: self.handle_grid_click(x, y))
                 case.bind("<Enter>", lambda e, x=i, y=j: self.handle_grid_hover_enter(x, y))
@@ -233,20 +264,155 @@ class IQPuzzlerInterface:
             ]
         else:
             piece_definitions = [
-                ("red", [[1, 1, 1, 0], [0, 0, 1, 1]]),
-                ("orange", [[0, 1, 0, 0], [1, 1, 1, 1], [0, 0, 0, 1]]),
-                ("yellow", [[1, 1, 1, 0], [1, 0, 1, 1]]),
-                ("lime", [[1, 1, 1]]),
-                ("green", [[1, 0, 0, 0], [1, 1, 1, 1], [1, 0, 0, 0]]),
-                ("skyblue", [[1, 1, 1], [1, 0, 0], [1, 0, 0]]),
-                ("white", [[1, 1, 1], [0, 1, 1]]),
-                ("blue", [[0, 0, 1], [1, 1, 1]]),
-                ("purple", [[1, 1, 1], [1, 1, 0], [1, 0, 0]]),
-                ("cyan", [[1, 1], [1, 1]]),
-                ("darkred", [[1, 1, 1], [1, 1, 1]]),
-                ("gray", [[1, 1, 1, 1, 1],[1, 0, 0, 0, 0]]),
-                ("magenta", [[1, 1, 1, 1],[0, 1, 1, 0]]),
-                ("pink", [[0, 1, 0], [1, 1, 1]]),
+                ("gray1", [
+                    [1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 0],
+                    [1, 1, 1, 0, 0],
+                    [1, 1, 0, 0, 0],
+                    [1, 0, 0, 0, 0],
+                ]),
+                ("gray2", [
+                    [0, 1, 1, 1],
+                    [1, 1, 1, 0],
+                    [1, 1, 0, 0],
+                    [0, 1, 0, 0],
+                ]),
+                ("gray3", [
+                    [0, 1, 1],
+                    [1, 1, 1],
+                    [0, 1, 0],
+                ]),
+                ("gray4", [
+                    [1, 1, 1, 1],
+                    [1, 1, 1, 0],
+                    [1, 1, 0, 0],
+                ]),
+                ("gray5", [
+                    [0, 1],
+                    [1, 1],
+                    [0, 1],
+                ]),
+                ("gray6", [
+                    [0, 1],
+                    [1, 1],
+                ]),
+                ("gray7", [
+                    [0, 1, 1, 0],
+                    [0, 1, 1, 1],
+                    [1, 1, 1, 0],
+                    [0, 1, 0, 0],
+                ]),
+                ("gray8", [
+                    [1, 0],
+                    [1, 1],
+                    [1, 1],
+                ]),
+                ("gray9", [
+                    [0, 1, 1, 0],
+                    [1, 1, 1, 1],
+                    [1, 1, 1, 0],
+                    [1, 1, 0, 0],
+                ]),
+                ("gray10", [
+                    [1],
+                    [1],
+                ]),
+                ("gray11", [
+                    [0, 1, 1, 1],
+                    [1, 1, 1, 0],
+                    [0, 1, 0, 0],
+                ]),
+                ("gray12", [
+                    [0, 1, 0, 0],
+                    [1, 1, 1, 1],
+                    [1, 1, 1, 0],
+                    [0, 1, 1, 0],
+                    [0, 1, 0, 0],
+                ]),
+                ("gray13", [
+                    [0, 0, 0, 1],
+                    [0, 0, 1, 1],
+                    [1, 1, 1, 1],
+                    [0, 1, 1, 1],
+                    [0, 0, 1, 1],
+                    [0, 0, 0, 1],
+                ]),
+                ("gray14", [
+                    [0, 1],
+                    [1, 1],
+                ]),
+                ("gray15", [
+                    [0, 0, 1, 1, 0],
+                    [0, 0, 1, 1, 1],
+                    [1, 1, 1, 1, 1],
+                    [0, 1, 1, 1, 0],
+                    [0, 0, 1, 0, 0],
+                ]),
+                ("gray16", [
+                    [1, 0, 0],
+                    [1, 1, 0],
+                    [1, 1, 1],
+                    [1, 1, 1],
+                    [1, 1, 0],
+                ]),
+                ("gray17", [
+                    [1],
+                    [1],
+                ]),
+                ("gray18", [
+                    [0, 1],
+                    [1, 1],
+                ]),
+                ("gray19", [
+                    [0, 0, 1, 0],
+                    [1, 1, 1, 1],
+                    [0, 1, 1, 0],
+                ]),
+                ("gray20", [
+                    [0, 0, 1, 0, 1],
+                    [0, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1],
+                    [0, 1, 1, 1, 0],
+                    [0, 0, 1, 0, 0],
+                ]),
+                ("gray21", [
+                    [1, 1],
+                    [1, 0],
+                ]),
+                ("gray22", [
+                    [0, 1, 1, 0, 0],
+                    [1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 0],
+                    [0, 1, 1, 0, 0],
+                ]),
+                ("gray23", [
+                    [0, 1, 1],
+                    [0, 1, 0],
+                    [1, 1, 0],
+                ]),
+                ("gray24", [
+                    [0, 0, 0, 1, 1],
+                    [0, 0, 0, 1, 1],
+                    [1, 1, 1, 1, 1],
+                    [0, 1, 1, 1, 1],
+                    [0, 0, 0, 1, 1],
+                ]),
+                ("gray25", [
+                    [1, 0, 0, 0, 0],
+                    [1, 1, 0, 0, 0],
+                    [1, 1, 1, 0, 1],
+                    [1, 1, 1, 1, 1],
+                ]),
+                ("gray26", [
+                    [0, 1, 0, 0],
+                    [1, 1, 1, 0],
+                    [1, 1, 1, 1],
+                    [1, 1, 1, 0],
+                ]),
+                ("gray27", [
+                    [0, 1, 1, 0, 0],
+                    [1, 1, 1, 1, 1],
+                ]),
             ]
         self.nbrpieces = len(piece_definitions)
         for idx, (piece_name, shape) in enumerate(piece_definitions):
