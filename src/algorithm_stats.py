@@ -16,10 +16,17 @@ class AlgorithmStats:
     stats.get_stats() # Retourne un dictionnaire récapitulatif des statistiques
     """
     def __init__(self):
-        self.start_time = time.time()  # Temps de départ de l'algorithme.
+        self.reset_stats()
+
+    def reset_stats(self):
+        """
+        Réinitialise toutes les statistiques pour un nouvel algorithme.
+        """
+        self.start_time = None  # Temps de départ (remis à None au reset).
+        self.end_time = None  # Temps de fin (pour calculer la durée totale).
         self.calculs = 0  # Nombre total de calculs/itérations effectuées.
         self.placements_testes = 0  # Nombre de placements de pièces testés.
-        self.solution_steps = []  # Etapes (placements) de la dernière solution trouvée.
+        self.solution_steps = []  # Étapes (placements) de la dernière solution trouvée.
         self.branches_explored = 0  # Nombre de branches explorées lors de l'exploration du backtracking.
         self.branches_pruned = 0  # Nombre de branches coupées (pruning) car identifiées comme sans issue.
         self.max_recursion_depth = 0  # Profondeur maximale de récursion atteinte par l'algorithme.
@@ -65,10 +72,29 @@ class AlgorithmStats:
         self.solution_steps = solution.copy()
         self.solutions_found += 1
 
+    def start_timer(self):
+        """
+        Démarre le chronomètre pour mesurer la durée de l'algorithme.
+        """
+        self.start_time = time.time()
+        self.end_time = None
+
+    def stop_timer(self):
+        """
+        Arrête le chronomètre et enregistre le temps final.
+        """
+        if self.start_time is not None:
+            self.end_time = time.time()
+
     def get_time_elapsed(self):
         """
         Retourne le temps écoulé depuis le début de l'algorithme.
+        Si l'algorithme est terminé, retourne la durée totale.
         """
+        if self.start_time is None:
+            return 0
+        if self.end_time is not None:
+            return self.end_time - self.start_time
         return time.time() - self.start_time
 
     def get_stats(self):

@@ -8,7 +8,7 @@ from plateau import Plateau
 from ttkbootstrap import Style, Window
 from ttkbootstrap.constants import *
 from solve_manager import SolverManager
-
+import threading
 PIECE_COLORS = {
     "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
     "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
@@ -125,8 +125,11 @@ class IQPuzzlerInterface:
         self.solution_steps = []
         self.current_step = -1
 
-        self.manager = None  # Instanciation du SolverManager quand on start la résolution
+        self.manager = None
         self.afficher_plateau()
+
+        self.manager_thread = None
+        self.is_solving = False  
 
     def init_plateau(self):
         """
@@ -453,21 +456,92 @@ class IQPuzzlerInterface:
             fixed_pieces
         )
 
-        # Lancer la résolution dans un thread principal
-        self.manager.run()
+        self.disable_controls()
+        self.is_solving = True
 
-        solutions = self.manager.get_solutions()
-        if solutions:
-            self.solution = solutions[0]
-            self.solution_steps = self.manager.get_current_solution_steps()
-            self.current_step = -1
-            self.update_stats_display()
-            self.afficher_solution()
+        self.manager_thread = threading.Thread(target=self.manager.run)
+        self.manager_thread.start()
+
+        self.update_feedback()
+
+    def update_feedback(self):
+        """
+        Mise à jour continue de l'interface pendant que la résolution est en cours.
+        Appelée périodiquement via `self.root.after`.
+        """
+        if self.manager.running:
+            stats = self.manager.get_stats()
+            self.update_stats_display(stats)
+
+            current_solution = self.manager.get_current_solution_steps()
+            if current_solution:
+                self.display_intermediate_solution(current_solution)
+
+            self.root.after(50, self.update_feedback) # Appel récursif après 50 ms
         else:
-            self.update_info("Aucune solution trouvée.")
-            self.afficher_plateau()
+            solutions = self.manager.get_solutions()
+            if solutions:
+                self.solution = solutions[0]
+                self.solution_steps = self.manager.get_current_solution_steps()
+                self.current_step = -1
+                self.update_stats_display()
+                self.afficher_solution()
+            else:
+                self.update_info("Aucune solution trouvée.")
+                self.afficher_plateau()
 
+            self.enable_controls()
 
+    def display_intermediate_solution(self, current_solution):
+        """
+        Affiche la solution en cours d'élaboration.
+        Utilisée pour fournir un feedback visuel continu pendant la résolution.
+        """
+        self.reset_board_visuellement()
+
+        for piece_name, data in self.placed_pieces.items():
+            color = PIECE_COLORS.get(piece_name, "gray")
+            for position in data['positions']:
+                i, j = position
+                self.cases[i][j].configure(bg=color)
+
+        for step in current_solution:
+            piece = step['piece']
+            color = PIECE_COLORS.get(piece.nom, "gray")
+            for cell in step['cells_covered']:
+                i, j = cell
+                self.cases[i][j].configure(bg=color)
+
+    def stop_resolution(self):
+        """
+        Arrête la résolution en cours.
+        """
+        if self.manager:
+            self.manager.request_stop()
+            self.is_solving = False
+            if self.manager_thread and self.manager_thread.is_alive():
+                self.manager_thread.join()  
+            self.enable_controls()
+
+    def disable_controls(self):
+        """
+        Désactive les boutons et autres contrôles pendant la résolution.
+        """
+        self.start_button.config(state="disabled")
+        self.stop_button.config(state="normal")
+        self.reset_button.config(state="disabled")
+        for piece in self.pieces.values():
+            piece.button.config(state="disabled")
+
+    def enable_controls(self):
+        """
+        Réactive les contrôles une fois la résolution terminée.
+        """
+        self.start_button.config(state="normal")
+        self.stop_button.config(state="disabled")
+        self.reset_button.config(state="normal")
+        for piece in self.pieces.values():
+            piece.button.config(state="normal")
 
     def display_current_step(self):
         """
@@ -504,12 +578,6 @@ class IQPuzzlerInterface:
                 i, j = cell
                 self.cases[i][j].configure(bg=color)
 
-    def stop_resolution(self):
-        """
-        Arrête l'algorithme en cours.
-        """
-        if self.manager:
-            self.manager.request_stop()
 
     def next_step(self):
         """
@@ -541,13 +609,19 @@ class IQPuzzlerInterface:
             print("    ", row.tolist(), ",")
         print("]")
 
-    def update_stats_display(self):
+    def update_stats_display(self, stats=None):
         """
         Met à jour l'affichage des informations de l'algorithme (stats).
-        Appelée après la fin de l'exécution ou pendant, si on faisait du polling.
+        Peut être appelée pendant ou après l'exécution.
+        Si `stats` est None, elle interroge directement le manager pour obtenir les stats actuelles.
+
+        Paramètres:
+        - stats (dict, optional): Dictionnaire contenant les statistiques.
         """
-        if self.manager:
+        if stats is None and self.manager:
             stats = self.manager.get_stats()
+
+        if stats:
             elapsed_time = stats.get("time", 0)
             calculs = stats.get("calculs", 0)
             placements_testes = stats.get("placements_testes", 0)
@@ -557,12 +631,14 @@ class IQPuzzlerInterface:
 
             info_text = (
                 f"Temps écoulé: {elapsed_time:.2f} s\n"
+                f"Calculs effectués: {calculs}\n"
                 f"Placements testés: {placements_testes}\n"
                 f"Branches explorées: {branches_explored}\n"
                 f"Branches coupées: {branches_pruned}\n"
                 f"Profondeur maximale de récursion: {max_recursion_depth}\n"
             )
             self.update_info(info_text)
+
 
     def reset_board_visuellement(self):
         """

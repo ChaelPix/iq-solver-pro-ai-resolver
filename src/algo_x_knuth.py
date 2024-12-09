@@ -33,6 +33,8 @@ class AlgorithmX:
         self.stop_requested = False
         self.piece_weights = self.calculate_piece_weights(heuristic_ascender)
         self.stats = AlgorithmStats()
+        self.stats.reset_stats()
+        self.stats.start_timer()
 
     def request_stop(self):
         """
@@ -137,6 +139,7 @@ class AlgorithmX:
                 self.solutions.append(solution.copy())
                 self.stats.add_solution(solution)
                 self.stats.decrement_depth()
+                self.stats.stop_timer()
                 return True
             self.stats.decrement_depth()
             return False
