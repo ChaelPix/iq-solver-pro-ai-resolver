@@ -28,10 +28,10 @@ class SolverManager:
         # Mettre à jour l'affichage
     final_solutions = manager.get_solutions()
     """
-    def __init__(self, plateau, pieces, heuristic_ascender, fixed_pieces=None):
+    def __init__(self, plateau, pieces, heuristic_choice, fixed_pieces=None):
         self.plateau = plateau
         self.pieces = pieces
-        self.heuristic_ascender = heuristic_ascender
+        self.heuristic = heuristic_choice
         self.fixed_pieces = fixed_pieces if fixed_pieces else {}
         self.algo = None
         self.running = False
@@ -47,7 +47,7 @@ class SolverManager:
         self.algo = AlgorithmX(
             self.plateau,
             self.pieces,
-            self.heuristic_ascender,
+            self.heuristic,
             self.fixed_pieces
         )
         self.running = True

@@ -23,7 +23,7 @@ class AlgorithmX:
       True: pièces plus "petites" prioritaires. False: pièces plus "grandes" prioritaires.
     - fixed_pieces (dict): Pièces déjà placées (variante et position), optionnel.
     """
-    def __init__(self, plateau, pieces, heuristic_ascender, fixed_pieces=None):
+    def __init__(self, plateau, pieces, heuristic="ascender", fixed_pieces=None):
         self.plateau = plateau
         self.pieces = pieces
         self.fixed_pieces = fixed_pieces if fixed_pieces else {}
@@ -31,7 +31,7 @@ class AlgorithmX:
         self.zone_cache = {}
         self.invalid_placements = {}
         self.stop_requested = False
-        self.piece_weights = self.calculate_piece_weights(heuristic_ascender)
+        self.piece_weights = self.calculate_piece_weights(heuristic)
         self.stats = AlgorithmStats()
         self.stats.reset_stats()
         self.stats.start_timer()
@@ -65,35 +65,68 @@ class AlgorithmX:
         """
         return self.solutions.copy()
 
-    def calculate_piece_weights(self, heuristic_ascender):
+    def calculate_piece_weights(self, heuristic="ascender"):
         """
-        Calcule les poids des pièces pour guider l'heuristique.
-        Si heuristic_ascender = True, les petites pièces obtiennent un poids plus élevé,
-        ce qui signifie qu'elles seront placées en dernier (car trié en décroissant).
-        Si False, les grandes pièces sont prioritaires (plus grand poids).
+        Calcule les poids des pièces en fonction de l'heuristique choisie.
+        Les heuristiques permettent de prioriser l'ordre de placement des pièces
+        en fonction de leur forme, taille ou d'autres critères.
+
+        - "ascender": Priorité aux petites pièces.
+        - "descender": Priorité aux grandes pièces.
+        - "compactness": Priorité aux pièces compactes.
+        - "compactness_inverse": Priorité aux pièces non compactes (grandes disparités largeur/hauteur).
+        - "perimeter": Priorité aux petits périmètres.
+        - "perimeter_inverse": Priorité aux grands périmètres.
+        - "holes": Priorité aux pièces avec peu de trous internes.
+        - "holes_inverse": Priorité aux pièces avec plus de trous internes.
 
         Paramètres:
-        - heuristic_ascender (bool): Choix de l'heuristique.
+        - heuristic (str): Nom de l'heuristique à utiliser.
 
         Retourne:
-        - dict: {nom_piece: poids}
+        - dict: Dictionnaire des poids des pièces, {nom_piece: poids}.
         """
         weights = {}
+
         for piece in self.pieces.values():
             if not hasattr(piece, 'forme_base') or piece.forme_base is None:
                 weights[piece.nom] = float('inf')
                 continue
-            occupied_cells = np.count_nonzero(piece.forme_base)
+
+            occupied_cells = np.count_nonzero(piece.forme_base)  # Nombre de cellules occupées.
             if occupied_cells == 0:
                 weights[piece.nom] = float('inf')
+                continue
+
+            # Calcul des critères nécessaires pour les heuristiques
+            shape = piece.forme_base
+            height, width = shape.shape
+            compactness = min(height, width) / max(height, width)  # Ratio compact.
+            perimeter = np.sum(np.pad(shape, pad_width=1, mode='constant', constant_values=0) != 0) - occupied_cells
+            holes = np.sum(shape == 0)  # Zones vides dans la forme.
+
+            if heuristic == "ascender":
+                weights[piece.nom] = 1 / occupied_cells  # Priorité aux petites pièces.
+            elif heuristic == "descender":
+                weights[piece.nom] = occupied_cells  # Priorité aux grandes pièces.
+            elif heuristic == "compactness":
+                weights[piece.nom] = compactness  # Priorité aux pièces compactes.
+            elif heuristic == "compactness_inverse":
+                weights[piece.nom] = 1 / (compactness + 1e-6)  # Priorité aux pièces non compactes.
+            elif heuristic == "perimeter":
+                weights[piece.nom] = 1 / perimeter if perimeter > 0 else float('inf')  # Priorité aux petits périmètres.
+            elif heuristic == "perimeter_inverse":
+                weights[piece.nom] = perimeter  # Priorité aux grands périmètres.
+            elif heuristic == "holes":
+                weights[piece.nom] = 1 / (holes + 1)  # Priorité aux pièces avec peu de trous.
+            elif heuristic == "holes_inverse":
+                weights[piece.nom] = holes  # Priorité aux pièces avec plus de trous.
             else:
-                if heuristic_ascender:
-                    # moins de cellules -> poids plus élevé
-                    weights[piece.nom] = 1 / occupied_cells
-                else:
-                    # plus de cellules -> poids plus élevé
-                    weights[piece.nom] = occupied_cells
+                raise ValueError(f"Unknown heuristic: {heuristic}")
+
         return weights
+
+
 
     def solve(self):
         """

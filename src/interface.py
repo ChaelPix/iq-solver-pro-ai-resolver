@@ -109,9 +109,9 @@ class IQPuzzlerInterface:
         self.reset_button.grid(row=0, column=7, padx=5)
 
         # Bouton changement heuristique
-        self.h_button = ttk.Button(self.controls_frame, text="Heur. Asc", width=8, command=self.change_heuristic)
-        self.h_button.grid(row=1, column=3)
-        self.heuristic_ascender = True
+        self.heuristic_choice = tk.StringVar(value="ascender")
+        ttk.OptionMenu(self.controls_frame, self.heuristic_choice, "ascender",
+                    "ascender", "descender", "compactness", "perimeter", "holes").grid(row=1, column=3)
 
         # Cadre d'information
         self.info_frame = tk.Frame(self.root)
@@ -448,11 +448,11 @@ class IQPuzzlerInterface:
         plateau_copy.lignes = self.grid_y
         plateau_copy.colonnes = self.grid_x
         plateau_copy.plateau = np.copy(self.plateau.plateau)
-
+        heuristic = self.heuristic_choice.get()
         self.manager = SolverManager(
             plateau_copy,
             self.pieces,
-            self.heuristic_ascender,
+            heuristic,
             fixed_pieces
         )
 
