@@ -8,6 +8,7 @@ from plateau import Plateau
 from ttkbootstrap import Style, Window
 from ttkbootstrap.constants import *
 from solve_manager import SolverManager
+from multi_solver_manager import MultiHeuristicManager
 import threading
 
 # PIECE_COLORS = {
@@ -79,8 +80,8 @@ class IQPuzzlerInterface:
             self.grid_x = 11
             self.grid_y = 5
         else:
-            self.grid_x = 15
-            self.grid_y = 15
+            self.grid_x = 14
+            self.grid_y = 8
 
         self.root.title("IQ Puzzler Pro Solver")
         self.root.geometry("870x900")
@@ -124,6 +125,8 @@ class IQPuzzlerInterface:
         # Boutons start/stop
         self.start_button = ttk.Button(self.controls_frame, text="Start", command=self.start_resolution, bootstyle="success")
         self.start_button.grid(row=0, column=3, padx=5)
+        self.start2_button = ttk.Button(self.controls_frame, text="Start Multithread", command=self.start_resolution_multi, bootstyle="success")
+        self.start2_button.grid(row=1, column=5, padx=5)
 
         self.stop_button = ttk.Button(self.controls_frame, text="Stop", command=self.stop_resolution, bootstyle="danger")
         self.stop_button.grid(row=0, column=4, padx=5)
@@ -142,7 +145,10 @@ class IQPuzzlerInterface:
         # Bouton changement heuristique
         self.heuristic_choice = tk.StringVar(value="ascender")
         ttk.OptionMenu(self.controls_frame, self.heuristic_choice, "ascender",
-                    "ascender", "descender", "compactness", "perimeter", "holes").grid(row=1, column=3)
+                    "ascender", "descender", 
+                    "compactness", "compactness_inverse",
+                    "perimeter", "perimeter_inverse",
+                    "holes", "holes_inverse").grid(row=1, column=3)
 
         # Cadre d'information
         self.info_frame = tk.Frame(self.root)
@@ -265,152 +271,104 @@ class IQPuzzlerInterface:
         else:
             piece_definitions = [
                 ("gray1", [
-                    [1, 1, 1, 1, 1],
-                    [1, 1, 1, 1, 0],
-                    [1, 1, 1, 0, 0],
-                    [1, 1, 0, 0, 0],
-                    [1, 0, 0, 0, 0],
+                    [1, 1, 1],
+                    [1, 1, 0],
+                    [1, 0, 0],
+                    [1, 0, 0],
                 ]),
                 ("gray2", [
                     [0, 1, 1, 1],
                     [1, 1, 1, 0],
-                    [1, 1, 0, 0],
                     [0, 1, 0, 0],
                 ]),
                 ("gray3", [
-                    [0, 1, 1],
-                    [1, 1, 1],
-                    [0, 1, 0],
+                    [0, 1, 1, 1],
+                    [1, 1, 1, 0],
                 ]),
                 ("gray4", [
-                    [1, 1, 1, 1],
+                    [0, 1, 1, 1],
                     [1, 1, 1, 0],
-                    [1, 1, 0, 0],
                 ]),
                 ("gray5", [
-                    [0, 1],
-                    [1, 1],
-                    [0, 1],
+                    [0, 1, 1],
+                    [1, 1, 1],
+                    [0, 1, 1],
                 ]),
                 ("gray6", [
-                    [0, 1],
-                    [1, 1],
+                    [1],
+                    [1],
                 ]),
                 ("gray7", [
-                    [0, 1, 1, 0],
-                    [0, 1, 1, 1],
-                    [1, 1, 1, 0],
-                    [0, 1, 0, 0],
-                ]),
-                ("gray8", [
                     [1, 0],
                     [1, 1],
+                    [1, 0],
+                    [1, 0],
+                    [1, 0],
+                    [1, 0],
+                ]),
+                ("gray8", [
                     [1, 1],
+                    [1, 1],
+                    [1, 0],
                 ]),
                 ("gray9", [
-                    [0, 1, 1, 0],
-                    [1, 1, 1, 1],
-                    [1, 1, 1, 0],
-                    [1, 1, 0, 0],
+                    [1],
+                    [1],
                 ]),
                 ("gray10", [
-                    [1],
-                    [1],
+                    [1, 1, 1],
+                    [1, 1, 0],
                 ]),
                 ("gray11", [
-                    [0, 1, 1, 1],
-                    [1, 1, 1, 0],
-                    [0, 1, 0, 0],
+                    [1, 1],
+                    [1, 1],
                 ]),
                 ("gray12", [
-                    [0, 1, 0, 0],
-                    [1, 1, 1, 1],
-                    [1, 1, 1, 0],
-                    [0, 1, 1, 0],
-                    [0, 1, 0, 0],
+                    [0, 1, 0],
+                    [1, 1, 1],
+                    [0, 1, 1],
                 ]),
                 ("gray13", [
-                    [0, 0, 0, 1],
-                    [0, 0, 1, 1],
-                    [1, 1, 1, 1],
-                    [0, 1, 1, 1],
-                    [0, 0, 1, 1],
-                    [0, 0, 0, 1],
+                    [1, 1],
+                    [1, 0],
                 ]),
                 ("gray14", [
-                    [0, 1],
+                    [1, 1],
+                    [1, 1],
+                    [1, 1],
                     [1, 1],
                 ]),
                 ("gray15", [
-                    [0, 0, 1, 1, 0],
-                    [0, 0, 1, 1, 1],
-                    [1, 1, 1, 1, 1],
-                    [0, 1, 1, 1, 0],
-                    [0, 0, 1, 0, 0],
+                    [1, 0, 0],
+                    [1, 1, 1],
+                    [1, 1, 0],
+                    [1, 0, 0],
                 ]),
                 ("gray16", [
-                    [1, 0, 0],
-                    [1, 1, 0],
                     [1, 1, 1],
-                    [1, 1, 1],
-                    [1, 1, 0],
+                    [0, 1, 1],
+                    [0, 1, 0],
                 ]),
                 ("gray17", [
-                    [1],
-                    [1],
-                ]),
-                ("gray18", [
-                    [0, 1],
-                    [1, 1],
-                ]),
-                ("gray19", [
-                    [0, 0, 1, 0],
-                    [1, 1, 1, 1],
-                    [0, 1, 1, 0],
-                ]),
-                ("gray20", [
-                    [0, 0, 1, 0, 1],
-                    [0, 1, 1, 1, 1],
-                    [1, 1, 1, 1, 1],
-                    [0, 1, 1, 1, 0],
-                    [0, 0, 1, 0, 0],
-                ]),
-                ("gray21", [
+                    [1, 0],
                     [1, 1],
                     [1, 0],
                 ]),
-                ("gray22", [
-                    [0, 1, 1, 0, 0],
-                    [1, 1, 1, 1, 1],
-                    [1, 1, 1, 1, 0],
-                    [0, 1, 1, 0, 0],
+                ("gray18", [
+                    [1],
+                    [1],
                 ]),
-                ("gray23", [
-                    [0, 1, 1],
+                ("gray19", [
                     [0, 1, 0],
-                    [1, 1, 0],
+                    [1, 1, 1],
+                    [0, 1, 0],
                 ]),
-                ("gray24", [
-                    [0, 0, 0, 1, 1],
-                    [0, 0, 0, 1, 1],
-                    [1, 1, 1, 1, 1],
-                    [0, 1, 1, 1, 1],
-                    [0, 0, 0, 1, 1],
-                ]),
-                ("gray25", [
-                    [1, 0, 0, 0, 0],
-                    [1, 1, 0, 0, 0],
-                    [1, 1, 1, 0, 1],
-                    [1, 1, 1, 1, 1],
-                ]),
-                ("gray26", [
+                ("gray20", [
                     [0, 1, 0, 0],
-                    [1, 1, 1, 0],
                     [1, 1, 1, 1],
-                    [1, 1, 1, 0],
                 ]),
-                ("gray27", [
-                    [0, 1, 1, 0, 0],
+                ("gray21", [
+                    [0, 1, 0, 1, 1],
                     [1, 1, 1, 1, 1],
                 ]),
             ]
@@ -676,14 +634,26 @@ class IQPuzzlerInterface:
 
     def stop_resolution(self):
         """
-        Arrête la résolution en cours.
+        Arrête la résolution en cours, que ce soit en mono ou multi-heuristique.
         """
-        if self.manager:
+        if hasattr(self, 'manager') and self.manager:
+            # Cas mono-heuristique
             self.manager.request_stop()
             self.is_solving = False
-            if self.manager_thread and self.manager_thread.is_alive():
-                self.manager_thread.join()  
+            if hasattr(self, 'manager_thread') and self.manager_thread and self.manager_thread.is_alive():
+                self.manager_thread.join()
             self.enable_controls()
+        elif hasattr(self, 'multi_manager') and self.multi_manager:
+            # Cas multi-heuristiques
+            self.multi_manager.request_stop_all()
+            self.is_solving = False
+            # On attend la fin de tous les threads
+            for t in self.multi_manager.threads:
+                if t.is_alive():
+                    t.join()
+            self.enable_controls()
+
+
 
     def disable_controls(self):
         """
@@ -809,3 +779,97 @@ class IQPuzzlerInterface:
         for i in range(self.grid_y):
             for j in range(self.grid_x):
                 self.cases[i][j].configure(bg="white")
+
+    def start_resolution_multi(self):
+        # Construire fixed_pieces comme avant
+        fixed_pieces = {}
+        for piece_name, info in self.placed_pieces.items():
+            fixed_pieces[piece_name] = {
+                'variante_index': info['variante_index'],
+                'position': info['position']
+            }
+
+        plateau_copy = Plateau()
+        plateau_copy.lignes = self.grid_y
+        plateau_copy.colonnes = self.grid_x
+        plateau_copy.plateau = np.copy(self.plateau.plateau)
+
+        # Liste d'heuristiques à tester en parallèle
+        heuristics_list = ["ascender", "descender", "compactness", "holes"]
+
+        self.multi_manager = MultiHeuristicManager(
+            plateau_copy,
+            self.pieces,
+            heuristics_list,
+            fixed_pieces
+        )
+
+        self.disable_controls()
+        self.is_solving = True
+
+        self.multi_manager.run_all()
+
+        # Lancer une mise à jour périodique comme avec update_feedback, mais pour multi
+        self.update_feedback_multi()
+
+    def update_feedback_multi(self):
+        """
+        Met à jour l'interface pendant que la résolution multi-heuristique est en cours.
+        Affiche les statistiques de toutes les branches, qu'elles soient en cours ou terminées.
+        Ajoute le nom de l'heuristique gagnante une fois que l'une des branches a trouvé une solution.
+        """
+        # Vérifier si une branche a terminé
+        finished, stats, solution, winner_heuristic = self.multi_manager.check_status()
+
+        # Collecter les stats de toutes les branches
+        info_text = "Résolution en cours...\nHeuristiques testées:\n"
+
+        # Récupération des stats pour toutes les branches
+        for heuristic, manager in self.multi_manager.managers:
+            manager_stats = manager.get_stats()
+            running = self.multi_manager.results[heuristic]["running"]
+
+            info_text += f"  - {heuristic} : "
+            if running:
+                info_text += f"{manager_stats['placements_testes']} placements testés, "
+                info_text += f"{manager_stats['branches_explored']} branches explorées, "
+                info_text += f"{manager_stats['branches_pruned']} branches coupées.\n"
+            else:
+                # Si terminé, afficher les stats finales
+                info_text += f"Terminé. Stats finales : "
+                info_text += f"{manager_stats['placements_testes']} placements testés, "
+                info_text += f"{manager_stats['branches_explored']} branches explorées, "
+                info_text += f"{manager_stats['branches_pruned']} branches coupées.\n"
+
+        # Mettre à jour l'affichage de manière thread-safe
+        self.root.after_idle(lambda: self.update_info(info_text))
+
+        if not finished:
+            # Continuer la mise à jour périodique tant qu'aucune solution n'est trouvée
+            self.root.after(100, self.update_feedback_multi)
+        else:
+            # Une branche a trouvé une solution
+            self.solution = solution
+            self.solution_steps = solution
+            self.current_step = -1
+
+            # Afficher les statistiques finales et la solution
+            self.update_stats_display(stats)
+            if winner_heuristic:
+                self.update_info(f"Solution trouvée par l'heuristique: {winner_heuristic}")
+            else:
+                self.update_info("Solution trouvée (aucune heuristique identifiée).")
+
+            # Afficher la solution et réactiver les contrôles
+            self.afficher_solution()
+            self.enable_controls()
+
+
+    def stop_resolution_multi(self):
+        """
+        Arrête toutes les branches de résolution en cours.
+        """
+        if self.multi_solver:
+            self.multi_solver.stop_all()
+            self.enable_controls()
+
