@@ -462,6 +462,7 @@ class IQPuzzlerInterface:
             self.solution_steps = self.manager.get_current_solution_steps()
             self.current_step = -1
             self.update_stats_display()
+            self.afficher_solution()
         else:
             self.update_info("Aucune solution trouvée.")
             self.afficher_plateau()
