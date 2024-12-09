@@ -473,10 +473,6 @@ class IQPuzzlerInterface:
             stats = self.manager.get_stats()
             self.update_stats_display(stats)
 
-            current_solution = self.manager.get_current_solution_steps()
-            if current_solution:
-                self.display_intermediate_solution(current_solution)
-
             self.root.after(50, self.update_feedback) # Appel récursif après 50 ms
         else:
             solutions = self.manager.get_solutions()
