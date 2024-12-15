@@ -1,3 +1,5 @@
+# NE RETIRE PAS MES COMMENTAIRES DANS LE CODE QUI SONT PRESENTS ET INDISPENSABLES POUR MON RAPPORT
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox, filedialog
@@ -10,47 +12,23 @@ from ttkbootstrap.constants import *
 from solve_manager import SolverManager
 from multi_solver_manager import MultiHeuristicManager
 import threading
-
-# PIECE_COLORS = {
-#     "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
-#     "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
-#     "blue": "blue", "purple": "purple", "darkred": "darkred", "pink": "pink",
-#     "gray": "gray12", "magenta": "magenta2"
-# }
+from polyminos_generator import GridPolyminoGenerator  # On importe la classe de génération de polyminos aléatoires
 
 PIECE_COLORS = {
-    "gray1": "gray1",
-    "gray2": "gray2",
-    "gray3": "gray3",
-    "gray4": "gray4",
-    "gray5": "gray5",
-    "gray6": "gray6",
-    "gray7": "gray7",
-    "gray8": "gray8",
-    "gray9": "gray9",
-    "gray10": "gray10",
-    "gray11": "gray11",
-    "gray12": "gray12",
-    "gray13": "gray13",
-    "gray14": "gray14",
-    "gray15": "gray15",
-    "gray16": "gray16",
-    "gray17": "gray17",
-    "gray18": "gray18",
-    "gray19": "gray19",
-    "gray20": "gray20",
-    "gray21": "gray21",
-    "gray22": "gray22",
-    "gray23": "gray23",
-    "gray24": "gray24",
-    "gray25": "gray25",
-    "gray26": "gray26",
-    "gray27": "gray27",
-    "gray28": "gray28",
-    "gray29": "gray29",
-    "gray30": "gray30",
-    "gray31": "gray31",
-}
+        "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
+        "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
+        "blue": "blue", "purple": "purple", "darkred": "darkred", "pink": "pink",
+        "gray": "gray12", "magenta": "magenta2", "gold": "gold", "coral": "coral",
+        "chartreuse": "chartreuse", "darkgreen": "darkgreen", "navy": "navy", "violet": "violet",
+        "tan": "tan", "salmon": "salmon", "turquoise": "turquoise", "indigo": "indigo",
+        "chocolate": "chocolate", "orchid": "orchid", "plum": "plum", "slateblue": "slateblue",
+        "khaki": "khaki", "seagreen": "seagreen", "goldenrod": "goldenrod", "lightcoral": "lightcoral",
+        "darkorange": "darkorange", "springgreen": "springgreen", "deepskyblue": "deepskyblue",
+        "dodgerblue": "dodgerblue", "mediumorchid": "mediumorchid", "firebrick": "firebrick",
+        "darkslategray": "darkslategray", "sienna": "sienna", "mediumseagreen": "mediumseagreen",
+        "royalblue": "royalblue", "mediumpurple": "mediumpurple", "lightsteelblue": "lightsteelblue",
+        "palegreen": "palegreen", "darkmagenta": "darkmagenta"
+    }
 
 
 class IQPuzzlerInterface:
@@ -69,9 +47,6 @@ class IQPuzzlerInterface:
     - L'interface lance l'algo (run()), puis dans une boucle (ou via un timer),
       elle appelle get_stats(), get_current_solution_steps() pour rafraîchir l'affichage.
     - Une fois l'algo terminé, on affiche la solution finale.
-
-    Paramètres:
-    - root (Tk): Fenêtre racine Tkinter.
     """
     def __init__(self, root):
         self.root = root
@@ -79,16 +54,14 @@ class IQPuzzlerInterface:
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
 
-        self.version = 2
-        if(self.version == 1):
-            self.grid_x = 11
-            self.grid_y = 5
-        else:
-            self.grid_x = 16
-            self.grid_y = 10
+        # La taille minimum est 5x11. Lorsque c'est 5x11, on garde les pièces de base du jeu.
+        # Sinon, on génère des polyminos aléatoires.
+        self.grid_x = 11
+        self.grid_y = 5
+        self.version = 1 if (self.grid_x == 11 and self.grid_y == 5) else 2
 
         self.root.title("IQ Puzzler Pro Solver")
-        self.root.geometry("870x900")
+        self.root.geometry("1600x900")
 
         # Gestion des pièces et plateau
         self.selected_piece = None
@@ -96,81 +69,158 @@ class IQPuzzlerInterface:
         self.solution = None
         self.plateau = Plateau()
 
-        self.team_label = tk.Label(self.root, text="IA41 Projet - Antoine & Traïan", font=("Arial", 10))
-        self.team_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)
+        # Cadre principal pour contenir tout
+        self.main_frame = tk.Frame(self.root)
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Plateau graphique
-        self.plateau_frame = tk.Frame(self.root)
-        self.plateau_frame.grid(row=0, column=0, padx=10, pady=10)
+        # Organisation des sous-cadres
+        self.top_frame = tk.Frame(self.main_frame)  # Barre supérieure
+        self.top_frame.pack(side="top", fill="x", pady=5)
+
+        self.middle_frame = tk.Frame(self.main_frame)  # Partie centrale pour la grille
+        self.middle_frame.pack(side="left", fill="both", expand=True, padx=5)
+
+        self.right_frame = tk.Frame(self.main_frame)  # Partie droite pour les contrôles
+        self.right_frame.pack(side="right", fill="y", padx=5)
+
+        # Étiquette du projet
+        self.team_label = tk.Label(self.top_frame, text="IA41 Projet - Antoine & Traïan", font=("Arial", 12))
+        self.team_label.pack(anchor="center")
+
+        # Configuration de la grille
+        self.plateau_frame = tk.Frame(self.middle_frame, relief="groove", borderwidth=2)
+        self.plateau_frame.pack(expand=True, pady=10)
+
+        # Configuration des lignes et colonnes pour rendre la grille fixe au centre
+        self.middle_frame.grid_columnconfigure(0, weight=1)
+        self.middle_frame.grid_rowconfigure(0, weight=1)
+
+        # Initialisation de la grille
         self.cases = [[None for _ in range(self.grid_x)] for _ in range(self.grid_y)]
         self.init_plateau()
 
+        # Cadre des pièces disponibles
+        self.pieces_frame = tk.Frame(self.middle_frame, relief="groove", borderwidth=2)
+        self.pieces_frame.pack(side="bottom", fill="x", pady=10)
+
         # Chargement des pièces
-        self.pieces_frame = tk.Frame(self.root)
-        self.pieces_frame.grid(row=1, column=0, padx=10, pady=10)
         self.pieces = {}
         self.load_pieces()
 
-        # Cadre de contrôle (boutons)
-        self.controls_frame = ttk.Frame(self.root)
-        self.controls_frame.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        # Cadre des contrôles
+        self.controls_frame = tk.Frame(self.right_frame, relief="groove", borderwidth=2)
+        self.controls_frame.pack(fill="x", pady=10)
 
-        # Boutons Load/Save
+        # Contrôles pour modifier la taille de la grille
+        self.grid_size_frame = tk.Frame(self.controls_frame, relief="groove", borderwidth=2, padx=5, pady=5)
+        self.grid_size_frame.grid(row=0, column=0, columnspan=3, pady=5)
+
+        tk.Label(self.grid_size_frame, text="Grid Width (X):").grid(row=0, column=0, padx=5, pady=2)
+        self.grid_x_entry = tk.Entry(self.grid_size_frame, width=5)
+        self.grid_x_entry.grid(row=0, column=1, padx=5)
+        self.grid_x_entry.insert(0, str(self.grid_x))
+
+        tk.Label(self.grid_size_frame, text="Grid Height (Y):").grid(row=1, column=0, padx=5, pady=2)
+        self.grid_y_entry = tk.Entry(self.grid_size_frame, width=5)
+        self.grid_y_entry.grid(row=1, column=1, padx=5)
+        self.grid_y_entry.insert(0, str(self.grid_y))
+
+        self.update_grid_button = ttk.Button(self.grid_size_frame, text="Update Grid", command=self.update_grid_size)
+        self.update_grid_button.grid(row=2, column=0, columnspan=2, pady=5)
+
+        # Boutons de contrôle (résolution, sauvegarde, etc.)
         self.load_button = ttk.Button(self.controls_frame, text="Load Board", command=self.charger_plateau)
-        self.load_button.grid(row=0, column=0, padx=5)
+        self.load_button.grid(row=1, column=0, padx=5, pady=5)
 
         self.save_button = ttk.Button(self.controls_frame, text="Save Board", command=self.sauvegarder_plateau)
-        self.save_button.grid(row=0, column=1, padx=5)
+        self.save_button.grid(row=1, column=1, padx=5, pady=5)
 
-        # Bouton rotation
         self.rotate_button = ttk.Button(self.controls_frame, text="Rotate", command=self.rotate_piece, bootstyle="primary")
-        self.rotate_button.grid(row=0, column=2, padx=5)
+        self.rotate_button.grid(row=1, column=2, padx=5, pady=5)
 
-        # Boutons start/stop
         self.start_button = ttk.Button(self.controls_frame, text="Start", command=self.start_resolution, bootstyle="success")
-        self.start_button.grid(row=0, column=3, padx=5)
+        self.start_button.grid(row=2, column=0, padx=5, pady=5)
+
         self.start2_button = ttk.Button(self.controls_frame, text="Start Multithread", command=self.start_resolution_multi, bootstyle="success")
-        self.start2_button.grid(row=1, column=5, padx=5)
+        self.start2_button.grid(row=2, column=1, padx=5, pady=5)
 
         self.stop_button = ttk.Button(self.controls_frame, text="Stop", command=self.stop_resolution, bootstyle="danger")
-        self.stop_button.grid(row=0, column=4, padx=5)
+        self.stop_button.grid(row=2, column=2, padx=5, pady=5)
 
-        # Boutons navigation étape
         self.prev_step_button = ttk.Button(self.controls_frame, text="Previous Step", command=self.previous_step, bootstyle="primary")
-        self.prev_step_button.grid(row=0, column=5, padx=5)
+        self.prev_step_button.grid(row=3, column=0, padx=5, pady=5)
 
         self.next_step_button = ttk.Button(self.controls_frame, text="Next Step", command=self.next_step, bootstyle="primary")
-        self.next_step_button.grid(row=0, column=6, padx=5)
+        self.next_step_button.grid(row=3, column=1, padx=5, pady=5)
 
-        # Reset board
         self.reset_button = ttk.Button(self.controls_frame, text="Reset Board", command=self.reset_board, bootstyle="warning")
-        self.reset_button.grid(row=0, column=7, padx=5)
+        self.reset_button.grid(row=3, column=2, padx=5, pady=5)
 
-        # Bouton changement heuristique
+        # Menu de choix heuristique
         self.heuristic_choice = tk.StringVar(value="ascender")
         ttk.OptionMenu(self.controls_frame, self.heuristic_choice, "ascender",
-                    "ascender", "descender", 
+                    "ascender", "descender",
                     "compactness", "compactness_inverse",
                     "perimeter", "perimeter_inverse",
-                    "holes", "holes_inverse").grid(row=1, column=3)
+                    "holes", "holes_inverse").grid(row=4, column=0, columnspan=3, pady=5)
 
-        # Cadre d'information
-        self.info_frame = tk.Frame(self.root)
-        self.info_frame.grid(row=3, column=0, padx=10, pady=10)
-        self.info_label = tk.Label(self.info_frame, text="Informations sur l'algorithme", font=("Arial", 14))
-        self.info_label.pack()
-        self.info_text = tk.Text(self.info_frame, width=80, height=5, state="disabled")
-        self.info_text.pack()
+        # Cadre d'informations
+        self.info_frame = tk.Frame(self.right_frame, relief="groove", borderwidth=2)
+        self.info_frame.pack(fill="x", pady=10)
 
+        self.info_label = tk.Label(self.info_frame, text="Informations sur l'algorithme", font=("Arial", 12))
+        self.info_label.pack(anchor="w", padx=10, pady=5)
+
+        self.info_text = tk.Text(self.info_frame, width=50, height=10, state="disabled")
+        self.info_text.pack(fill="both", expand=True, padx=10, pady=5)
+
+        # Initialisation des variables
         self.placed_pieces = {}
         self.solution_steps = []
         self.current_step = -1
-
         self.manager = None
+        self.manager_thread = None
+        self.is_solving = False
         self.afficher_plateau()
 
-        self.manager_thread = None
-        self.is_solving = False  
+    def update_grid_size(self):
+        """
+        Met à jour la taille de la grille en fonction des valeurs entrées,
+        génère de nouvelles pièces si la taille n'est pas 5x11.
+        """
+        try:
+            new_x = int(self.grid_x_entry.get())
+            new_y = int(self.grid_y_entry.get())
+            if new_x < 10 or new_y < 5:
+                messagebox.showerror("Erreur", "La taille minimum de la grille est 5x10 (YxX) !")
+                return
+            self.grid_x = new_x
+            self.grid_y = new_y
+            self.version = 1 if (self.grid_x == 11 and self.grid_y == 5) else 2
+
+            grid_width_px = self.grid_x * 40
+            grid_height_px = self.grid_y * 40 
+            side_controls_width_px = 600  
+            top_margin_px = 400  
+
+            new_width = max(1600, grid_width_px + side_controls_width_px + 50)  
+            new_height = max(900, grid_height_px + top_margin_px + 50) 
+
+            self.root.geometry(f"{new_width}x{new_height}")
+
+            for widget in self.plateau_frame.winfo_children():
+                widget.destroy()
+
+            for widget in self.pieces_frame.winfo_children():
+                widget.destroy()
+
+            self.init_plateau()
+            self.pieces = {}
+            self.placed_pieces = {}
+            self.load_pieces() 
+            self.afficher_plateau()
+        except ValueError:
+            messagebox.showerror("Erreur", "Veuillez entrer des nombres valides.")
 
     def init_plateau(self):
         """
@@ -241,23 +291,13 @@ class IQPuzzlerInterface:
                         break
                 self.cases[i][j].configure(bg=color)
 
-    def change_heuristic(self):
-        """
-        Inverse le mode d'heuristique (ascendante / descendante)
-        et met à jour le texte du bouton.
-        """
-        self.heuristic_ascender = not self.heuristic_ascender
-        if self.heuristic_ascender:
-            self.h_button.config(text="Heur. Asc")
-        else:
-            self.h_button.config(text="Heur. Desc")
-
     def load_pieces(self):
         """
         Charge la liste des pièces définies (selon version),
-        crée les objets Piece et les affiche (boutons + preview).
+        ou génère des pièces aléatoires si la taille n'est pas 5x11.
         """
         if self.version == 1:
+            # On garde les pièces du jeu de base
             piece_definitions = [
                 ("red", [[1, 1, 1, 1], [0, 0, 0, 1]]),
                 ("orange", [[0, 1, 0], [1, 1, 1], [1, 0, 0]]),
@@ -273,156 +313,11 @@ class IQPuzzlerInterface:
                 ("pink", [[1, 1, 0, 0], [0, 1, 1, 1]])
             ]
         else:
-            piece_definitions = [
-                ("gray1", [
-                    [1, 1, 1, 1],
-                    [1, 1, 1, 0],
-                    [1, 1, 0, 0],
-                ]),
-                ("gray2", [
-                    [1, 1],
-                    [1, 0],
-                ]),
-                ("gray3", [
-                    [0, 1, 1, 1],
-                    [1, 1, 1, 0],
-                    [0, 1, 0, 0],
-                ]),
-                ("gray4", [
-                    [0, 1, 1, 1],
-                    [1, 1, 1, 0],
-                    [0, 1, 0, 0],
-                    [0, 1, 0, 0],
-                ]),
-                ("gray5", [
-                    [1, 1],
-                    [1, 0],
-                ]),
-                ("gray6", [
-                    [0, 1, 1],
-                    [1, 1, 1],
-                    [0, 1, 0],
-                ]),
-                ("gray7", [
-                    [1, 0],
-                    [1, 1],
-                ]),
-                ("gray8", [
-                    [0, 1],
-                    [1, 1],
-                ]),
-                ("gray9", [
-                    [1],
-                    [1],
-                ]),
-                ("gray10", [
-                    [0, 1, 0],
-                    [1, 1, 1],
-                    [0, 1, 0],
-                ]),
-                ("gray11", [
-                    [1, 1],
-                    [1, 0],
-                ]),
-                ("gray12", [
-                    [0, 1, 1, 0],
-                    [1, 1, 1, 1],
-                    [0, 1, 0, 0],
-                ]),
-                ("gray13", [
-                    [0, 1],
-                    [0, 1],
-                    [1, 1],
-                ]),
-                ("gray14", [
-                    [1, 1],
-                    [1, 1],
-                ]),
-                ("gray15", [
-                    [1],
-                    [1],
-                ]),
-                ("gray16", [
-                    [0, 1, 0],
-                    [1, 1, 1],
-                ]),
-                ("gray17", [
-                    [0, 1, 0],
-                    [0, 1, 1],
-                    [1, 1, 1],
-                    [0, 1, 0],
-                ]),
-                ("gray18", [
-                    [0, 0, 1, 0],
-                    [1, 1, 1, 1],
-                    [0, 1, 1, 0],
-                    [0, 0, 1, 0],
-                ]),
-                ("gray19", [
-                    [1],
-                    [1],
-                    [1],
-                ]),
-                ("gray20", [
-                    [0, 1, 0],
-                    [1, 1, 1],
-                    [0, 1, 0],
-                ]),
-                ("gray21", [
-                    [0, 0, 1, 0, 0],
-                    [0, 1, 1, 1, 1],
-                    [1, 1, 1, 1, 0],
-                    [0, 0, 1, 0, 0],
-                ]),
-                ("gray22", [
-                    [0, 1],
-                    [1, 1],
-                ]),
-                ("gray23", [
-                    [1],
-                    [1],
-                ]),
-                ("gray24", [
-                    [1, 0],
-                    [1, 1],
-                    [1, 0],
-                    [1, 1],
-                ]),
-                ("gray25", [
-                    [0, 1, 0, 0],
-                    [0, 1, 1, 1],
-                    [1, 1, 1, 0],
-                    [0, 1, 0, 0],
-                ]),
-                ("gray26", [
-                    [0, 1, 0, 0],
-                    [1, 1, 1, 1],
-                    [1, 1, 1, 0],
-                    [0, 1, 0, 0],
-                ]),
-                ("gray27", [
-                    [0, 0, 1],
-                    [0, 1, 1],
-                    [1, 1, 1],
-                    [0, 1, 1],
-                ]),
-                ("gray28", [
-                    [0, 1, 0],
-                    [1, 1, 1],
-                    [1, 1, 1],
-                ]),
-                ("gray29", [
-                    [0, 1],
-                    [1, 1],
-                ]),
-                ("gray30", [
-                    [0, 1, 0],
-                    [1, 1, 1],
-                ]),
-                ("gray31", [
-                    [1, 1, 1, 1],
-                ]),
-            ]
+            # On génère des polyminos aléatoires en fonction de la taille de la grille
+            generator = GridPolyminoGenerator(self.grid_y, self.grid_x)
+            generator.generate()
+            piece_definitions = generator.get_piece_definitions()
+
         self.nbrpieces = len(piece_definitions)
         for idx, (piece_name, shape) in enumerate(piece_definitions):
             self.pieces[piece_name] = Piece(piece_name, shape)
@@ -432,17 +327,20 @@ class IQPuzzlerInterface:
     def create_piece_button_with_preview(self, piece_name, idx):
         """
         Crée un bouton et un aperçu graphique de la pièce.
-
-        Paramètres:
-        - piece_name (str): Nom de la pièce.
-        - idx (int): Indice pour positionner le bouton dans le grid.
         """
-        row, col = divmod(idx, self.nbrpieces // 2)
+        # On va empiler les pièces sur plusieurs lignes si besoin.
+        # On va répartir sur 2 lignes minimum, sinon sur 1
+        # Si beaucoup de pièces, on utilisera idx pour faire plusieurs colonnes.
+        # On peut faire une grille adaptée.
+        # Pour plus de simplicité, on dispose les pièces sur plusieurs colonnes.
+        columns_count = max(1, min(self.nbrpieces, 12))
+        row, col = divmod(idx, columns_count)
+
         frame = tk.Frame(self.pieces_frame)
         frame.grid(row=row, column=col, padx=5, pady=5)
 
         button = tk.Button(frame, text=piece_name.capitalize(),
-                           bg=PIECE_COLORS[piece_name],
+                           bg=PIECE_COLORS.get(piece_name, "gray"),
                            command=lambda n=piece_name: self.select_piece(n))
         button.pack(side="top")
         self.pieces[piece_name].button = button
@@ -462,7 +360,7 @@ class IQPuzzlerInterface:
         canvas.delete("all")
 
         variante = piece.variantes[self.rotation_index] if self.selected_piece == piece_name else piece.variantes[0]
-        color = PIECE_COLORS[piece_name]
+        color = PIECE_COLORS.get(piece_name, "gray")
 
         for i, row in enumerate(variante):
             for j, val in enumerate(row):
@@ -608,8 +506,6 @@ class IQPuzzlerInterface:
     def start_resolution(self):
         """
         Lance la résolution du puzzle via le SolverManager.
-        Ensuite, met en place un timer pour périodiquement rafraîchir l'affichage des stats
-        et afficher la solution une fois que l'algorithme est terminé.
         """
         self.solution = []
         fixed_pieces = {}
@@ -641,14 +537,13 @@ class IQPuzzlerInterface:
 
     def update_feedback(self):
         """
-        Mise à jour continue de l'interface pendant que la résolution est en cours.
-        Appelée périodiquement via `self.root.after`.
+        Mise à jour continue de l'interface pendant la résolution.
         """
         if self.manager.running:
             stats = self.manager.get_stats()
             self.update_stats_display(stats)
 
-            self.root.after(50, self.update_feedback) # Appel récursif après 50 ms
+            self.root.after(50, self.update_feedback) 
         else:
             solutions = self.manager.get_solutions()
             if solutions:
@@ -665,8 +560,7 @@ class IQPuzzlerInterface:
 
     def display_intermediate_solution(self, current_solution):
         """
-        Affiche la solution en cours d'élaboration.
-        Utilisée pour fournir un feedback visuel continu pendant la résolution.
+        Affiche une solution intermédiaire.
         """
         self.reset_board_visuellement()
 
@@ -685,30 +579,25 @@ class IQPuzzlerInterface:
 
     def stop_resolution(self):
         """
-        Arrête la résolution en cours, que ce soit en mono ou multi-heuristique.
+        Arrête la résolution en cours.
         """
         if hasattr(self, 'manager') and self.manager:
-            # Cas mono-heuristique
             self.manager.request_stop()
             self.is_solving = False
             if hasattr(self, 'manager_thread') and self.manager_thread and self.manager_thread.is_alive():
                 self.manager_thread.join()
             self.enable_controls()
         elif hasattr(self, 'multi_manager') and self.multi_manager:
-            # Cas multi-heuristiques
             self.multi_manager.request_stop_all()
             self.is_solving = False
-            # On attend la fin de tous les threads
             for t in self.multi_manager.threads:
                 if t.is_alive():
                     t.join()
             self.enable_controls()
 
-
-
     def disable_controls(self):
         """
-        Désactive les boutons et autres contrôles pendant la résolution.
+        Désactive les contrôles pendant la résolution.
         """
         self.start_button.config(state="disabled")
         self.stop_button.config(state="normal")
@@ -724,22 +613,21 @@ class IQPuzzlerInterface:
         self.stop_button.config(state="disabled")
         self.reset_button.config(state="normal")
         for piece in self.pieces.values():
-            piece.button.config(state="normal")
+            if piece.nom not in self.placed_pieces:
+                piece.button.config(state="normal")
 
     def display_current_step(self):
         """
-        Affiche le plateau à l'étape courante de la solution.
+        Affiche la solution à l'étape courante.
         """
         self.reset_board_visuellement()
 
-        # Réaffiche les pièces initiales
         for piece_name, data in self.placed_pieces.items():
             color = PIECE_COLORS.get(piece_name, "gray")
             for position in data['positions']:
                 i, j = position
                 self.cases[i][j].configure(bg=color)
 
-        # Applique les étapes jusqu'à current_step inclus
         for step in self.solution_steps[:self.current_step + 1]:
             piece = step['piece']
             color = PIECE_COLORS.get(piece.nom, "gray")
@@ -760,7 +648,6 @@ class IQPuzzlerInterface:
             for cell in sol['cells_covered']:
                 i, j = cell
                 self.cases[i][j].configure(bg=color)
-
 
     def next_step(self):
         """
@@ -795,11 +682,6 @@ class IQPuzzlerInterface:
     def update_stats_display(self, stats=None):
         """
         Met à jour l'affichage des informations de l'algorithme (stats).
-        Peut être appelée pendant ou après l'exécution.
-        Si `stats` est None, elle interroge directement le manager pour obtenir les stats actuelles.
-
-        Paramètres:
-        - stats (dict, optional): Dictionnaire contenant les statistiques.
         """
         if stats is None and self.manager:
             stats = self.manager.get_stats()
@@ -865,17 +747,12 @@ class IQPuzzlerInterface:
 
     def update_feedback_multi(self):
         """
-        Met à jour l'interface pendant que la résolution multi-heuristique est en cours.
-        Affiche les statistiques de toutes les branches, qu'elles soient en cours ou terminées.
-        Ajoute le nom de l'heuristique gagnante une fois que l'une des branches a trouvé une solution.
+        Met à jour l'interface pendant la résolution multi-heuristique.
         """
-        # Vérifier si une branche a terminé
         finished, stats, solution, winner_heuristic = self.multi_manager.check_status()
 
-        # Collecter les stats de toutes les branches
         info_text = "Résolution en cours...\nHeuristiques testées:\n"
 
-        # Récupération des stats pour toutes les branches
         for heuristic, manager in self.multi_manager.managers:
             manager_stats = manager.get_stats()
             running = self.multi_manager.results[heuristic]["running"]
@@ -886,41 +763,33 @@ class IQPuzzlerInterface:
                 info_text += f"{manager_stats['branches_explored']} branches explorées, "
                 info_text += f"{manager_stats['branches_pruned']} branches coupées.\n"
             else:
-                # Si terminé, afficher les stats finales
                 info_text += f"Terminé. Stats finales : "
                 info_text += f"{manager_stats['placements_testes']} placements testés, "
                 info_text += f"{manager_stats['branches_explored']} branches explorées, "
                 info_text += f"{manager_stats['branches_pruned']} branches coupées.\n"
 
-        # Mettre à jour l'affichage de manière thread-safe
         self.root.after_idle(lambda: self.update_info(info_text))
 
         if not finished:
-            # Continuer la mise à jour périodique tant qu'aucune solution n'est trouvée
             self.root.after(100, self.update_feedback_multi)
         else:
-            # Une branche a trouvé une solution
             self.solution = solution
             self.solution_steps = solution
             self.current_step = -1
 
-            # Afficher les statistiques finales et la solution
             self.update_stats_display(stats)
             if winner_heuristic:
                 self.update_info(f"Solution trouvée par l'heuristique: {winner_heuristic}")
             else:
                 self.update_info("Solution trouvée (aucune heuristique identifiée).")
 
-            # Afficher la solution et réactiver les contrôles
             self.afficher_solution()
             self.enable_controls()
-
 
     def stop_resolution_multi(self):
         """
         Arrête toutes les branches de résolution en cours.
         """
-        if self.multi_solver:
-            self.multi_solver.stop_all()
+        if self.multi_manager:
+            self.multi_manager.request_stop_all()
             self.enable_controls()
-

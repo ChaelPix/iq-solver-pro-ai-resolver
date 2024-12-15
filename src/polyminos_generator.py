@@ -8,13 +8,30 @@ class GridPolyminoGenerator:
     tout en garantissant que toutes les cases de la grille sont remplies.
     """
 
-    def __init__(self, rows, cols):
+    PIECE_COLORS = {
+        "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
+        "green": "green", "white": "lightblue", "cyan": "cyan", "skyblue": "skyblue",
+        "blue": "blue", "purple": "purple", "darkred": "darkred", "pink": "pink",
+        "gray": "gray12", "magenta": "magenta2", "gold": "gold", "coral": "coral",
+        "chartreuse": "chartreuse", "darkgreen": "darkgreen", "navy": "navy", "violet": "violet",
+        "tan": "tan", "salmon": "salmon", "turquoise": "turquoise", "indigo": "indigo",
+        "chocolate": "chocolate", "orchid": "orchid", "plum": "plum", "slateblue": "slateblue",
+        "khaki": "khaki", "seagreen": "seagreen", "goldenrod": "goldenrod", "lightcoral": "lightcoral",
+        "darkorange": "darkorange", "springgreen": "springgreen", "deepskyblue": "deepskyblue",
+        "dodgerblue": "dodgerblue", "mediumorchid": "mediumorchid", "firebrick": "firebrick",
+        "darkslategray": "darkslategray", "sienna": "sienna", "mediumseagreen": "mediumseagreen",
+        "royalblue": "royalblue", "mediumpurple": "mediumpurple", "lightsteelblue": "lightsteelblue",
+        "palegreen": "palegreen", "darkmagenta": "darkmagenta"
+    }
+
+    def __init__(self, rows, cols, max_pieces=50):
         if rows < 1 or cols < 1:
             raise ValueError("Les dimensions de la grille doivent être supérieures à 1.")
         self.rows = rows
         self.cols = cols
         self.grid = [[-1 for _ in range(cols)] for _ in range(rows)]  # Grille initiale
         self.polyominos = []  # Liste des polyominos générés
+        self.max_pieces = min(max_pieces, len(self.PIECE_COLORS))
 
     def generate(self):
         """
@@ -25,7 +42,7 @@ class GridPolyminoGenerator:
 
         for i in range(self.rows):
             for j in range(self.cols):
-                if not visited[i][j]:
+                if not visited[i][j] and label < self.max_pieces:
                     size = random.randint(2, min(self.rows, self.cols))  # Taille aléatoire
                     polyomino = self._create_polymino(i, j, size, visited, label)
                     if polyomino:
@@ -121,7 +138,6 @@ class GridPolyminoGenerator:
         - list: Liste de tuples (nom, forme), où `nom` est une couleur unique et `forme` est un tableau 2D.
         """
         piece_definitions = []
-        assigned_colors = [f"gray{num}" for num in range(1, len(self.polyominos) + 1)]
 
         for idx, polyomino in enumerate(self.polyominos):
             # Déterminer la forme (dimension minimale englobante)
@@ -139,14 +155,8 @@ class GridPolyminoGenerator:
                 shape[x - min_x][y - min_y] = 1
 
             # Ajouter au résultat
-            color = assigned_colors[idx]
+            color = list(self.PIECE_COLORS.keys())[idx]
             piece_definitions.append((color, shape))
-
-        # Debug: Afficher les couleurs utilisées
-        print("\nPIECE_COLORS = {")
-        for idx, color in enumerate(assigned_colors):
-            print(f'    "{color}": "{color}",')
-        print("}\n")
 
         return piece_definitions
 
@@ -163,8 +173,9 @@ if __name__ == "__main__":
     print("Bienvenue dans le générateur de polyominos.")
     rows = int(input("Entrez le nombre de lignes: "))
     cols = int(input("Entrez le nombre de colonnes: "))
+    max_pieces = int(input("Entrez le nombre maximum de pièces (50 max): "))
 
-    generator = GridPolyminoGenerator(rows, cols)
+    generator = GridPolyminoGenerator(rows, cols, max_pieces)
     generator.generate()
     generator.display_grid()
 
