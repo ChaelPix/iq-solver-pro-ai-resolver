@@ -163,9 +163,9 @@ class IQPuzzlerInterface:
         self.reset_button = ttk.Button(self.controls_frame, text="Reset Board", command=self.reset_board, bootstyle="warning")
         self.reset_button.grid(row=3, column=2, padx=5, pady=5)
 
-        self.show_visual_feedback = tk.BooleanVar(value=False)
-        self.visual_feedback_check = ttk.Checkbutton(self.controls_frame, text="Update Interface", variable=self.show_visual_feedback)
-        self.visual_feedback_check.grid(row=5, column=0, columnspan=3, pady=5)
+        self.review_button = ttk.Button(self.controls_frame, text="Rewind all steps", command=self.review_intermediate_steps, bootstyle="primary")
+        self.review_button.grid(row=6, column=0, columnspan=3, pady=5)
+
 
         # Menu de choix heuristique
         self.heuristic_choice = tk.StringVar(value="ascender")
@@ -193,6 +193,54 @@ class IQPuzzlerInterface:
         self.manager_thread = None
         self.is_solving = False
         self.afficher_plateau()
+        self.is_animating = False
+
+    def review_intermediate_steps(self):
+        """
+        Démarre une animation pour visualiser toutes les étapes intermédiaires enregistrées.
+        """
+        if self.manager and self.manager.algo:
+            all_intermediate = self.manager.algo.stats.intermediate_steps_record
+            if all_intermediate:
+                self.solution_steps = all_intermediate
+                self.current_step = -1 
+                self.is_animating = True 
+                self.disable_controls()
+                self.stop_button.config(state="normal") 
+                self.animate_intermediate_steps()
+            else:
+                messagebox.showinfo("Info", "Aucune étape intermédiaire enregistrée.")
+        else:
+            messagebox.showinfo("Erreur", "Résolution non disponible.")
+
+
+    def animate_intermediate_steps(self):
+        """
+        Affiche les étapes intermédiaires une par une avec un délai pour simuler une animation.
+        """
+        if not self.is_animating:
+            self.enable_controls()
+            return
+
+        self.current_step += 1
+
+        if self.current_step < len(self.solution_steps):
+            step = self.solution_steps[self.current_step]
+            self.reset_board_visuellement()
+
+            for placement in step:
+                piece = placement['piece']
+                color = PIECE_COLORS.get(piece.nom, "gray")
+                for cell in placement['cells_covered']:
+                    i, j = cell
+                    self.cases[i][j].configure(bg=color)
+
+            self.root.after(5, self.animate_intermediate_steps)
+        else:
+            self.is_animating = False
+            self.enable_controls()
+
+            
 
     def update_grid_size(self):
         """
@@ -555,11 +603,6 @@ class IQPuzzlerInterface:
             stats = self.manager.get_stats()
             self.update_stats_display(stats)
 
-            if self.show_visual_feedback.get() and self.is_solving and self.manager:
-                current_steps = self.manager.get_current_solution_steps()
-                if current_steps:
-                    self.display_intermediate_solution(current_steps)
-
             self.root.after(50, self.update_feedback)
         else:
             solutions = self.manager.get_solutions()
@@ -596,8 +639,14 @@ class IQPuzzlerInterface:
 
     def stop_resolution(self):
         """
-        Arrête la résolution en cours.
+        Arrête la résolution en cours ou l'animation si elle est active.
         """
+        if self.is_animating:
+            self.is_animating = False
+            self.enable_controls()
+            messagebox.showinfo("Info", "Animation annulée.")
+            return
+
         if hasattr(self, 'manager') and self.manager:
             self.manager.request_stop()
             self.is_solving = False
@@ -611,7 +660,7 @@ class IQPuzzlerInterface:
                 if t.is_alive():
                     t.join()
             self.enable_controls()
-
+            
     def disable_controls(self):
         """
         Désactive les contrôles pendant la résolution.

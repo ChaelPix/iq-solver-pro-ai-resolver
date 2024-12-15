@@ -194,6 +194,7 @@ class AlgorithmX:
 
             solution.append(row)
             self.stats.set_current_solution_steps(solution)
+            self.stats.record_intermediate_steps(solution)
             self.stats.increment_placements_testes()
 
             columns_to_remove = [idx for idx, val in enumerate(row['row']) if val == 1]

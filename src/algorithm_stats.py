@@ -17,6 +17,7 @@ class AlgorithmStats:
     """
     def __init__(self):
         self.reset_stats()
+        self.intermediate_steps_record = []
 
     def reset_stats(self):
         """
@@ -125,3 +126,6 @@ class AlgorithmStats:
 
     def set_current_solution_steps(self, steps):
         self.current_solution_steps = [s for s in steps]
+        
+    def record_intermediate_steps(self, steps):
+        self.intermediate_steps_record.append([s for s in steps])
