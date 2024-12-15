@@ -121,4 +121,7 @@ class AlgorithmStats:
         Retourne une copie des étapes de la dernière solution trouvée.
         Chaque étape correspond à un placement d'une pièce sur le plateau.
         """
-        return self.solution_steps.copy()
+        return self.current_solution_steps.copy()
+
+    def set_current_solution_steps(self, steps):
+        self.current_solution_steps = [s for s in steps]

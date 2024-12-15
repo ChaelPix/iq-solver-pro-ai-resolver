@@ -163,6 +163,10 @@ class IQPuzzlerInterface:
         self.reset_button = ttk.Button(self.controls_frame, text="Reset Board", command=self.reset_board, bootstyle="warning")
         self.reset_button.grid(row=3, column=2, padx=5, pady=5)
 
+        self.show_visual_feedback = tk.BooleanVar(value=False)
+        self.visual_feedback_check = ttk.Checkbutton(self.controls_frame, text="Update Interface", variable=self.show_visual_feedback)
+        self.visual_feedback_check.grid(row=5, column=0, columnspan=3, pady=5)
+
         # Menu de choix heuristique
         self.heuristic_choice = tk.StringVar(value="ascender")
         ttk.OptionMenu(self.controls_frame, self.heuristic_choice, "ascender",
@@ -551,7 +555,12 @@ class IQPuzzlerInterface:
             stats = self.manager.get_stats()
             self.update_stats_display(stats)
 
-            self.root.after(50, self.update_feedback) 
+            if self.show_visual_feedback.get() and self.is_solving and self.manager:
+                current_steps = self.manager.get_current_solution_steps()
+                if current_steps:
+                    self.display_intermediate_solution(current_steps)
+
+            self.root.after(50, self.update_feedback)
         else:
             solutions = self.manager.get_solutions()
             if solutions:
