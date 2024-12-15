@@ -116,14 +116,21 @@ class IQPuzzlerInterface:
         self.grid_size_frame.grid(row=0, column=0, columnspan=3, pady=5)
 
         tk.Label(self.grid_size_frame, text="Grid Width (X):").grid(row=0, column=0, padx=5, pady=2)
-        self.grid_x_entry = tk.Entry(self.grid_size_frame, width=5)
-        self.grid_x_entry.grid(row=0, column=1, padx=5)
-        self.grid_x_entry.insert(0, str(self.grid_x))
+        self.grid_x_spinbox = tk.Spinbox(
+            self.grid_size_frame, from_=10, to=50, width=5, increment=1
+        )
+        self.grid_x_spinbox.grid(row=0, column=1, padx=5)
+        self.grid_x_spinbox.delete(0, "end")
+        self.grid_x_spinbox.insert(0, str(self.grid_x))
 
         tk.Label(self.grid_size_frame, text="Grid Height (Y):").grid(row=1, column=0, padx=5, pady=2)
-        self.grid_y_entry = tk.Entry(self.grid_size_frame, width=5)
-        self.grid_y_entry.grid(row=1, column=1, padx=5)
-        self.grid_y_entry.insert(0, str(self.grid_y))
+        self.grid_y_spinbox = tk.Spinbox(
+            self.grid_size_frame, from_=5, to=30, width=5, increment=1
+        )
+        self.grid_y_spinbox.grid(row=1, column=1, padx=5)
+        self.grid_y_spinbox.delete(0, "end")
+        self.grid_y_spinbox.insert(0, str(self.grid_y))
+
 
         self.update_grid_button = ttk.Button(self.grid_size_frame, text="Update Grid", command=self.update_grid_size)
         self.update_grid_button.grid(row=2, column=0, columnspan=2, pady=5)
@@ -189,8 +196,9 @@ class IQPuzzlerInterface:
         génère de nouvelles pièces si la taille n'est pas 5x11.
         """
         try:
-            new_x = int(self.grid_x_entry.get())
-            new_y = int(self.grid_y_entry.get())
+            new_x = int(self.grid_x_spinbox.get())
+            new_y = int(self.grid_y_spinbox.get())
+
             if new_x < 10 or new_y < 5:
                 messagebox.showerror("Erreur", "La taille minimum de la grille est 5x10 (YxX) !")
                 return
@@ -200,7 +208,7 @@ class IQPuzzlerInterface:
 
             grid_width_px = self.grid_x * 40
             grid_height_px = self.grid_y * 40 
-            side_controls_width_px = 600  
+            side_controls_width_px = 1000  
             top_margin_px = 400  
 
             new_width = max(1600, grid_width_px + side_controls_width_px + 50)  
