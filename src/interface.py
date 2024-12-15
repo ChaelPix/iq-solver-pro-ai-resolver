@@ -166,6 +166,8 @@ class IQPuzzlerInterface:
         self.review_button = ttk.Button(self.controls_frame, text="Rewind all steps", command=self.review_intermediate_steps, bootstyle="primary")
         self.review_button.grid(row=6, column=0, columnspan=3, pady=5)
 
+        self.step_progress_label = tk.Label(self.right_frame, text="", font=("Arial", 10))
+        self.step_progress_label.pack(anchor="w", padx=10, pady=5)
 
         # Menu de choix heuristique
         self.heuristic_choice = tk.StringVar(value="ascender")
@@ -220,6 +222,7 @@ class IQPuzzlerInterface:
         """
         if not self.is_animating:
             self.enable_controls()
+            self.step_progress_label.config(text="")
             return
 
         self.current_step += 1
@@ -235,7 +238,11 @@ class IQPuzzlerInterface:
                     i, j = cell
                     self.cases[i][j].configure(bg=color)
 
-            self.root.after(5, self.animate_intermediate_steps)
+            self.step_progress_label.config(
+                text=f"Step: {self.current_step + 1}/{len(self.solution_steps)}"
+            )
+
+            self.root.after(1, self.animate_intermediate_steps)
         else:
             self.is_animating = False
             self.enable_controls()
@@ -279,6 +286,7 @@ class IQPuzzlerInterface:
             self.placed_pieces = {}
             self.load_pieces() 
             self.afficher_plateau()
+            self.step_progress_label.config(text="")
         except ValueError:
             messagebox.showerror("Erreur", "Veuillez entrer des nombres valides.")
 
@@ -567,6 +575,7 @@ class IQPuzzlerInterface:
         """
         Lance la résolution du puzzle via le SolverManager.
         """
+        self.step_progress_label.config(text="")
         self.solution = []
         fixed_pieces = {}
         for piece_name, info in self.placed_pieces.items():
@@ -644,7 +653,8 @@ class IQPuzzlerInterface:
         if self.is_animating:
             self.is_animating = False
             self.enable_controls()
-            messagebox.showinfo("Info", "Animation annulée.")
+            self.step_progress_label.config(text="")
+            self.reset_board()
             return
 
         if hasattr(self, 'manager') and self.manager:
@@ -668,6 +678,7 @@ class IQPuzzlerInterface:
         self.start_button.config(state="disabled")
         self.stop_button.config(state="normal")
         self.reset_button.config(state="disabled")
+        self.update_grid_button.config(state="disabled")
         for piece in self.pieces.values():
             piece.button.config(state="disabled")
 
@@ -678,6 +689,8 @@ class IQPuzzlerInterface:
         self.start_button.config(state="normal")
         self.stop_button.config(state="disabled")
         self.reset_button.config(state="normal")
+        self.update_grid_button.config(state="normal")
+
         for piece in self.pieces.values():
             if piece.nom not in self.placed_pieces:
                 piece.button.config(state="normal")
@@ -780,6 +793,7 @@ class IQPuzzlerInterface:
                 self.cases[i][j].configure(bg="white")
 
     def start_resolution_multi(self):
+        self.step_progress_label.config(text="")
         # Construire fixed_pieces comme avant
         fixed_pieces = {}
         for piece_name, info in self.placed_pieces.items():
