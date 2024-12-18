@@ -270,8 +270,8 @@ class IQPuzzlerInterface:
             side_controls_width_px = 1000  
             top_margin_px = 400  
 
-            new_width = max(1600, grid_width_px + side_controls_width_px + 50)  
-            new_height = max(900, grid_height_px + top_margin_px + 50) 
+            new_width = max(1600, min(grid_width_px + side_controls_width_px + 50, 1920))
+            new_height = max(900, min(grid_height_px + top_margin_px + 50, 1080)) 
 
             self.root.geometry(f"{new_width}x{new_height}")
 
