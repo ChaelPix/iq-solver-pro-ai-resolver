@@ -69,24 +69,104 @@ Pour la réalisation de ce projet, nous avons utilisé les outils suivants :
 - **Gestion de version : GitHub**  
   Pour la gestion de notre projet, Github est un outil indispensable que ce soit pour le versionning, le système de branches pour nos tests, le travail collaboratif.
 
-#### II/Pieces & Tableau
+## II/ Pieces & Tableau
 
-#### Représenter les pieces et le tableau
+### Représentation des éléments du jeu
 
-Le tableau est simple à coder, une matrice de la taille du plateau, `5x11`, que l'on utilisera autant pour être manipulé 
+Le tableau est simple à représenter : c'est une matrice de la taille du plateau, `5x11`. 
 
-Pour représenter les pièces, il est nécessaire de mettre en place une <i>stratégie</i> pour que l'on puisse facilement les importer, exporter, utiliser efficacement.
-Pour cela, il est évident que l'on va utiliser des matrices, 
+```python
+class Plateau:
+    def __init__(self, lignes=5, colonnes=11):
+        self.lignes = lignes  
+        self.colonnes = colonnes  
+        self.plateau = np.zeros((lignes, colonnes), dtype=int) # remplissage du tabeau avec des 0
+```
 
-#### Placer les pieces manuellement
+Puis, pour faciliter l'intéraction avec ce dernier, nous avons ajouté 3 méthodes explicites :
 
-### III/Algo resolution
+```python
+    def placer_piece(self, piece, variante_index, position):
+    def peut_placer(self, variante, position):
+    def retirer_piece(self, piece, variante_index, position):
+```
+Ces méthodes permettent respectivement de :
 
-#### a) Recherches d'algo
+- Placer une pièce sur le plateau,
+- Vérifier si une pièce peut être placée à une position donnée,
+- Retirer une pièce précédemment placée.
 
 
+Afin de représenter les pièces, nous devons avoir le **nom** de la pièce pour la couleur, ainsi que sa **forme de base** représentée par une matrice.
 
-#### b) explications choix backtracing -> algo x knuth
+```python
+class Piece:
+    def __init__(self, nom, forme_base):
+        self.nom = nom
+        self.forme_base = np.array(forme_base)
+        self.variantes = self.generer_variantes()
+```
+
+Pour que l'algorithme puisse utiliser les variantes, nous avons implémenté une méthode qui vient retourner les **8 variantes** possibles.
+
+```python
+    def generer_variantes(self):
+        variantes = []
+        for i in range(4):  # (0°, 90°, 180°, 270°)
+            rotation = np.rot90(self.forme_base, i)
+            variantes.append(rotation)
+            # symétrie horizontale
+            symetrie = np.fliplr(rotation)
+            variantes.append(symetrie)
+
+        # sécurité pour retirer les doublons
+        variantes_uniques = []
+        for var in variantes:
+            if not any(np.array_equal(var, existante) for existante in variantes_uniques):
+                variantes_uniques.append(var)
+
+        return variantes_uniques
+```
+
+### Placer les pieces sur l'interface
+
+Désormais,  l'utilisateur doit pouvoir placer les pièces souhaitées pour son niveau. 
+L'explication complète de l'interface sera faite dans une autre partie. Ici nous nous contenterons de seulement expliquer les parties essentielles pour le placement des pièces.
+
+*explications des méthodes de la classe interface liées au placement*
+
+## III/ L'algorithme de résolution
+
+### Les recherches techniques
+
+Comme expliqué dans l'introduction, le choix d'un algorithme de type **backtracing** nous semblait pertinent. Mais c'était la seule notions que nous connaissions. Nous avons ainsi commencé à faire des recherches plus techniques afin de mieux comprendre les concepts mathématiques et informatiques associés au projet.
+
+#### Polyominos
+En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelés des "Polyominos". C'est une forme crée par des carrés connectés où chaque carré est adjacent à au moins un autre
+[Source](https://fr.wikipedia.org/wiki/Polyomino)  
+
+![screen nos polyominos]()
+*Figure 3 : Les polyominos du jeu IQ Puzzler Pro*  
+
+#### Problème de couverture exacte
+Ensuite, notre projet est à un **problème de couverture exacte**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche. 
+Ce problème est un problème **NP-complet**, c'est à dire qu’il est difficile à résoudre de manière optimale en raison de sa complexité temporelle. Trouver une solution rapide pour des instances de grande taille devient rapidement impraticable.
+
+En effet, on pourrait simplifier la complexité temporelle de notre problème tel que :
+**\(O(b^d)\)**
+où :
+**\(b\)** est le facteur de branchement, c'est-à-dire le nombre moyen de choix possibles à chaque étape (ici, les pièces à placer avec leurs variantes).
+et
+**\(d\)** est la profondeur maximale de l’arbre de recherche (ici, le nombre de pièces à placer).
+
+[Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte)
+
+![screen nos polyominos solvés]()
+*Figure 4 : Exemple de couverture des polyominos*  
+
+#### Point de départ : Algorithme X de Donald Knuth
+
+
 
 #### c) explications de l'algo 
 <i>(partie théorie soulignée de code)</i>
