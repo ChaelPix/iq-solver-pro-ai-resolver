@@ -1,5 +1,3 @@
-# NE RETIRE PAS MES COMMENTAIRES DANS LE CODE QUI SONT PRESENTS ET INDISPENSABLES POUR MON RAPPORT
-
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox, filedialog
@@ -12,7 +10,7 @@ from ttkbootstrap.constants import *
 from solve_manager import SolverManager
 from multi_solver_manager import MultiHeuristicManager
 import threading
-from polyminos_generator import GridPolyminoGenerator  # On importe la classe de génération de polyminos aléatoires
+from polyminos_generator import GridPolyminoGenerator
 
 PIECE_COLORS = {
         "red": "red", "orange": "orange", "yellow": "yellow", "lime": "lime",
@@ -59,7 +57,10 @@ class IQPuzzlerInterface:
         self.grid_x = 11
         self.grid_y = 5
         self.version = 1 if (self.grid_x == 11 and self.grid_y == 5) else 2
-
+        
+        self.stepsskipped = 1
+        self.delaysteps = 5
+        
         self.root.title("IQ Puzzler Pro Solver")
         self.root.geometry("1600x900")
 
@@ -164,15 +165,23 @@ class IQPuzzlerInterface:
         self.reset_button.grid(row=3, column=2, padx=5, pady=5)
 
         self.review_button = ttk.Button(self.controls_frame, text="Rewind all steps", command=self.review_intermediate_steps, bootstyle="primary")
-        self.review_button.grid(row=6, column=0, columnspan=3, pady=5)
+        self.review_button.grid(row=4, column=2, columnspan=3, pady=5)
 
+        self.step_cursor_label = tk.Label(self.controls_frame, text="Steps to Skip:")
+        self.step_cursor_label.grid(row=6, column=0, pady=5)
+
+        self.step_cursor = tk.Spinbox(self.controls_frame, from_=1, to=10, width=5)
+        self.step_cursor.grid(row=6, column=1, pady=5)
+        self.step_cursor.delete(0, "end")
+        self.step_cursor.insert(0, "1")
+        
         self.step_progress_label = tk.Label(self.right_frame, text="", font=("Arial", 10))
         self.step_progress_label.pack(anchor="w", padx=10, pady=5)
 
         # Menu de choix heuristique
-        self.heuristic_choice = tk.StringVar(value="ascender")
-        ttk.OptionMenu(self.controls_frame, self.heuristic_choice, "ascender",
-                    "ascender", "descender",
+        self.heuristic_choice = tk.StringVar(value="descender")
+        ttk.OptionMenu(self.controls_frame, self.heuristic_choice, "descender",
+                    "descender", "ascender",
                     "compactness", "compactness_inverse",
                     "perimeter", "perimeter_inverse",
                     "holes", "holes_inverse").grid(row=4, column=0, columnspan=3, pady=5)
@@ -209,6 +218,7 @@ class IQPuzzlerInterface:
                 self.is_animating = True 
                 self.disable_controls()
                 self.stop_button.config(state="normal") 
+                self.stepsskipped = int(self.step_cursor.get())
                 self.animate_intermediate_steps()
             else:
                 messagebox.showinfo("Info", "Aucune étape intermédiaire enregistrée.")
@@ -225,7 +235,11 @@ class IQPuzzlerInterface:
             self.step_progress_label.config(text="")
             return
 
-        self.current_step += 1
+        if len(self.solution_steps) - self.current_step >= self.stepsskipped:
+            self.current_step += self.stepsskipped
+        else:
+            self.current_step += 1
+            self.delaysteps = 50
 
         if self.current_step < len(self.solution_steps):
             step = self.solution_steps[self.current_step]
@@ -242,7 +256,7 @@ class IQPuzzlerInterface:
                 text=f"Step: {self.current_step + 1}/{len(self.solution_steps)}"
             )
 
-            self.root.after(1, self.animate_intermediate_steps)
+            self.root.after(self.delaysteps, self.animate_intermediate_steps)
         else:
             self.is_animating = False
             self.enable_controls()
