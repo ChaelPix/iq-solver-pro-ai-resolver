@@ -69,7 +69,10 @@ Pour la réalisation de ce projet, nous avons utilisé les outils suivants :
 - **Gestion de version : GitHub**  
   Pour la gestion de notre projet, Github est un outil indispensable que ce soit pour le versionning, le système de branches pour nos tests, le travail collaboratif.
 
-## II/ Pieces & Tableau
+- **Aide diverses : ChatGPT/Github Copilot**  
+  Nous avons utilisé ces outils afin de nous aider dans nos recherches comme en donnant des pistes, ou vérifiant si ce que l'on avait appris était vrai et compris. Ces outils ont aussi aidé pour la documentation python de certains modules comme pour l'interface, et la rédaction des commentaires. 
+
+## II/ Création du jeu : Pièces et Tableau
 
 ### Représentation des éléments du jeu
 
@@ -142,34 +145,213 @@ L'explication complète de l'interface sera faite dans une autre partie. Ici nou
 Comme expliqué dans l'introduction, le choix d'un algorithme de type **backtracing** nous semblait pertinent. Mais c'était la seule notions que nous connaissions. Nous avons ainsi commencé à faire des recherches plus techniques afin de mieux comprendre les concepts mathématiques et informatiques associés au projet.
 
 #### Polyominos
-En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelés des "Polyominos". C'est une forme crée par des carrés connectés où chaque carré est adjacent à au moins un autre
+En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelés des "Polyominos". C'est une forme crée par des carrés connectés où chaque carré est adjacent à au moins un autre.
 [Source](https://fr.wikipedia.org/wiki/Polyomino)  
 
 ![screen nos polyominos]()
 *Figure 3 : Les polyominos du jeu IQ Puzzler Pro*  
 
 #### Problème de couverture exacte
-Ensuite, notre projet est à un **problème de couverture exacte**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche. 
+Ensuite, notre projet est à un **problème de couverture exacte**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  [Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte) <br>
 Ce problème est un problème **NP-complet**, c'est à dire qu’il est difficile à résoudre de manière optimale en raison de sa complexité temporelle. Trouver une solution rapide pour des instances de grande taille devient rapidement impraticable.
 
-En effet, on pourrait simplifier la complexité temporelle de notre problème tel que :
-**\(O(b^d)\)**
-où :
-**\(b\)** est le facteur de branchement, c'est-à-dire le nombre moyen de choix possibles à chaque étape (ici, les pièces à placer avec leurs variantes).
-et
-**\(d\)** est la profondeur maximale de l’arbre de recherche (ici, le nombre de pièces à placer).
+En effet, on pourrait simplifier la complexité temporelle de notre problème tel que : <br> 
+**O(b^d)** <br>
+où : <br>
+**b** est le facteur de branchement, c'est-à-dire le nombre moyen de choix possibles à chaque étape (ici, les pièces à placer avec leurs variantes).<br>
+et <br>
+**d** est la profondeur maximale de l’arbre de recherche (ici, le nombre de pièces à placer).
 
-[Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte)
 
 ![screen nos polyominos solvés]()
 *Figure 4 : Exemple de couverture des polyominos*  
 
 #### Point de départ : Algorithme X de Donald Knuth
 
+L’algorithme X, proposé par Donald Knuth, est conçu pour résoudre des **problèmes de couverture exacte**. Dans notre projet, il permet de déterminer les placements valides des pièces sur le plateau du jeu IQ Puzzler Pro tout en respectant les contraintes du puzzle.
+
+##### 1 - Condition d'une solution trouvée  
+
+La première étape de l'algorithme consiste à vérifier si la matrice de contraintes est vide. Une matrice vide indique que toutes les contraintes ont été satisfaites, donc une solution a été trouvée.  
+
+```python
+if not matrix:  # si la matrice est vide
+    validator = SolutionValidator(self.pieces, self.plateau)
+    if validator.validate_solution(solution):  # on vérifie la solution
+        self.solutions.append(solution.copy())  # on ajoute notre solution trouvée
+        return True
+    return False
+```
+
+- La méthode `validate_solution` de la classe SolutionValidator est utilisée pour s'assurer que la solution est correcte :
+    - Il vérifie que chaque pièce est utilisée une seule fois.
+    - Il vérifie qu'aucune cellule n'est couverte par deux pièces (pas de chevauchement).
+    - Il vérifie que toutes les cellules du plateau sont couvertes (solution complète).
+- Si une solution est valide, elle est ajoutée à la liste des solutions.
+    - Note : Notre classe est prévue pour lister toutes les solutions possibles. Cependant, dans le contexte de notre projet où nous devons trouver qu'une solution au puzzle, depuis une classe extérieure, nous demandons d'arrêter l'algorithme dès la première solution trouvée.
+
+##### 2 - Sélection d'une colonne avec MRV (Minimum Remaining Values)
+
+Si la matrice n'est pas vide, l'algorithme sélectionne une colonne. Nous utilisons l’heuristique **MRV (Minimum Remaining Values)**, qui choisit la colonne ayant le moins d'options possibles.   
+Cette approche vise à réduire l’espace de recherche en choisissant en priorité les contraintes les plus difficiles à satisfaire.
+
+**Fonctionnement**
+
+La méthode `select_min_column` compte, pour chaque colonne, le nombre de lignes qui la couvrent. La colonne avec le plus petit nombre est sélectionnée, car elle représente la contrainte la plus restrictive.
+
+Admettons une matrice de contraintes où :  
+- Les colonnes représentent des cellules du plateau.  
+- Les lignes représentent des placements possibles.  
+
+| Lignes / Colonnes | A | B | C | D |
+|--------------------|---|---|---|---|
+| Placement 1       | 1 | 0 | 1 | 0 |
+| Placement 2       | 0 | 1 | 1 | 0 |
+| Placement 3       | 0 | 0 | 1 | 1 |
+
+- La colonne A est couverte par 1 ligne.  
+- La colonne B est couverte par 1 ligne.  
+- La colonne C est couverte par 3 lignes.  
+- La colonne D est couverte par 1 ligne.  
+
+L'heuristique MRV choisit une colonne parmi A, B, ou D, car elles ont le moins de lignes associées.
+
+```python
+def select_min_column(self, matrix, header):
+    """
+    Sélectionne la colonne avec le moins d'options (heuristique MRV).
+    """
+    counts = [0] * len(header)  # compteur par colonne
+
+    # parcourt la matrice pour compter les couvertures par colonne
+    for row in matrix:
+        for idx, val in enumerate(row['row']):
+            if val == 1:
+                counts[idx] += 1  # incrémente le compteur pour chaque occurrence
+
+    # remplace les colonnes non couvertes par une valeur infinie
+    counts = [c if c > 0 else float('inf') for c in counts]
+
+    # sélectionnne la colonne avec le minimum d'options
+    m = min(counts)
+    if m == float('inf'):  # Si aucune colonne n'est disponible
+        return None
+    return counts.index(m)  # Retourne l'indice de la colonne choisie
+```
+
+Si aucune colonne n’est couverte, cela signifie que la matrice est incohérente, et l'algorithme retourne `None` pour faire un retour arrière.
+```python
+column = self.select_min_column(matrix, header)  # sélectionne la colonne la plus contraignante
+if column is None:  # aucune colonne n'est disponible : retour en arrière
+    return False
+```
+
+##### 3 - Exploration les lignes couvrant la colonne sélectionnée  
+
+Une fois une colonne choisie, l’algorithme identifie toutes les lignes qui couvrent cette colonne. Chaque ligne correspond à un placement possible pour une pièce. L'algorithme essaye ces placements un par un.  
+
+```python
+rows_to_cover = [row for row in matrix if row['row'][column] == 1]  # récupère les lignes couvrant la colonne
+```
+
+Un tri des lignes peut être effectué pour prioriser les options les plus probables :  
+
+```python
+def prioritize_rows(self, rows):
+    rows.sort(key=lambda r: -self.piece_weights[r['piece'].nom])  # Tri décroissant par poids
+    return rows
+```
+
+Chaque ligne est ensuite testée :  
+
+```python
+for row in rows_to_cover:
+    solution.append(row)  # ajout de la ligne à la solution actuelle
+    new_matrix = self.cover_columns(matrix, columns_to_remove, row)  # réduction de la matrice
+
+    if self.algorithm_x(new_matrix, header, solution):  # Appel récursif
+        return True
+    solution.pop()  # Retour arrière
+```
+
+---
+
+##### 4 - Réduction de la matrice  
+
+Après avoir choisi une ligne (un placement), l’algorithme réduit la matrice en supprimant :  
+1. Toutes les colonnes couvertes par cette ligne.  
+2. Toutes les lignes conflictuelles (celles qui couvrent les mêmes colonnes).  
+
+```python
+def cover_columns(self, matrix, columns_to_remove, selected_row):
+    new_matrix = []
+    for r in matrix:
+        if r == selected_row:  # ignore la ligne sélectionnée
+            continue
+        if all(r['row'][idx] == 0 for idx in columns_to_remove):  # conserve les lignes non conflictuelles
+            new_matrix.append(r)
+    return new_matrix
+```
+- Si la colonne A est couverte par la ligne sélectionnée, toutes les lignes contenant A sont supprimées.  
+
+### Implémentation complète
+
+```python
+def algorithm_x(self, matrix, header, solution):
+    # Étape 1 : Vérification de solution
+    if not matrix:  # si la matrice est vide
+        validator = SolutionValidator(self.pieces, self.plateau)
+        if validator.validate_solution(solution):  # Valide la solution trouvée
+            self.solutions.append(solution.copy())  # Ajoute la solution ce qui déclanchera la fin dans notre projet.
+            return True
+        return False # retour arrière
+
+    # Étape 2 : Sélectionner une colonne (heuristique MRV)
+    column = self.select_min_column(matrix, header)
+    if column is None:  # Aucune colonne disponible
+        return False # retour arrière
+
+    # Étape 3 : Récupérer les lignes couvrant la colonne
+    rows_to_cover = [row for row in matrix if row['row'][column] == 1]
+    rows_to_cover = self.prioritize_rows(rows_to_cover)  # Tri optionnel des lignes
+
+    for row in rows_to_cover:  # Tester chaque ligne
+        solution.append(row)  # Ajouter le placement à la solution
+        columns_to_remove = [idx for idx, val in enumerate(row['row']) if val == 1]
+        new_matrix = self.cover_columns(matrix, columns_to_remove, row)  # Réduire la matrice
+
+        # Étape 4 : Appel récursif
+        if self.algorithm_x(new_matrix, header, solution):
+            return True
+        solution.pop()  # Retour arrière si échec
+
+    return False  # retour arrière
+```
+
+![Différents niveaux solvés]()
+![Différents niveaux solvés]()
+![Différents niveaux solvés]()
 
 
-#### c) explications de l'algo 
-<i>(partie théorie soulignée de code)</i>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 #### d) ajout de l'"exploration de zones vides"
 
