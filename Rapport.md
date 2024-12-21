@@ -166,11 +166,11 @@ et <br>
 ![screen nos polyominos solvés]()
 *Figure 4 : Exemple de couverture des polyominos*  
 
-#### Point de départ : Algorithme X de Donald Knuth
+### Point de départ : Algorithme X de Donald Knuth
 
 L’algorithme X, proposé par Donald Knuth, est conçu pour résoudre des **problèmes de couverture exacte**. Dans notre projet, il permet de déterminer les placements valides des pièces sur le plateau du jeu IQ Puzzler Pro tout en respectant les contraintes du puzzle.
 
-##### 1 - Condition d'une solution trouvée  
+#### 1 - Condition d'une solution trouvée  
 
 La première étape de l'algorithme consiste à vérifier si la matrice de contraintes est vide. Une matrice vide indique que toutes les contraintes ont été satisfaites, donc une solution a été trouvée.  
 
@@ -190,7 +190,7 @@ if not matrix:  # si la matrice est vide
 - Si une solution est valide, elle est ajoutée à la liste des solutions.
     - Note : Notre classe est prévue pour lister toutes les solutions possibles. Cependant, dans le contexte de notre projet où nous devons trouver qu'une solution au puzzle, depuis une classe extérieure, nous demandons d'arrêter l'algorithme dès la première solution trouvée.
 
-##### 2 - Sélection d'une colonne avec MRV (Minimum Remaining Values)
+#### 2 - Sélection d'une colonne avec MRV (Minimum Remaining Values)
 
 Si la matrice n'est pas vide, l'algorithme sélectionne une colonne. Nous utilisons l’heuristique **MRV (Minimum Remaining Values)**, qui choisit la colonne ayant le moins d'options possibles.   
 Cette approche vise à réduire l’espace de recherche en choisissant en priorité les contraintes les plus difficiles à satisfaire.
@@ -246,7 +246,7 @@ if column is None:  # aucune colonne n'est disponible : retour en arrière
     return False
 ```
 
-##### 3 - Exploration les lignes couvrant la colonne sélectionnée  
+#### 3 - Exploration les lignes couvrant la colonne sélectionnée  
 
 Une fois une colonne choisie, l’algorithme identifie toutes les lignes qui couvrent cette colonne. Chaque ligne correspond à un placement possible pour une pièce. L'algorithme essaye ces placements un par un.  
 
@@ -274,9 +274,7 @@ for row in rows_to_cover:
     solution.pop()  # Retour arrière
 ```
 
----
-
-##### 4 - Réduction de la matrice  
+#### 4 - Réduction de la matrice  
 
 Après avoir choisi une ligne (un placement), l’algorithme réduit la matrice en supprimant :  
 1. Toutes les colonnes couvertes par cette ligne.  
@@ -293,8 +291,6 @@ def cover_columns(self, matrix, columns_to_remove, selected_row):
     return new_matrix
 ```
 - Si la colonne A est couverte par la ligne sélectionnée, toutes les lignes contenant A sont supprimées.  
-
-### Implémentation complète
 
 ```python
 def algorithm_x(self, matrix, header, solution):
@@ -333,31 +329,179 @@ def algorithm_x(self, matrix, header, solution):
 ![Différents niveaux solvés]()
 
 
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
+### Optimisations
 
-#### d) ajout de l'"exploration de zones vides"
+Pour améliorer les performances de l'algorithme X, nous avons intégré des stratégies d'optimisation. Ces ajouts permettent de réduire l’espace de recherche, de prioriser des placements et d’effectuer un pruning (coupure) des branches non valides.
 
-#### e) ajout d'heuristiques
+---
 
-- Plusieurs heurestiques se présentent à nous, par rapport à la taille des pièces, leur compacité, si elles possèdes 'trous' par exemple une pièce en U : ':.:' où l'on peut placer une pièce que le U entourera.
+#### Exploration des zones vides
+
+L’exploration des zones est un élément clé dans l'optimisation de notre algorithme. L'objectif est d'identifier des configurations intermédiaires qui rendent impossible la résolution du puzzle. Cela permet un pruning (coupure) des branches non valides, améliorant ainsi la rapidité de l'algorithme.
+
+En effet, à chaque nouveau placement, nous vérifions s'il n'existe pas de zone vide (trous) impossibles à remplir avec les polyominos restants afin de directement couper la branche invalide.
+
+---
+
+**Test de la solution :**  
+La méthode `apply_solution_to_plateau` applique les placements actuels à une copie du plateau, marquant les cellules occupées.
+
+```python
+def apply_solution_to_plateau(self, solution):
+    """
+    Applique la solution actuelle à un plateau temporaire pour simuler l'état.
+    
+    Paramètres :
+    - solution : Liste des placements effectués.
+
+    Retourne :
+    - plateau_temp : Copie du plateau avec les cellules occupées.
+    """
+    plateau_temp = np.copy(self.plateau.plateau)  # Copie de l'état actuel du plateau
+    for sol in solution:
+        for cell in sol['cells_covered']:  # Marque les cellules occupées par la solution
+            i, j = cell
+            plateau_temp[i, j] = 1
+    return plateau_temp
+```
+
+---
+
+**Identification des zones vides :**  
+Les zones vides sont détectées en explorant le plateau temporaire pour identifier les cellules contiguës non occupées. La méthode `explore_zone` utilise un parcours en largeur (BFS) pour regrouper les cellules d’une même zone.
+
+```python
+def get_empty_zones(self, plateau_temp):
+    """
+    Identifie les zones vides (ensembles de cellules contiguës non occupées).
+
+    Paramètres :
+    - plateau_temp : Plateau temporaire avec la solution appliquée.
+
+    Retourne :
+    - empty_zones : Liste des zones vides, chaque zone étant une liste de cellules (i, j).
+    """
+    visited = set()  # Ensemble pour suivre les cellules déjà explorées
+    empty_zones = []  # Liste des zones vides identifiées
+    for i in range(self.plateau.lignes):
+        for j in range(self.plateau.colonnes):
+            if plateau_temp[i, j] == 0 and (i, j) not in visited:  # Cellule vide non visitée
+                zone = self.explore_zone(plateau_temp, i, j, visited)  # Explore la zone
+                empty_zones.append(zone)  # Ajoute la zone à la liste
+    return empty_zones
+```
+
+```python
+def explore_zone(self, plateau_temp, i, j, visited):
+    """
+    Parcours une zone vide en partant d'une cellule initiale.
+
+    Paramètres :
+    - plateau_temp : Plateau temporaire.
+    - i, j : Coordonnées de la cellule de départ.
+    - visited : Ensemble des cellules déjà explorées.
+
+    Retourne :
+    - zone : Liste des cellules formant la zone vide explorée.
+    """
+    queue = [(i, j)]  # Initialisation de la file pour BFS
+    visited.add((i, j))  # Marque la cellule comme visitée
+    zone = [(i, j)]  # Liste des cellules de la zone actuelle
+    while queue:
+        ci, cj = queue.pop(0)  # Récupère la cellule actuelle
+        for ni, nj in [(ci+1, cj), (ci-1, cj), (ci, cj+1), (ci, cj-1)]:  # Directions (haut, bas, gauche, droite)
+            if 0 <= ni < self.plateau.lignes and 0 <= nj < self.plateau.colonnes:
+                if plateau_temp[ni, nj] == 0 and (ni, nj) not in visited:  # Cellule vide non visitée
+                    visited.add((ni, nj))  # Marque comme visitée
+                    queue.append((ni, nj))  # Ajoute à la file
+                    zone.append((ni, nj))  # Ajoute à la zone
+    return zone
+```
+
+---
+
+**Validation des zones :**  
+Une fois les zones vides identifiées, elles sont comparées aux tailles des pièces restantes. Si une zone ne peut pas être comblée exactement, la branche est coupée.
+
+```python
+def has_unfillable_voids(self, solution):
+    """
+    Vérifie si une solution partielle conduit à des zones impossibles à remplir.
+
+    Paramètres :
+    - solution : Liste des placements actuels.
+
+    Retourne :
+    - bool : True si une zone est impossible à remplir, False sinon.
+    """
+    plateau_temp = self.apply_solution_to_plateau(solution)  # Applique la solution courante
+    empty_zones = self.get_empty_zones(plateau_temp)  # Identifie les zones vides
+    remaining_sizes = [np.count_nonzero(self.pieces[p].forme_base) for p in remaining_pieces]  # Tailles des pièces restantes
+
+    for zone in empty_zones:
+        zone_size = len(zone)  # Taille de la zone vide
+        if zone_size in self.zone_cache:  # Vérifie dans le cache si cette taille est comblable
+            if not self.zone_cache[zone_size]:
+                return True  # Zone non comblable détectée
+        else:
+            possible = self.is_zone_fillable(zone_size, remaining_sizes)  # Vérifie via subset sum
+            self.zone_cache[zone_size] = possible  # Met à jour le cache
+            if not possible:
+                return True
+    return False
+```
+
+---
+
+**Vérification via la somme des sous-ensembles : *Subset Sum***
+
+L’objectif de cette étape est de vérifier si une zone vide de taille donnée peut être comblée par une combinaison de tailles des pièces restantes. Cette vérification repose sur une approche de **programmation dynamique**, appelée *Subset Sum*, qui détermine si une somme spécifique (taille de la zone) peut être atteinte avec les éléments d’un ensemble (tailles des pièces restantes).
+
+**Tableau dynamique (`dp`)** :  
+- `dp[i]` est `True` si une combinaison de pièces permet de former une zone de taille `i`.
+ - Initialisation : `dp[0] = True` (une zone de taille 0 peut toujours être remplie).  
+
+**Mise à jour du tableau** :  
+- Pour chaque taille de pièce, le tableau est mis à jour de manière descendante (du plus grand vers 0). Cela évite de compter plusieurs fois une même pièce.
+
+**Résultat final** :  
+Si `dp[zone_size]` est `True`, la zone est comblable. Sinon, elle ne peut pas être remplie exactement.
+
+```python
+def can_fill_zone(self, zone_size, piece_sizes):
+    """
+    Vérifie si une zone de taille donnée peut être comblée par une combinaison des pièces restantes.
+
+    Paramètres :
+    - zone_size : Taille de la zone vide.
+    - piece_sizes : Liste des tailles (nombre de cellules) des pièces restantes.
+
+    Retourne :
+    - bool : True si la zone est remplissable exactement, False sinon.
+    """
+    dp = [False] * (zone_size + 1)  # initialisation du tableau dynamique
+    dp[0] = True
+
+    for size in piece_sizes:
+        for i in range(zone_size, size - 1, -1):  # Parcours descendant pour éviter les doublons
+            dp[i] = dp[i] or dp[i - size]  # TRUE si (taille actuelle - taille de la pièce) est atteignable
+
+    return dp[zone_size]
+```
+
+**Exemple :**
+- Zone vide : taille 7.  
+- Pièces restantes : tailles [2, 3, 6].  
+
+1. Initialisation : `dp = [True, False, False, False, False, False, False, False]`.  
+2. Ajout de la pièce 2 : `dp = [True, False, True, False, False, False, False, False]`.  
+3. Ajout de la pièce 3 : `dp = [True, False, True, True, False, True, False, False]`.  
+4. Ajout de la pièce 6 : `dp = [True, False, True, True, False, True, True, True]`.  
+5. `dp[7] = True`. La zone peut être remplie avec les pièces [2, 3, 2].  
+
+#### Heuristiques : Poids des pièces
+
+Dans l'introduction, nous avions expliqué qu'il était plus efficace de commencer par les pièces les plus grandes. De cette observation, nous avons implémenter un choix de prorisation des placements des pièces. Nous définissons un poids à chaque polyomino selon la priorité choisie: 
 
 |Heuristique|Priorité|
 |:--|:---|
@@ -370,15 +514,67 @@ def algorithm_x(self, matrix, header, solution):
 |holes	             |Pièces avec peu de trous internes.|
 |holes_inverse       |Pièces avec plus de trous internes.|
 
+```python
+def calculate_piece_weights(self, heuristic="ascender"):
+    weights = {}
+    #pour chaque piece
+    for piece in self.pieces.values():
+        if not hasattr(piece, 'forme_base') or piece.forme_base is None:
+            weights[piece.nom] = float('inf')
+            continue
 
+        occupied_cells = np.count_nonzero(piece.forme_base)  # nombre de cellules occupées.
+        if occupied_cells == 0:
+            weights[piece.nom] = float('inf')
+            continue
 
-#### f) ajout multi-threading pour résolution boostée comme le cervô de Traïan
+        # calcul des critères
+        shape = piece.forme_base
+        height, width = shape.shape
+        compactness = min(height, width) / max(height, width)  # Ratio compact.
+        perimeter = np.sum(np.pad(shape, pad_width=1, mode='constant', constant_values=0) != 0) - occupied_cells
+        holes = np.sum(shape == 0)  # zones vides dans la forme.
 
+        #assignation du poid selon le type choisi.
+        if heuristic == "ascender":
+            weights[piece.nom] = 1 / occupied_cells
+        elif heuristic == "descender":
+            weights[piece.nom] = occupied_cells
+        elif heuristic == "compactness":
+            weights[piece.nom] = compactness
+        elif heuristic == "compactness_inverse":
+            weights[piece.nom] = 1 / (compactness + 1e-6)
+        elif heuristic == "perimeter":
+            weights[piece.nom] = 1 / perimeter if perimeter > 0 else float('inf')
+        elif heuristic == "perimeter_inverse":
+            weights[piece.nom] = perimeter
+        elif heuristic == "holes":
+            weights[piece.nom] = 1 / (holes + 1)
+        elif heuristic == "holes_inverse":
+            weights[piece.nom] = holes
+        else:
+            raise ValueError(f"Unknown heuristic: {heuristic}")
+    return weights
+```
+![meme niveau avec chaque heuristic]()
+![meme niveau avec chaque heuristic]()
+![meme niveau avec chaque heuristic]()
+![meme niveau avec chaque heuristic]()
+![meme niveau avec chaque heuristic]()
+![meme niveau avec chaque heuristic]()
+![meme niveau avec chaque heuristic]()
+![meme niveau avec chaque heuristic]()
+![meme niveau avec chaque heuristic]()
 
+### Projet réussi : Résolution de niveaux de IQ Puzzler Pro
 
-### IV/Interface
+![démo niveau avec stats]()
+![démo niveau avec stats]()
+![démo niveau avec stats]()
 
-L'interface est une interface TKinter Basique, une grille (plateau) affichée dynamiquement et dont chaque cases possède des fonctions, des boutons appelant des fonctions et une TextBox pour afficher les résultats de l'algorithme dont le temps d'éxécution.
+## IV/Interface
+
+L'explication de cette partie permet de comprendre l'utilisation de notre classe AlgorithmX. 
 
 #### a) Classes indépendantes explications
 
