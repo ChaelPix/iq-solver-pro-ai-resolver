@@ -37,7 +37,7 @@ Les niveaux du jeu sont répartis en plusieurs paliers de difficulté croissante
 #### Classes
 Voici une représentation de notre projet sous forme de diagramme UML de classes, afin de montrer une vue d’ensemble sur la conception et la structure globale.  
 
-![Diagramme UML de classe]()  
+![Diagramme UML de classe](img/diagclass.png)  
 *Figure 1 : Diagramme de classes UML du projet*  
 
 Nous avons veillé à bien séparer la logique algorithmique de l’interface utilisateur. Cette séparation permet de réutiliser l’interface dans d’autres contextes, indépendamment de l’algorithme. 
@@ -45,16 +45,21 @@ Nous avons veillé à bien séparer la logique algorithmique de l’interface ut
 L’algorithme lui-même a été structuré en plusieurs classes afin de segmenter les différents modules qui le composent afin d'une meilleure facilité de maintenance et de compréhension.
 
 #### Séquences  
-Voici une représentation des interactions entre les différents acteurs et composants de notre projet, illustrée par un diagramme UML de séquences.  
+Voici une représentation des interactions entre les différentes classes de notre projet, illustrée par un diagramme UML de séquences.  
 
-![Diagramme UML de séquence]()  
+![Diagramme UML de séquence](img/diagseq.png)    
 *Figure 2 : Diagramme de séquence UML du projet*  
 
 #### États et transitions  
-Enfin, pour mieux comprendre le déroulement principal de notre programme, voici un diagramme d’états et de transitions.
+Enfin, pour mieux comprendre le déroulement principal de notre programme, voici un diagramme d’états et de transitions simplifié.
 
-![Diagramme UML d’états et transitions]()  
+![Diagramme UML d’états et transitions](img/diagtransitions.png)  
 *Figure 3 : Diagramme d’états et transitions UML du projet*  
+
+Nous avons 3 états principaux :
+- Le début : L'utilisateur choisit de placer les pièces.
+- La résolution : L'algorithme cherche la solution.
+- La fin : Affichage du résultat.
 
 ### Les outils utilisés
 
@@ -148,7 +153,7 @@ Comme expliqué dans l'introduction, le choix d'un algorithme de type **backtrac
 En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelés des "Polyominos". C'est une forme crée par des carrés connectés où chaque carré est adjacent à au moins un autre.
 [Source](https://fr.wikipedia.org/wiki/Polyomino)  
 
-![screen nos polyominos]()
+![screen nos polyominos](img/iqpolyominos.png)
 *Figure 3 : Les polyominos du jeu IQ Puzzler Pro*  
 
 #### Problème de couverture exacte
@@ -163,7 +168,7 @@ et <br>
 **d** est la profondeur maximale de l’arbre de recherche (ici, le nombre de pièces à placer).
 
 
-![screen nos polyominos solvés]()
+![screen nos polyominos solvés](img/iqsolve.png)  
 *Figure 4 : Exemple de couverture des polyominos*  
 
 ### Point de départ : Algorithme X de Donald Knuth
@@ -582,9 +587,13 @@ L'explication de cette partie permet de comprendre l'utilisation de notre classe
 
 #### c) interface
 
-### V/ Benchmarks pour flex nos stats
+#### d) récupérer les stats
 
-### VI/Pour aller plus loin
+
+### V/ Benchmarks : Analyse des performances
+
+
+### VI/ Pour aller plus loin : Augmentation de la grille
 
 Pour voir si l'algorithme fonctionnait même avec d'autres pièces et d'autres tailles de plateau, on a premièrement découpé manuellement un plateau `6x12` pour faire 14 pièces de formes différentes. Une fois cela fait on a utilisé l'éditeur de pièces <u>editor.py</u>. Et après avoir ajouté les pièces dans le tableau `pieces_definitions` le programme marchait déjà
 
@@ -603,7 +612,7 @@ Pour voir si l'algorithme fonctionnait même avec d'autres pièces et d'autres t
 
 #### d) Drop the Mike.
 
-### VII/Projet Annexes
+### VII/Projet Annexes non aboutis
 
 #### a) Tests Réseau neuronal
 
