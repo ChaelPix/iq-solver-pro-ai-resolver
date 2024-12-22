@@ -789,7 +789,7 @@ class IQPuzzlerInterface:
 
             info_text = (
                 f"Temps écoulé: {elapsed_time:.2f} s\n"
-                f"Calculs effectués: {calculs}\n"
+                #f"Calculs effectués: {calculs}\n"
                 f"Placements testés: {placements_testes}\n"
                 f"Branches explorées: {branches_explored}\n"
                 f"Branches coupées: {branches_pruned}\n"

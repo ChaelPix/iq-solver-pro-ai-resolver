@@ -561,21 +561,37 @@ def calculate_piece_weights(self, heuristic="ascender"):
             raise ValueError(f"Unknown heuristic: {heuristic}")
     return weights
 ```
-![meme niveau avec chaque heuristic]()
-![meme niveau avec chaque heuristic]()
-![meme niveau avec chaque heuristic]()
-![meme niveau avec chaque heuristic]()
-![meme niveau avec chaque heuristic]()
-![meme niveau avec chaque heuristic]()
-![meme niveau avec chaque heuristic]()
-![meme niveau avec chaque heuristic]()
-![meme niveau avec chaque heuristic]()
+
+Analysons les résultats pour un niveau.
+
+![meme niveau avec chaque heuristic](img/heuristics_benchmark.jpg)
+*Figure : Un même niveau résolu avec les différentes heuristiques*
+
+![stats heuristic](img/heuristiques_stats.png)
+*Figure : Comparaison Temps et nombre de placements testés entre chaque heuristique*
+
+On remarque des différences notables, montrant que notre choix d'incorporer ces heuristiques est une stratégie effiace et pertinente.
+De manière générale, l'heuristique "Descender" est la plus effiace, c'est celles qui vient placer les plus grandes pièces en premier. Cependant, comme tout heuristique, qui sert à guider le résultat, cette dernière peut ne pas être la plus efficace dans certains cas.
+
+### Avant / Après optimisations
+
+Pour commencer, comparons la version optimisée et la version de départ.
+
+![Niveau de ref](img/lvl39.jpg)  
+*Figure : Niveau difficulté "Wizard" du jeu.*
+![avant opti](img/lvl39_noopti.png)  
+*Figure : Résolution de la grille avant optimisation.*
+![apres](img/lvl39_opti.png)  
+*Figure : Résolution de la grille après optimisation.*
+
+Comparons les différences :
+- Temps : Cette valeur est très différente car nous avons retiré l'affichage de la résolution de la grille en temps réel afin de gagner en performance. Nous enregistrons désormais chaque placement dans une liste afin de rejouer les étapes une fois la résolution finie.
+- Placements testés : Cette valeur est important, et nous voyons ici que nous avons réduit de moitié (145 vs 73). Les optimisations sont donc efficaceS.
 
 ### Projet réussi : Résolution de niveaux de IQ Puzzler Pro
 
-![démo niveau avec stats]()
-![démo niveau avec stats]()
-![démo niveau avec stats]()
+Nous avons désormais montré que notre projet était fonctionnel, il est capable de résoudre des niveaux en quelques millisecondes de manière efficace.
+Avec une base de projet solide, nous avons souhaité aller plus loin. Pour cela, nous allons rapidement expliqué certains points clés de l'interface. 
 
 ## IV/Interface
 
@@ -588,10 +604,6 @@ L'explication de cette partie permet de comprendre l'utilisation de notre classe
 #### c) interface
 
 #### d) récupérer les stats
-
-
-### V/ Benchmarks : Analyse des performances
-
 
 ### VI/ Pour aller plus loin : Augmentation de la grille
 
@@ -613,6 +625,8 @@ Pour voir si l'algorithme fonctionnait même avec d'autres pièces et d'autres t
 #### d) Drop the Mike.
 
 ### VII/Projet Annexes non aboutis
+
+
 
 #### a) Tests Réseau neuronal
 
