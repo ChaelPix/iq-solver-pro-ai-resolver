@@ -54,6 +54,7 @@ Voici une représentation des interactions entre les différentes classes de not
 Enfin, pour mieux comprendre le déroulement principal de notre programme, voici un diagramme d’états et de transitions simplifié.
 
 ![Diagramme UML d’états et transitions](img/diagtransitions.png)  
+
 *Figure 3 : Diagramme d’états et transitions UML du projet*  
 
 Nous avons 3 états principaux :
@@ -154,7 +155,7 @@ En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelé
 [Source](https://fr.wikipedia.org/wiki/Polyomino)  
 
 ![screen nos polyominos](img/iqpolyominos.png)
-*Figure 3 : Les polyominos du jeu IQ Puzzler Pro*  
+*Figure 4 : Les polyominos du jeu IQ Puzzler Pro*  
 
 #### Problème de couverture exacte
 Ensuite, notre projet est à un **problème de couverture exacte**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  [Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte) <br>
@@ -169,7 +170,7 @@ et <br>
 
 
 ![screen nos polyominos solvés](img/iqsolve.png)  
-*Figure 4 : Exemple de couverture des polyominos*  
+*Figure 5 : Exemple de couverture des polyominos*  
 
 ### Point de départ : Algorithme X de Donald Knuth
 
@@ -329,9 +330,15 @@ def algorithm_x(self, matrix, header, solution):
     return False  # retour arrière
 ```
 
-![Différents niveaux solvés]()
-![Différents niveaux solvés]()
-![Différents niveaux solvés]()
+Maintenant, testons notre algorithme :
+
+<img src="img/lvl3.png" width="75%" alt="lvl3 solvé">
+
+*Figure : Niveau 3 du jeu solvé*
+
+<img src="img/lvl39b.png" width="75%" alt="lvl39 solvé">
+
+*Figure : Niveau 39 du jeu solvé*
 
 
 ### Optimisations
@@ -567,7 +574,8 @@ Analysons les résultats pour un niveau.
 ![meme niveau avec chaque heuristic](img/heuristics_benchmark.jpg)
 *Figure : Un même niveau résolu avec les différentes heuristiques*
 
-![stats heuristic](img/heuristiques_stats.png)
+<img src="img/heuristiques_stats.png" width="80%" alt="description">  
+
 *Figure : Comparaison Temps et nombre de placements testés entre chaque heuristique*
 
 On remarque des différences notables, montrant que notre choix d'incorporer ces heuristiques est une stratégie effiace et pertinente.
@@ -577,12 +585,8 @@ De manière générale, l'heuristique "Descender" est la plus effiace, c'est cel
 
 Pour commencer, comparons la version optimisée et la version de départ.
 
-![Niveau de ref](img/lvl39.jpg)  
-*Figure : Niveau difficulté "Wizard" du jeu.*
-![avant opti](img/lvl39_noopti.png)  
-*Figure : Résolution de la grille avant optimisation.*
-![apres](img/lvl39_opti.png)  
-*Figure : Résolution de la grille après optimisation.*
+![Niveau de ref](img/lvl39_comp.jpg)  
+*Figure : Comparaison résolution d'un niveau*
 
 Comparons les différences :
 - Temps : Cette valeur est très différente car nous avons retiré l'affichage de la résolution de la grille en temps réel afin de gagner en performance. Nous enregistrons désormais chaque placement dans une liste afin de rejouer les étapes une fois la résolution finie.
