@@ -1,17 +1,45 @@
 # Rapport IA41 : IQ Puzzler Pro
 
-[toc]
+<!-- TOC -->
 
-*– un rappel de l'énoncé du problème,
-– votre spécification (formalisation) du problème,
-– l'analyse du problème,
-– la méthode proposée, avec en annexe le listing du programme commenté,
-– la description détaillée d'une ou de plusieurs situations traitées par votre programme,
-– les résultats obtenus par votre programme sur ces situations,
-– les difficultés éventuellement rencontrées,
-– les améliorations possibles (méthodes de résolution) et
-– les perspectives d'ouverture possibles du sujet traité.*
+- [Rapport IA41 : IQ Puzzler Pro](#rapport-ia41--iq-puzzler-pro)
+    - [I/ Présentation du projet](#i-pr%C3%A9sentation-du-projet)
+        - [Contextualisation](#contextualisation)
+        - [Vue globale du projet](#vue-globale-du-projet)
+            - [Classes](#classes)
+            - [Séquences](#s%C3%A9quences)
+            - [États et transitions](#%C3%A9tats-et-transitions)
+        - [Les outils utilisés](#les-outils-utilis%C3%A9s)
+    - [II/ Création du jeu : Pièces et Tableau](#ii-cr%C3%A9ation-du-jeu--pi%C3%A8ces-et-tableau)
+        - [Représentation des éléments du jeu](#repr%C3%A9sentation-des-%C3%A9l%C3%A9ments-du-jeu)
+        - [Placer les pieces sur l'interface](#placer-les-pieces-sur-linterface)
+    - [III/ L'algorithme de résolution](#iii-lalgorithme-de-r%C3%A9solution)
+        - [Les recherches techniques](#les-recherches-techniques)
+            - [Polyominos](#polyominos)
+            - [Problème de couverture exacte](#probl%C3%A8me-de-couverture-exacte)
+        - [Point de départ : Algorithme X de Donald Knuth](#point-de-d%C3%A9part--algorithme-x-de-donald-knuth)
+            - [- Condition d'une solution trouvée](#--condition-dune-solution-trouv%C3%A9e)
+            - [- Sélection d'une colonne avec MRV Minimum Remaining Values](#--s%C3%A9lection-dune-colonne-avec-mrv-minimum-remaining-values)
+            - [- Exploration les lignes couvrant la colonne sélectionnée](#--exploration-les-lignes-couvrant-la-colonne-s%C3%A9lectionn%C3%A9e)
+            - [- Réduction de la matrice](#--r%C3%A9duction-de-la-matrice)
+        - [Optimisations](#optimisations)
+            - [Pruning : Exploration des zones vides](#pruning--exploration-des-zones-vides)
+            - [Heuristiques : Poids des pièces](#heuristiques--poids-des-pi%C3%A8ces)
+        - [Avant / Après optimisations](#avant--apr%C3%A8s-optimisations)
+        - [Projet réussi : Résolution de niveaux de IQ Puzzler Pro](#projet-r%C3%A9ussi--r%C3%A9solution-de-niveaux-de-iq-puzzler-pro)
+    - [IV/Interface](#ivinterface)
+        - [Lancer la résolution](#lancer-la-r%C3%A9solution)
+        - [Interface changeable](#interface-changeable)
+        - [Limitations de notre interface](#limitations-de-notre-interface)
+    - [VI/ Pour aller plus loin : Augmentation de la grille](#vi-pour-aller-plus-loin--augmentation-de-la-grille)
+            - [Algorithme de découpe de grille en polyominos](#algorithme-de-d%C3%A9coupe-de-grille-en-polyominos)
+            - [Démonstrations de résolutions de grilles](#d%C3%A9monstrations-de-r%C3%A9solutions-de-grilles)
+            - [Limitations de notre outil & Améliorations possibles](#limitations-de-notre-outil--am%C3%A9liorations-possibles)
+    - [VII/Projet Annexes non aboutis](#viiprojet-annexes-non-aboutis)
+        - [Réseau neuronal](#r%C3%A9seau-neuronal)
+        - [Portabilité CUDA](#portabilit%C3%A9-cuda)
 
+<!-- /TOC -->
 
 ## I/ Présentation du projet
 
@@ -26,7 +54,7 @@ Nous avons identifié trois questions fondamentales à résoudre dans ce context
 
 Pour débuter, nous avons commandé le jeu afin de l’explorer concrètement : pour manipuler les pièces, comprendre leurs interactions et résoudre manuellement plusieurs niveaux. Cela nous à permis de réfléchir aux problématiques liées à la représentation du jeu, à la résolution et d’identifier des stratégies potentiellement efficaces.
 
-Nous avons choisi de concentrer notre travail sur le mode de jeu principal, qui repose sur une grille de 5 x 11 cases et des pièces avec chacune 8 variantes possibles (rotations et symétries incluses).
+Nous avons choisi de concentrer notre travail sur le mode de jeu principal, qui repose sur une grille de 5 x 11 cases et 12 pièces avec chacune 8 variantes possibles (rotations et symétries incluses).
 
 Les niveaux du jeu sont répartis en plusieurs paliers de difficulté croissante. Grâce à nos essais pratiques et à des recherches en ligne auprès de forums de passionnés, nous avons constaté que la résolution humaine reposait sur la même stratégie : tester différentes configurations en plaçant d’abord les pièces les plus grandes, souvent le long des bords ou autour des éléments déjà positionnés.
 
@@ -116,7 +144,7 @@ class Piece:
         self.variantes = self.generer_variantes()
 ```
 
-Pour que l'algorithme puisse utiliser les variantes, nous avons implémenté une méthode qui vient retourner les **8 variantes** possibles.
+Pour que l'algorithme puisse utiliser les variantes, nous avons implémenté une méthode qui vient retourner les **8 variantes** possibles. Selon les pièces, une variante peut redonner la même forme qu'une autre variante précédemment calculée. De ce fait, nous enlevons à la fin les doublons pour éviter la redondance de calculs.
 
 ```python
     def generer_variantes(self):
@@ -128,7 +156,7 @@ Pour que l'algorithme puisse utiliser les variantes, nous avons implémenté une
             symetrie = np.fliplr(rotation)
             variantes.append(symetrie)
 
-        # sécurité pour retirer les doublons
+        # retire les doublons
         variantes_uniques = []
         for var in variantes:
             if not any(np.array_equal(var, existante) for existante in variantes_uniques):
@@ -155,7 +183,7 @@ En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelé
 [Source](https://fr.wikipedia.org/wiki/Polyomino)  
 
 ![screen nos polyominos](img/iqpolyominos.png)
-*Figure 4 : Les polyominos du jeu IQ Puzzler Pro*  
+*Figure 4 : Les 12 polyominos du jeu IQ Puzzler Pro*  
 
 #### Problème de couverture exacte
 Ensuite, notre projet est à un **problème de couverture exacte**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  [Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte) <br>
@@ -334,20 +362,20 @@ Maintenant, testons notre algorithme :
 
 <img src="img/lvl3.png" width="75%" alt="lvl3 solvé">
 
-*Figure : Niveau 3 du jeu solvé*
+*Figure : Niveau 3 du jeu solvé en 25 placements testés*
 
 <img src="img/lvl39b.png" width="75%" alt="lvl39 solvé">
 
-*Figure : Niveau 39 du jeu solvé*
+*Figure : Niveau 39 du jeu solvé en 145 placements testés*
 
 
 ### Optimisations
 
-Pour améliorer les performances de l'algorithme X, nous avons intégré des stratégies d'optimisation. Ces ajouts permettent de réduire l’espace de recherche, de prioriser des placements et d’effectuer un pruning (coupure) des branches non valides.
+Pour améliorer les performances de l'algorithme X, nous avons intégré des stratégies d'optimisation. Ces ajouts permettent de réduire l’espace de recherche, de prioriser des placements et d’effectuer un **pruning** (coupure) des branches non valides.
 
 ---
 
-#### Exploration des zones vides
+#### Pruning : Exploration des zones vides
 
 L’exploration des zones est un élément clé dans l'optimisation de notre algorithme. L'objectif est d'identifier des configurations intermédiaires qui rendent impossible la résolution du puzzle. Cela permet un pruning (coupure) des branches non valides, améliorant ainsi la rapidité de l'algorithme.
 
@@ -513,18 +541,20 @@ def can_fill_zone(self, zone_size, piece_sizes):
 
 #### Heuristiques : Poids des pièces
 
-Dans l'introduction, nous avions expliqué qu'il était plus efficace de commencer par les pièces les plus grandes. De cette observation, nous avons implémenter un choix de prorisation des placements des pièces. Nous définissons un poids à chaque polyomino selon la priorité choisie: 
+Dans l'introduction, nous avions expliqué qu'il était plus efficace de commencer par les pièces les plus grandes. De cette observation, nous avons implémenter un choix de prorisation des placements des pièces. Nous définissons un poids à chaque polyomino selon la priorité choisie : 
 
 |Heuristique|Priorité|
 |:--|:---|
-|ascender            |Petites pièces.|
-|descender           |Grandes pièces.|
+|ascender            |Petites pièces (air).|
+|descender           |Grandes pièces (air).|
 |compactness	     |Pièces compactes.|
 |compactness_inverse |Pièces non compactes (grandes disparités largeur/hauteur)|
 |perimeter	         |Petits périmètres.|
 |perimeter_inverse   |Grands périmètres.|
 |holes	             |Pièces avec peu de trous internes.|
 |holes_inverse       |Pièces avec plus de trous internes.|
+
+Certaines des heuristiques du tableau ne semblent pour le moment non pertinentes pour les pièces du IQ Puzzler Pro. Cependant, elles se réveleront utiles dans une partie suivante.
 
 ```python
 def calculate_piece_weights(self, heuristic="ascender"):
@@ -601,38 +631,99 @@ Avec une base de projet solide, nous avons souhaité aller plus loin. Pour cela,
 
 L'explication de cette partie permet de comprendre l'utilisation de notre classe AlgorithmX. 
 
-#### a) Classes indépendantes explications
+### Lancer la résolution
 
-#### b) bridge vers interface
+La classe de l'interface contient de nombreuses méthodes, mais seulement une nous intéresse : `start_resolution()`. Cette dernière intéragit avec le stack gérant l'algorithme :
+```python
+    def start_resolution(self):
+        # reinitialise les variables précédentes
+        self.step_progress_label.config(text="") 
+        self.solution = []
 
-#### c) interface
+        # ajoute les pieces placees comme pieces fixes
+        fixed_pieces = {}
+        for piece_name, info in self.placed_pieces.items():
+            fixed_pieces[piece_name] = {
+                'variante_index': info['variante_index'],
+                'position': info['position']
+            }
 
-#### d) récupérer les stats
+        # cree un nouvel objet Plateau pour le solver
+        plateau_copy = Plateau()
+        plateau_copy.lignes = self.grid_y
+        plateau_copy.colonnes = self.grid_x
+        plateau_copy.plateau = np.copy(self.plateau.plateau)
+        heuristic = self.heuristic_choice.get()
 
-### VI/ Pour aller plus loin : Augmentation de la grille
+        # lance la résolution
+        self.manager = SolverManager(
+            plateau_copy,
+            self.pieces,
+            heuristic,
+            fixed_pieces
+        )
+
+        # desactive l'interaction de certains controls
+        self.disable_controls()
+        self.is_solving = True
+
+        # manager lance dans un thread
+        self.manager_thread = threading.Thread(target=self.manager.run)
+        self.manager_thread.start()
+        self.update_feedback()
+```
+
+Pour lancer une résolution, il suffit simplement de donner les paramètres attendus par la SolverManager :
+```python
+        # lance la résolution
+        self.manager = SolverManager(
+            plateau_copy, # objet Plateau
+            self.pieces,  # dictionnaire des pièces à placer
+            heuristic,    # string du nom heuristique
+            fixed_pieces  # dictionnaire des pièces placées (optionnel)
+        )
+```    
+
+Nous lançons la résolution dans un thread à part afin de pouvoir récupérer dans le thread principal de l'interface les statistiques et le temps écoulé en direct.
+
+```python
+        # manager lance dans un thread
+        self.manager_thread = threading.Thread(target=self.manager.run)
+        self.manager_thread.start()
+```
+
+### Interface changeable
+
+Ainsi, nous avons vu que le lancement de la résolution est très simple à utiliser. En effet, nous avons choisi une architecture de classes modulaires dans le cas où nous voulions changer l'interface.
+
+![Diagramme UML de séquence](img/diagseq2.png)    
+*Figure : Diagramme de séquence UML simplifié du projet* 
+
+Dans cette architecture, nous pouvons facilement choisir une autre librairie python, ou alors créer une passerelle vers un autre langage permettant plus de possibilité que Tkinter. 
+
+### Limitations de notre interface
+
+En effet, une fois la résolution optimisée fonctionnelle, nous avons voulu encore augmenter l'efficacité de notre algorithme en utilisant le multi-threading. Cependant, il est très difficile d'exploiter le multi-threading avec Tkinter. Malgré le fait que l'interface soit censée être indépendante, nous avons rencontré de nombreuses difficultés à faire fonctionner le parallélisme de notre algorithme.
+
+Si nous devions refaire l'interface en C++, nous aurions bien plus de facilité à intégrer le multi-threading car ce langage permet une meilleure gestion du parallélisme.
+
+## VI/ Pour aller plus loin : Augmentation de la grille
 
 Pour voir si l'algorithme fonctionnait même avec d'autres pièces et d'autres tailles de plateau, on a premièrement découpé manuellement un plateau `6x12` pour faire 14 pièces de formes différentes. Une fois cela fait on a utilisé l'éditeur de pièces <u>editor.py</u>. Et après avoir ajouté les pièces dans le tableau `pieces_definitions` le programme marchait déjà
 
 ![quadrillage 6x12](https://hackmd.io/_uploads/rJ1t7DNNkl.png)
 
-#### 1) Grilles et Pièces non conventionnelles
+#### Algorithme de découpe de grille en polyominos
 
-**Test avec algo polyomnio et taille 400x5000 ?**
+#### Démonstrations de résolutions de grilles
 
-#### a) contexte explication
-<i>test avec grille différentes et pièces différentes</i>
+#### Limitations de notre outil & Améliorations possibles
 
-#### b) challenge de grille customizable + algo découpe pièces aléaoires
+## VII/Projet Annexes non aboutis
 
-#### c) on est des GOATS et on peut tout résoudre
+Voici quelques idées que nous avions eu pour aller plus loin dans la conception de la résolution du jeu.
 
-#### d) Drop the Mike.
-
-### VII/Projet Annexes non aboutis
-
-
-
-#### a) Tests Réseau neuronal
+### Réseau neuronal
 
 L'un des objectifs abandonnés était d'avoir un réseau neuronnal qui pourrait jouer tout seul, le principe était de lui donner une pièce à placer (ou plutôt une variante) ainsi que le plateau `5x11` et d'attendre en sortie le tableau avec la pièce placée.
 Cette ambition vaine du fait de la <i>complexité</i> du projet et de l'entraînement nécessaire pour que le réseau neuronal puisse placer les pièces aux bons endroits, sans qu'il n'y ait de modification du plateau initial ni de faux positifs : 2 pièces superposées
@@ -642,7 +733,7 @@ Plusieurs logiciels étaient disponibles mais nécessitaient une license, ou n'�
 Le problème avec les réseaux neuronnaux est qu'il est assez difficile de construire le réseau de la bonne manière, de sorte à pouvoir lui transmettre des données et une couche finale qui donne un résultat exploitable par un intermédiaire (si l'on voulait exploiter le réseau en temps réel une fois entraîné).
 Vient aussi le problème de l'entraînement, il aurait fallu beaucoup de données sûres, et un temps d'entraînement assez faible pour pouvoir tester ses performances et modifier le réseau en temps restraint. Ce projet a été abandonné dans les quelques semaines après le début du projet, et nous ne l'avons pas abordé à nouveau depuis.
 
-#### b) Portabilité CUDA
+### Portabilité CUDA
 
 `Cuda` est un langage de programmation lancé en 2007 par `NVIDIA` permettant de faire des calculs sur sa carte graphique.
 

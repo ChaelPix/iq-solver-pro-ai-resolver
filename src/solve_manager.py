@@ -16,11 +16,11 @@ class SolverManager:
     Paramètres:
     - plateau (Plateau): Copie du plateau initial.
     - pieces (dict): Dictionnaire des pièces {nom: Piece}.
-    - heuristic_ascender (bool): Heuristique pour l'ordre des pièces.
+    - heuristic_choice (string): Heuristique pour l'ordre des pièces.
     - fixed_pieces (dict): Pièces pré-placées, optionnel.
 
     Utilisation:
-    manager = SolverManager(plateau_copy, pieces, heuristic_ascender, fixed_pieces)
+    manager = SolverManager(plateau_copy, pieces, heuristic_choice, fixed_pieces)
     manager.run()
     while manager.is_running():
         stats = manager.get_stats()

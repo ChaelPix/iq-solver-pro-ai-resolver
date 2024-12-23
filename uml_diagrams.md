@@ -1,48 +1,11 @@
 https://www.plantuml.com/
 
-# class
-@startuml
-!define RECTANGLE class
-skinparam linetype ortho
-skinparam padding 5
-skinparam roundcorner 5
-skinparam class {
-    BackgroundColor white
-    ArrowColor black
-    BorderColor black
-}
-RECTANGLE Piece {
-}
+<!-- TOC -->
 
-RECTANGLE ZoneChecker {
-}
+- [seq](#seq)
+- [seq 2](#seq-2)
 
-RECTANGLE SolverManager {
-}
-
-RECTANGLE SolutionValidator {
-}
-
-RECTANGLE GridPolyminoGenerator {
-}
-
-RECTANGLE Plateau {
-}
-
-RECTANGLE MultiHeuristicManager {
-}
-
-RECTANGLE ConstraintMatrixBuilder {
-}
-
-RECTANGLE AlgorithmStats {
-}
-
-RECTANGLE AlgorithmX {
-}
-
-RECTANGLE IQPuzzlerInterface {
-}
+<!-- /TOC -->
 
 ZoneChecker o--> Plateau
 ZoneChecker o--> Piece
@@ -76,26 +39,29 @@ IQPuzzlerInterface o--> Plateau
 IQPuzzlerInterface o--> Piece
 @enduml
 
-
 # seq
 @startuml
 title IQ Solver Pro - Séquence de résolution
 
 actor User
 participant "IQPuzzlerInterface" as UI
+participant "Piece" as PC 
+participant "Plateau" as PL
 participant "SolverManager" as SM
 participant "AlgorithmX" as AX
-participant "Plateau" as PL
 participant "ConstraintMatrixBuilder" as CMB
 participant "ZoneChecker" as ZC
-participant "Piece" as PC 
 participant "SolutionValidator" as SV
 participant "AlgorithmStats" as AS
 
+UI->PL : Plateau(5,11)
 User -> UI: Place les pièces
+UI -> PC: get_piece()
+PC --> UI: piece
+UI -> PL: peut_placer()
+
 User -> UI: start_resolution()
 activate UI
-
     UI -> SM: run()
     activate SM
     
@@ -130,6 +96,41 @@ activate UI
     AX --> SM: solution
     deactivate AX
     
+    SM -> AS: get_stats()
+    AS --> SM: stats
+ 
+    SM --> UI: update_display()
+    deactivate SM
+
+
+UI --> User: display_solution()
+deactivate UI
+@enduml
+
+# seq 2
+@startuml
+title IQ Solver Pro - Séquence de résolution
+
+actor User
+participant "IQPuzzlerInterface" as UI
+participant "Piece" as PC 
+participant "Plateau" as PL
+participant "SolverManager" as SM
+
+UI->PL : Plateau(5,11)
+User -> UI: Place les pièces
+UI -> PC: get_piece()
+PC --> UI: piece
+UI -> PL: peut_placer()
+
+User -> UI: start_resolution()
+activate UI
+    UI -> SM: run()
+    activate SM
+    
+
+    SM -> SM: gestion algo
+ 
     SM --> UI: update_display()
     deactivate SM
 
