@@ -33,6 +33,7 @@
         - [Limitations de notre interface](#limitations-de-notre-interface)
     - [VI/ Pour aller plus loin : Augmentation de la grille](#vi-pour-aller-plus-loin--augmentation-de-la-grille)
             - [Algorithme de découpe de grille en polyominos](#algorithme-de-d%C3%A9coupe-de-grille-en-polyominos)
+            - [Algorithme de découpe de grille en polyominos](#algorithme-de-d%C3%A9coupe-de-grille-en-polyominos)
             - [Démonstrations de résolutions de grilles](#d%C3%A9monstrations-de-r%C3%A9solutions-de-grilles)
             - [Limitations de notre outil & Améliorations possibles](#limitations-de-notre-outil--am%C3%A9liorations-possibles)
     - [VII/Projet Annexes non aboutis](#viiprojet-annexes-non-aboutis)
@@ -709,15 +710,294 @@ Si nous devions refaire l'interface en C++, nous aurions bien plus de facilité 
 
 ## VI/ Pour aller plus loin : Augmentation de la grille
 
-Pour voir si l'algorithme fonctionnait même avec d'autres pièces et d'autres tailles de plateau, on a premièrement découpé manuellement un plateau `6x12` pour faire 14 pièces de formes différentes. Une fois cela fait on a utilisé l'éditeur de pièces <u>editor.py</u>. Et après avoir ajouté les pièces dans le tableau `pieces_definitions` le programme marchait déjà
+Nous avons eu l'idée que notre algorithme était conçu pour résoudre n'importe quelle configuration de polyominos sur une grille de taille x et y variable. Alors, nous avons premièrement découpé manuellement un plateau `6x12` pour faire 14 pièces de formes différentes. Nous avons implémenté ces pièces dans notre programme, et lancé la résolution.
 
-![quadrillage 6x12](https://hackmd.io/_uploads/rJ1t7DNNkl.png)
+![quadrillage 6x12](img/nvgrille.png)
+
+*Figure : Grille découpée en 14 polyominos*
+
+On a lancé la résolution sans aucune pièce placée.
+
+![avant 6x12](img/nvgrille_start.png)
+*Figure : Nouvelle grille et pièces implémentées*
+
+Avec 2 heuristiques différentes (Descender, Ascender).
+![apres 6x12](img/nvgrill_resolue.jpg)
+*Figure : Résolution de la nouvelle grille*
+
+Notre hypothèse est concluante, bien que logique, nous pouvons ne pas nous limiter à la grille par défaut du jeu IQ Puzzler Pro, et ainsi s'amuser sur de plus grandes grilles.
 
 #### Algorithme de découpe de grille en polyominos
 
+Afin ne pas à avoir à créer manuellement chaque découpage, nous avons pensé à un algorithme de découpage d'une grille de taille X et Y en Z polyominos en favorisant l'unicité de ces derniers.
+
+Je vais reformuler l'explication de l'algorithme en ajoutant un pseudo-algorithme clair, des commentaires détaillés dans le code, et un exemple en texte/tableau pour illustrer le processus.
+
+
+#### Algorithme de découpe de grille en polyominos
+
+Afin de ne pas avoir à créer manuellement chaque découpage, nous avons conçu un algorithme pour découper une grille de taille X et Y en Z polyominos tout en favorisant l'unicité de ces derniers.
+
+**Procédé :**
+- On initialise une grille vide de taille X×Y.
+- Pour chaque cellule non visitée :
+   - On crée un polyomino de taille aléatoire.
+   - On étend le polyomino en ajoutant des cellules adjacentes jusqu'à atteindre la taille souhaitée.
+   - Si la taille souhaitée n'est pas atteinte, annuler le polyomino.
+- On rempli les cellules vides restantes en les assignant au plus petit polyomino voisin.
+
+
+**Exemple :**
+Grille 3x3
+
+1. **Initialisation :**
+   - Grille vide de taille 3x3.
+   - Toutes les cellules sont marquées comme non visitées.
+
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | -1| -1| -1|
+| 1 | -1| -1| -1|
+| 2 | -1| -1| -1|
+
+2. **Création du premier polyomino (A) :**
+   - Départ en (0,0).
+   - Taille aléatoire choisie : 2.
+   - Étendre à la cellule adjacente (0,1).
+
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | -1|
+| 1 | -1| -1| -1|
+| 2 | -1| -1| -1|
+
+3. **Création du deuxième polyomino (B) :**
+   - Départ en (0,2).
+   - Taille aléatoire choisie : 3.
+   - Étendre à la cellule adjacente (1,2), puis (1,1).
+
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | B |
+| 1 | -1| B | B |
+| 2 | -1| -1| -1|
+
+4. **Création du troisième polyomino (C) :**
+   - Départ en (1,0).
+   - Taille aléatoire choisie : 3.
+   - Étendre à la cellule adjacente (2,0), puis (2,1).
+
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | B |
+| 1 | C | B | B |
+| 2 | C | C | -1|
+
+5. **Création du quatrième polyomino (D) :**
+   - Départ en (2,2).
+   - Taille aléatoire choisie : 2.
+   - Pas d'extension possible, taille non atteinte.
+
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | B |
+| 1 | C | B | B |
+| 2 | C | C | -1|
+
+6. **Fusion des cases vides adjacentes**
+    - Dans l'ordre, on vérifie les cases adjacentes vides.
+
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | B |
+| 1 | C | B | B |
+| 2 | C | C | B |
+
+**Implémentation :**
+
+1. **Initialisation :** Création d'une grille vide et d'une liste pour stocker les polyominos générés.
+
+```python
+def __init__(self, rows, cols, max_pieces=50):
+    self.rows = rows
+    self.cols = cols
+    self.grid = [[-1 for _ in range(cols)] for _ in range(rows)] #-1 partout
+
+    self.polyominos = []
+    self.max_pieces = min(max_pieces, len(self.PIECE_COLORS))
+```
+
+2. **Génération des polyominos :** Pour chaque cellule non visitée, on tente de créer un nouveau polyomino de taille aléatoire.
+
+```python
+def generate(self):
+    # grille pour suivre les cellules visitées
+    visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
+    label = 0  # label pour chaque polyomino
+
+    # creation de chaque polyomino
+    for i in range(self.rows):
+        for j in range(self.cols):
+            if not visited[i][j] and label < self.max_pieces:
+                size = random.randint(2, min(self.rows, self.cols))
+                # Création du polyomino
+                polyomino = self._create_polymino(i, j, size, visited, label)
+                if polyomino:
+                    self.polyominos.append(polyomino)
+                    label += 1
+
+    # remplie les cases restantes
+    self._fill_remaining_cells()
+```
+
+3. **Création d'un polyomino :** À partir d'une position de départ, on étend le polyomino en ajoutant des cellules adjacentes jusqu'à atteindre la taille souhaitée.
+
+```python
+def _create_polymino(self, start_x, start_y, size, visited, label):
+    """
+    Crée un polyomino à partir d'une position de départ.
+
+    Paramètres:
+    - start_x (int): Ligne de départ.
+    - start_y (int): Colonne de départ.
+    - size (int): Taille souhaitée du polyomino.
+    - visited (list): Grille des cellules visitées.
+    - label (int): Étiquette du polyomino.
+
+    Retourne:
+    - list: Liste des coordonnées du polyomino ou None si impossible.
+    """
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Droite, Bas, Gauche, Haut
+    queue = deque([(start_x, start_y)])
+    polyomino = []
+
+    while queue and len(polyomino) < size:
+        x, y = queue.popleft()
+        if 0 <= x < self.rows and 0 <= y < self.cols and not visited[x][y]:
+            visited[x][y] = True
+            self.grid[x][y] = label
+            polyomino.append((x, y))
+
+            random.shuffle(directions)  # Mélange des directions pour l'aléatoire
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.rows and 0 <= ny < self.cols and not visited[nx][ny]:
+                    queue.append((nx, ny))
+
+    # Si on n'a pas pu atteindre la taille souhaitée, annuler
+    if len(polyomino) < size:
+        for x, y in polyomino:
+            visited[x][y] = False
+            self.grid[x][y] = -1
+        return None
+
+    return polyomino
+```
+
+4. **Remplissage des cases restantes :** Les cellules non assignées sont attribuées au plus petit polyomino voisin.
+
+```python
+def _fill_remaining_cells(self):
+    """
+    Remplit les cases restantes (étiquetées -1) en les assignant
+    au polyomino voisin le plus petit.
+    """
+    for i in range(self.rows):
+        for j in range(self.cols):
+            if self.grid[i][j] == -1:  # Case non assignée
+                # voisins valides
+                neighbors = self._get_neighbors(i, j)
+                if neighbors:
+                    # Trouver le polyomino le plus petit parmi les voisins
+                    neighbor_sizes = {self.grid[x][y]: len(self.polyominos[self.grid[x][y]]) for x, y in neighbors}
+                    smallest_poly_label = min(neighbor_sizes, key=neighbor_sizes.get)
+
+                    # Assigner cette case au polyomino le plus petit
+                    self.grid[i][j] = smallest_poly_label
+                    self.polyominos[smallest_poly_label].append((i, j))
+```
+
+5. **Trouver les voisins valides :** Cette méthode aide à trouver les voisins d'une cellule donnée.
+
+```python
+def _get_neighbors(self, x, y):
+    """
+    Trouve les voisins valides d'une case donnée.
+
+    Paramètres:
+    - x (int): Ligne de la case.
+    - y (int): Colonne de la case.
+
+    Retourne:
+    - list: Liste des coordonnées des voisins ayant des labels valides.
+    """
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    neighbors = []
+    for dx, dy in directions:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < self.rows and 0 <= ny < self.cols and self.grid[nx][ny] != -1:
+            neighbors.append((nx, ny))
+    return neighbors
+```
+
+Nous avons ensuite implémenter le générateur à notre interface. Voici notre toute première grille générée en 16x10 :
+
+![grille](img/16x10_start.png)
+*Figure : Pièces d'un tableau 16x10*
+
+Nous avons ensuite lancé la résolution avec à ce moment un prototype du multithreading qui lance une résolution avec chaque heuristique dans chaque thread :
+
+![16x10_solved](img/16x10_solved.png)
+*Figure : Pièces d'un tableau 16x10 solvé*
+
+L'heuristique `Descender` a essayé 6396 pour résoudre la grille vide en 5 secondes.
+
 #### Démonstrations de résolutions de grilles
 
+Nous avons ensuite ajouté des couleurs uniques à chaque pièce, puis réadapté l'interface. Nous pouvons maintenant nous amuser avec de nouvelles grilles.
+
+Reprenons une grille 16x10. En partant d'une grille vide, avec l'heuristique `Descender`, la résolution n'a testé que 37 placements.
+
+![16x10](img/coloredgrid.jpg)
+*Figure : Tableau 16x10 solvé à partir d'une grille vide*
+
+En plaçant des pièces, on va restreindre le nombre de solutions possibles, mais cela ne décourage pas notre algorithme.
+
+![16x10](img/newcolore_restrains.jpg)
+*Figure : Tableau 16x10 solvé à partir avec restrictions*
+
+Ici, il a fallu plus de 27000 placements testés, mais en 6 secondes. Ce nombre paraît grand, mais nous sommes très loin de la complexité temporelle d'un algorithme déterministe O(b^d) montrant ainsi que nos optimisations sont puissantes.
+
+![12x12](img/12x12.png)
+*Figure : Tableau 12x12 solvé à partir d'une grille vide en 1s et 4313 placements testés*
+
 #### Limitations de notre outil & Améliorations possibles
+
+![60x5](img/60x5.png)
+*Figure : Tableau 60x5 solvé à partir d'une grille vide*
+
+![60x6](img/60x6.jpg)
+*Figure : Tableau 60x6 non solvé à partir d'une grille vide : 15min et 840 000 placements testés (arrêt manuel)*
+
+Sur les **grandes grilles**, nous remarquons que la résolution atteint des **centaines de milliers** de branches explorées et que notre **exploration** de zones vides faiblit.
+
+
+Cela s'explique par plusieurs raisons :
+- Une grille grande implique une **complexité** de calcul croissante.
+- Notre **algorithme de découpage** peut générer, via l'_**aléatoire**, des pièces aux formes très complexes sur de grandes surfaces.
+- Le découpage peut créer des pièces **similaires** qui seront testées indépendamment alors qu'elles produiront un résultat identique.
+- La résolution est **mono-thread**, n'exploite qu'une fraction de la puissance de calcul disponible.
+
+![cpu6%](img/cpu6.png)
+
+*Figure : Algo ne prenant que 6% du cpu d'un processeur I9-13900HX*
+
+Les améliorations possibles seraient donc :
+- Optimiser le **découpage des polyominos** avec des contraintes sur la taille et la forme.
+- Implémenter la **détection des pièces similaires** pour éviter les calculs redondants.
+- **Paralléliser** la résolution via du **multi-threading** sur le CPU. Cependant, **Tkinter** présente des limitations pour la gestion multi-thread. Une migration vers **C++** avec SFML/TGUI (librairie graphique bas niveau) était envisagée mais le projet étant déjà bien avancé, le temps manquait pour une réécriture complète.
+
+Nous avons voulu toujours pousser plus loin les performances et les défis à résoudre. L'objectif initial était de résoudre un tableau 11x5. Ce sont des pistes d'améliorations pour rendre notre algorithme robuste à toutes situations initiales.
 
 ## VII/Projet Annexes non aboutis
 
@@ -745,3 +1025,11 @@ Mais ici il a aussi été question d'améliorer les performances jusqu'à diminu
 
 Pour résoudre ce problème, il existe une version `Python` de CUDA
 Nonobstant le potentiel remplacement de la carte graphique cramée à cause du projet, et de la potentielle taille de la grille non plus en `5x11`, mais bien en `55x121` (eh oui faut bien s'amuser) et des pièces qui ne seraient plus contraintes dans des matrices `4x4` mais pourrait adopter des dimensions moins conventionnelles (ex: `42x69`).
+
+## Conclusion 
+
+Nous avons pris plaisir à réaliser ce projet qui nous a permis de développer un solveur pour le jeu IQ Puzzler Pro. En partant de l'algorithme X de Knuth comme base, nous avons progressivement ajouté nos propres améliorations comme les heuristiques, l'exploration de zone, des optimisations par-ci par-là.
+
+Nous ne nous sommes pas arrêtés à la simple résolution du jeu. Notre curiosité nous a poussés à explorer de nouvelles possibilités comme la création de grilles personnalisées ou l'utilisation de nouveaux outils (CUDA, réseaux neuronaux, ...). Ces explorations, même si certaines n'ont pas abouti, nous ont permis d'apprendre et de comprendre de nouveaux concepts.
+
+En programmation, il y a toujours de nouvelles choses à apprendre et de nouvelles approches à explorer. Les connaissances que nous avons acquises nous serviront certainement dans nos futurs projets.
