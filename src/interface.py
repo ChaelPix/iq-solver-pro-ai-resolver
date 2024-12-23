@@ -787,7 +787,7 @@ class IQPuzzlerInterface:
 
         if stats:
             nbr_pieces = len(self.pieces)
-            nbr_variants = sum(len(piece.variantes) for piece in self.pieces.values())
+            nbr_possibilites = np.prod([len(piece.variantes) for piece in self.pieces.values()])
             elapsed_time = stats.get("time", 0)
             calculs = stats.get("calculs", 0)
             placements_testes = stats.get("placements_testes", 0)
@@ -797,7 +797,7 @@ class IQPuzzlerInterface:
 
             info_text = (
                 f"Nombre de pièces: {nbr_pieces}\n"
-                f"Nombre de variantes: {nbr_variants}\n"
+                f"Nombre de possibilités: {nbr_possibilites if nbr_possibilites < 10000000000 else "{:.2e}".format(nbr_possibilites)}\n"
                 f"Temps écoulé: {elapsed_time:.2f} s\n"
                 #f"Calculs effectués: {calculs}\n"
                 f"Placements testés: {placements_testes}\n"
