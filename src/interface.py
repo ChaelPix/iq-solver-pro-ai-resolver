@@ -58,9 +58,6 @@ class IQPuzzlerInterface:
         self.grid_y = 5
         self.version = 1 if (self.grid_x == 11 and self.grid_y == 5) else 2
         
-        self.stepsskipped = 1
-        self.delaysteps = 5
-        
         self.root.title("IQ Puzzler Pro Solver")
         self.root.geometry("1600x900")
 
@@ -186,6 +183,9 @@ class IQPuzzlerInterface:
                     "perimeter", "perimeter_inverse",
                     "holes", "holes_inverse").grid(row=4, column=0, columnspan=3, pady=5)
 
+
+
+
         # Cadre d'informations
         self.info_frame = tk.Frame(self.right_frame, relief="groove", borderwidth=2)
         self.info_frame.pack(fill="x", pady=10)
@@ -195,6 +195,9 @@ class IQPuzzlerInterface:
 
         self.info_text = tk.Text(self.info_frame, width=50, height=10, state="disabled")
         self.info_text.pack(fill="both", expand=True, padx=10, pady=5)
+        
+
+
 
         # Initialisation des variables
         self.placed_pieces = {}
@@ -205,6 +208,9 @@ class IQPuzzlerInterface:
         self.is_solving = False
         self.afficher_plateau()
         self.is_animating = False
+        self.stepsskipped = 1
+        self.delaysteps = 5
+        
 
     def review_intermediate_steps(self):
         """
@@ -780,6 +786,8 @@ class IQPuzzlerInterface:
             stats = self.manager.get_stats()
 
         if stats:
+            nbr_pieces = len(self.pieces)
+            nbr_variants = sum(len(piece.variantes) for piece in self.pieces.values())
             elapsed_time = stats.get("time", 0)
             calculs = stats.get("calculs", 0)
             placements_testes = stats.get("placements_testes", 0)
@@ -788,12 +796,15 @@ class IQPuzzlerInterface:
             max_recursion_depth = stats.get("max_recursion_depth", 0)
 
             info_text = (
+                f"Nombre de pièces: {nbr_pieces}\n"
+                f"Nombre de variantes: {nbr_variants}\n"
                 f"Temps écoulé: {elapsed_time:.2f} s\n"
                 #f"Calculs effectués: {calculs}\n"
                 f"Placements testés: {placements_testes}\n"
                 f"Branches explorées: {branches_explored}\n"
                 f"Branches coupées: {branches_pruned}\n"
                 f"Profondeur maximale de récursion: {max_recursion_depth}\n"
+                
             )
             self.update_info(info_text)
 
