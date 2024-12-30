@@ -1,17 +1,46 @@
 # Rapport IA41 : IQ Puzzler Pro
 
-[toc]
+[<!-- TOC -->
 
-*– un rappel de l'énoncé du problème,
-– votre spécification (formalisation) du problème,
-– l'analyse du problème,
-– la méthode proposée, avec en annexe le listing du programme commenté,
-– la description détaillée d'une ou de plusieurs situations traitées par votre programme,
-– les résultats obtenus par votre programme sur ces situations,
-– les difficultés éventuellement rencontrées,
-– les améliorations possibles (méthodes de résolution) et
-– les perspectives d'ouverture possibles du sujet traité.*
+- [Rapport IA41 : IQ Puzzler Pro](#rapport-ia41--iq-puzzler-pro)
+  - [I/ Présentation du projet](#i-présentation-du-projet)
+    - [Contextualisation](#contextualisation)
+    - [Vue globale du projet](#vue-globale-du-projet)
+      - [Classes](#classes)
+      - [Séquences](#séquences)
+      - [États et transitions](#états-et-transitions)
+    - [Les outils utilisés](#les-outils-utilisés)
+  - [II/ Création du jeu : Pièces et Tableau](#ii-création-du-jeu--pièces-et-tableau)
+    - [Représentation des éléments du jeu](#représentation-des-éléments-du-jeu)
+    - [Placer les pieces sur l'interface](#placer-les-pieces-sur-linterface)
+  - [III/ L'algorithme de résolution](#iii-lalgorithme-de-résolution)
+    - [Les recherches techniques](#les-recherches-techniques)
+      - [Polyominos](#polyominos)
+      - [Problème de couverture exacte](#problème-de-couverture-exacte)
+    - [Point de départ : Algorithme X de Donald Knuth](#point-de-départ--algorithme-x-de-donald-knuth)
+      - [1 - Condition d'une solution trouvée](#1---condition-dune-solution-trouvée)
+      - [2 - Sélection d'une colonne avec MRV (Minimum Remaining Values)](#2---sélection-dune-colonne-avec-mrv-minimum-remaining-values)
+      - [3 - Exploration des lignes couvrant la colonne sélectionnée](#3---exploration-des-lignes-couvrant-la-colonne-sélectionnée)
+      - [4 - Réduction de la matrice](#4---réduction-de-la-matrice)
+    - [Optimisations](#optimisations)
+      - [Pruning : Exploration des zones vides](#pruning--exploration-des-zones-vides)
+      - [Heuristiques : Poids des pièces](#heuristiques--poids-des-pièces)
+    - [Avant / Après optimisations](#avant--après-optimisations)
+    - [Projet réussi : Résolution de niveaux de IQ Puzzler Pro](#projet-réussi--résolution-de-niveaux-de-iq-puzzler-pro)
+  - [IV/Interface](#ivinterface)
+    - [Lancer la résolution](#lancer-la-résolution)
+    - [Interface changeable](#interface-changeable)
+    - [Limitations de notre interface](#limitations-de-notre-interface)
+  - [VI/ Pour aller plus loin : Augmentation des dimensions de la grille](#vi-pour-aller-plus-loin--augmentation-des-dimensions-de-la-grille)
+      - [Algorithme de découpe de grille en polyominos](#algorithme-de-découpe-de-grille-en-polyominos)
+      - [Démonstrations de résolutions de grilles](#démonstrations-de-résolutions-de-grilles)
+      - [Limitations de notre outil \& améliorations possibles](#limitations-de-notre-outil--améliorations-possibles)
+  - [VII/Projet Annexes non aboutis](#viiprojet-annexes-non-aboutis)
+    - [Réseau neuronal](#réseau-neuronal)
+    - [Portabilité CUDA](#portabilité-cuda)
+  - [Conclusion](#conclusion)
 
+<!-- /TOC -->]
 
 ## I/ Présentation du projet
 
@@ -20,32 +49,32 @@
 Le projet porte sur le jeu IQ Puzzler Pro, un puzzle assez connu dont l’objectif est de compléter des grilles en positionnant correctement des pièces de formes variées.
 
 Nous avons identifié trois questions fondamentales à résoudre dans ce contexte :  
-- **Comment représenter les différentes pièces, en tenant compte de leurs variations de rotations ?**  
-- **Comment résoudre efficacement les niveaux du jeu IQ Puzzler Pro ?**  
+- **Comment représenter les différentes pièces, en tenant compte de leurs variations possibles ?**
+- **Comment résoudre efficacement les niveaux du jeu IQ Puzzler Pro ?**
 - **Comment concevoir et implémenter un algorithme capable de résoudre automatiquement chaque niveau ?**
 
-Pour débuter, nous avons commandé le jeu afin de l’explorer concrètement : pour manipuler les pièces, comprendre leurs interactions et résoudre manuellement plusieurs niveaux. Cela nous à permis de réfléchir aux problématiques liées à la représentation du jeu, à la résolution et d’identifier des stratégies potentiellement efficaces.
+Pour débuter, nous avons commandé le jeu afin de l’explorer concrètement, l'objectif : commencer à manipuler les pièces, comprendre leurs interactions et pouvoir résoudre manuellement des niveaux du jeu initial. Cela nous à permis de réfléchir aux problématiques liées à la représentation du jeu, à la résolution et d’identifier des stratégies supposément efficaces.
 
-Nous avons choisi de concentrer notre travail sur le mode de jeu principal, qui repose sur une grille de 5 x 11 cases et des pièces avec chacune 8 variantes possibles (rotations et symétries incluses).
+Nous avons choisi de concentrer notre travail sur le mode de jeu principal, qui repose sur une grille de 5 x 11 cases et 12 pièces avec chacune au plus 8 variantes possibles (rotations et symétries incluses).
 
-Les niveaux du jeu sont répartis en plusieurs paliers de difficulté croissante. Grâce à nos essais pratiques et à des recherches en ligne auprès de forums de passionnés, nous avons constaté que la résolution humaine reposait sur la même stratégie : tester différentes configurations en plaçant d’abord les pièces les plus grandes, souvent le long des bords ou autour des éléments déjà positionnés.
+Les niveaux du jeu sont répartis en plusieurs paliers de difficultés croissantes. Grâce à nos essais pratiques et à des recherches en ligne auprès de forums de passionnés, nous avons constaté que la résolution humaine reposait sur la même stratégie : tester différentes configurations en plaçant d’abord les pièces les plus grandes, souvent le long des bords ou autour des éléments déjà positionnés.
 
-À partir de ces observations, nous avons choisi d’implémenter un algorithme de **backtracking** avec des optimisations comme l’exploration de l’espace des solutions, et des heuristiques comme la prioritisation des pièces de plus grandes tailles afin de limiter le nombre de calculs
+À partir de ces observations, nous avons choisi d’implémenter un algorithme de **backtracking** avec des optimisations comme l’exploration de l’espace des solutions, et des heuristiques comme la priorisation des pièces de plus grandes tailles afin de limiter le nombre de calculs.
 
 ### Vue globale du projet
 
 #### Classes
-Voici une représentation de notre projet sous forme de diagramme UML de classes, afin de montrer une vue d’ensemble sur la conception et la structure globale.  
+Voici une représentation de notre projet sous forme de diagramme de classes UML, afin de montrer une vue d’ensemble sur la conception et la structure globale.
 
 ![Diagramme UML de classe](img/diagclass.png)  
 *Figure 1 : Diagramme de classes UML du projet*  
 
 Nous avons veillé à bien séparer la logique algorithmique de l’interface utilisateur. Cette séparation permet de réutiliser l’interface dans d’autres contextes, indépendamment de l’algorithme. 
 
-L’algorithme lui-même a été structuré en plusieurs classes afin de segmenter les différents modules qui le composent afin d'une meilleure facilité de maintenance et de compréhension.
+L’algorithme lui-même a été structuré en plusieurs classes afin de segmenter les différents modules qui le composent pour une meilleure comprehension et lisibilité et une facilité de maintenance accrue.
 
 #### Séquences  
-Voici une représentation des interactions entre les différentes classes de notre projet, illustrée par un diagramme UML de séquences.  
+Voici une représentation des interactions entre les différentes classes de notre projet, illustrée par un diagramme de séquences UML.  
 
 ![Diagramme UML de séquence](img/diagseq.png)    
 *Figure 2 : Diagramme de séquence UML du projet*  
@@ -64,47 +93,41 @@ Nous avons 3 états principaux :
 
 ### Les outils utilisés
 
-Pour la réalisation de ce projet, nous avons utilisé les outils suivants :  
+Pour la réalisation de ce projet, nous avons utilisé les outils suivants :
 
-- **Langage de programmation : Python**  
-  Nous avions peur de ne pas avoir le temps d'assez explorer le projet et d'être découragés en utilisant le langage Prolog. Nous avons ainsi préféré choisir Python.
+- **Langage de programmation : Python**
+  Nous avions peur de ne pas avoir le temps d'assez explorer le projet et d'être découragés en utilisant le langage Prolog. Nous avons ainsi préféré choisir Python. Aussi le fait que Python ait des bibliothèques connues et efficaces, également assez facile d'utilisation pour tout ce qui est interface nous a fait préféré ce dernier. 
 
 - **Interface utilisateur : Tkinter**  
   Nous avons utilisé Tkinter pour concevoir et implémenter l’interface graphique. Afin de réaliser nos premiers tests, cet outil nous a permis de rapidement visualiser nos résultats.  Nous avons ensuite continué à développer notre classe d'interface tout au long de nos avancées, et il est finalement devenu trop tard pour envisager un changement d'interface, malgré les limites liées au multithreading.
 
 - **Gestion de version : GitHub**  
-  Pour la gestion de notre projet, Github est un outil indispensable que ce soit pour le versionning, le système de branches pour nos tests, le travail collaboratif.
+  Pour la gestion de notre projet, Github est un outil indispensable que ce soit pour le `Version Control`, le système de branches pour nos tests et le travail collaboratif.
 
 - **Aide diverses : ChatGPT/Github Copilot**  
-  Nous avons utilisé ces outils afin de nous aider dans nos recherches comme en donnant des pistes, ou vérifiant si ce que l'on avait appris était vrai et compris. Ces outils ont aussi aidé pour la documentation python de certains modules comme pour l'interface, et la rédaction des commentaires. 
+  Nous avons utilisé ces outils afin de nous aider dans nos recherches comme en donnant des pistes, ou vérifiant si ce que l'on avait appris était vrai et compris. Ces outils ont aussi aidé pour la documentation Python de certains modules comme pour l'interface, et la rédaction des commentaires. 
 
 ## II/ Création du jeu : Pièces et Tableau
 
 ### Représentation des éléments du jeu
 
-Le tableau est simple à représenter : c'est une matrice de la taille du plateau, `5x11`. 
+Le tableau est simple à représenter : c'est une matrice de la taille du plateau, `5x11`.
 
 ```python
 class Plateau:
     def __init__(self, lignes=5, colonnes=11):
         self.lignes = lignes  
         self.colonnes = colonnes  
-        self.plateau = np.zeros((lignes, colonnes), dtype=int) # remplissage du tabeau avec des 0
+        self.plateau = np.zeros((lignes, colonnes), dtype=int) # remplissage du tableau avec des 0
 ```
 
-Puis, pour faciliter l'intéraction avec ce dernier, nous avons ajouté 3 méthodes explicites :
+Puis, pour faciliter l’interaction avec ce dernier, nous avons ajouté 3 méthodes explicites :
 
 ```python
     def placer_piece(self, piece, variante_index, position):
     def peut_placer(self, variante, position):
     def retirer_piece(self, piece, variante_index, position):
 ```
-Ces méthodes permettent respectivement de :
-
-- Placer une pièce sur le plateau,
-- Vérifier si une pièce peut être placée à une position donnée,
-- Retirer une pièce précédemment placée.
-
 
 Afin de représenter les pièces, nous devons avoir le **nom** de la pièce pour la couleur, ainsi que sa **forme de base** représentée par une matrice.
 
@@ -116,7 +139,7 @@ class Piece:
         self.variantes = self.generer_variantes()
 ```
 
-Pour que l'algorithme puisse utiliser les variantes, nous avons implémenté une méthode qui vient retourner les **8 variantes** possibles.
+Pour que l'algorithme puisse utiliser les variantes, nous avons implémenté une méthode qui vient retourner les au plus **8 variantes** possibles. Selon les pièces, une variante peut redonner la même forme qu'une autre variante précédemment calculée. De ce fait, nous enlevons à la fin les doublons pour éviter la redondance de calculs.
 
 ```python
     def generer_variantes(self):
@@ -128,7 +151,7 @@ Pour que l'algorithme puisse utiliser les variantes, nous avons implémenté une
             symetrie = np.fliplr(rotation)
             variantes.append(symetrie)
 
-        # sécurité pour retirer les doublons
+        # retire les doublons
         variantes_uniques = []
         for var in variantes:
             if not any(np.array_equal(var, existante) for existante in variantes_uniques):
@@ -148,14 +171,14 @@ L'explication complète de l'interface sera faite dans une autre partie. Ici nou
 
 ### Les recherches techniques
 
-Comme expliqué dans l'introduction, le choix d'un algorithme de type **backtracing** nous semblait pertinent. Mais c'était la seule notions que nous connaissions. Nous avons ainsi commencé à faire des recherches plus techniques afin de mieux comprendre les concepts mathématiques et informatiques associés au projet.
+Comme expliqué dans l'introduction, le choix d'un algorithme de type **backtracking** nous semblait pertinent, mais c'était la seule notion que nous connaissions. Nous avons ainsi commencé à faire des recherches plus techniques afin de mieux comprendre les concepts mathématiques et informatiques associés au projet.
 
 #### Polyominos
 En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelés des "Polyominos". C'est une forme crée par des carrés connectés où chaque carré est adjacent à au moins un autre.
 [Source](https://fr.wikipedia.org/wiki/Polyomino)  
 
 ![screen nos polyominos](img/iqpolyominos.png)
-*Figure 4 : Les polyominos du jeu IQ Puzzler Pro*  
+*Figure 4 : Les 12 polyominos du jeu IQ Puzzler Pro*  
 
 #### Problème de couverture exacte
 Ensuite, notre projet est à un **problème de couverture exacte**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  [Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte) <br>
@@ -163,13 +186,13 @@ Ce problème est un problème **NP-complet**, c'est à dire qu’il est difficil
 
 En effet, on pourrait simplifier la complexité temporelle de notre problème tel que : <br> 
 **O(b^d)** <br>
-où : <br>
+où : 
 **b** est le facteur de branchement, c'est-à-dire le nombre moyen de choix possibles à chaque étape (ici, les pièces à placer avec leurs variantes).<br>
-et <br>
+et
 **d** est la profondeur maximale de l’arbre de recherche (ici, le nombre de pièces à placer).
 
 
-![screen nos polyominos solvés](img/iqsolve.png)  
+![image exemple solution](img/iqsolve.png)  
 *Figure 5 : Exemple de couverture des polyominos*  
 
 ### Point de départ : Algorithme X de Donald Knuth
@@ -189,10 +212,10 @@ if not matrix:  # si la matrice est vide
     return False
 ```
 
-- La méthode `validate_solution` de la classe SolutionValidator est utilisée pour s'assurer que la solution est correcte :
-    - Il vérifie que chaque pièce est utilisée une seule fois.
-    - Il vérifie qu'aucune cellule n'est couverte par deux pièces (pas de chevauchement).
-    - Il vérifie que toutes les cellules du plateau sont couvertes (solution complète).
+- La méthode `validate_solution` de la classe SolutionValidator est utilisée pour s'assurer que la solution est correcte en vérifiant :
+    - Que chaque pièce est utilisée une seule fois.
+    - Qu'aucune cellule n'est couverte par deux pièces (pas de chevauchement).
+    - Que toutes les cellules du plateau sont couvertes (solution complète).
 - Si une solution est valide, elle est ajoutée à la liste des solutions.
     - Note : Notre classe est prévue pour lister toutes les solutions possibles. Cependant, dans le contexte de notre projet où nous devons trouver qu'une solution au puzzle, depuis une classe extérieure, nous demandons d'arrêter l'algorithme dès la première solution trouvée.
 
@@ -207,13 +230,42 @@ La méthode `select_min_column` compte, pour chaque colonne, le nombre de lignes
 
 Admettons une matrice de contraintes où :  
 - Les colonnes représentent des cellules du plateau.  
-- Les lignes représentent des placements possibles.  
+- Les lignes représentent des placements possibles. 
 
-| Lignes / Colonnes | A | B | C | D |
-|--------------------|---|---|---|---|
-| Placement 1       | 1 | 0 | 1 | 0 |
-| Placement 2       | 0 | 1 | 1 | 0 |
-| Placement 3       | 0 | 0 | 1 | 1 |
+<table style="border-collapse: collapse; border: 2px solid rgb(140 140 140); letter-spacing: 0.5px; margin-left: 40px;">
+    <thead style = "background-color: rgb(228 240 245);">
+        <tr style = "border: 1px solid black;">
+            <th style = "text-align: center;" scope="col">Lignes / Colonnes </th>
+            <th style = "text-align: center;" scope="col">A</th>
+            <th style = "text-align: center;" scope="col">B</th>
+            <th style = "text-align: center;" scope="col">C</th>
+            <th style = "text-align: center;" scope="col">D</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr style = "border: 1px solid rgb(160 160 160); padding: 8px 10px; background-color: rgb(245, 245, 245);">
+            <td scope="row" style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">Placement 1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+        </tr>
+        <tr style = "border: 1px solid rgb(160 160 160); padding: 8px 10px; background-color: rgb(228, 240, 245)">
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;" scope="row">Placement 2</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px; ">0</td>
+        </tr>
+        <tr style = "border: 1px solid rgb(160 160 160); padding: 8px 10px; background-color: rgb(245, 245, 245);">
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;" scope="row">Placement 3</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+        </tr>
+    </tbody>
+</table>
 
 - La colonne A est couverte par 1 ligne.  
 - La colonne B est couverte par 1 ligne.  
@@ -238,7 +290,7 @@ def select_min_column(self, matrix, header):
     # remplace les colonnes non couvertes par une valeur infinie
     counts = [c if c > 0 else float('inf') for c in counts]
 
-    # sélectionnne la colonne avec le minimum d'options
+    # sélectionne la colonne avec le minimum d'options
     m = min(counts)
     if m == float('inf'):  # Si aucune colonne n'est disponible
         return None
@@ -252,7 +304,7 @@ if column is None:  # aucune colonne n'est disponible : retour en arrière
     return False
 ```
 
-#### 3 - Exploration les lignes couvrant la colonne sélectionnée  
+#### 3 - Exploration des lignes couvrant la colonne sélectionnée  
 
 Une fois une colonne choisie, l’algorithme identifie toutes les lignes qui couvrent cette colonne. Chaque ligne correspond à un placement possible pour une pièce. L'algorithme essaye ces placements un par un.  
 
@@ -304,7 +356,7 @@ def algorithm_x(self, matrix, header, solution):
     if not matrix:  # si la matrice est vide
         validator = SolutionValidator(self.pieces, self.plateau)
         if validator.validate_solution(solution):  # Valide la solution trouvée
-            self.solutions.append(solution.copy())  # Ajoute la solution ce qui déclanchera la fin dans notre projet.
+            self.solutions.append(solution.copy())  # Ajoute la solution ce qui déclenchera la fin dans notre projet.
             return True
         return False # retour arrière
 
@@ -332,22 +384,22 @@ def algorithm_x(self, matrix, header, solution):
 
 Maintenant, testons notre algorithme :
 
-<img src="img/lvl3.png" width="75%" alt="lvl3 solvé">
+<img src="img/lvl3.png" width="75%" alt="lvl3 résolu">
 
-*Figure : Niveau 3 du jeu solvé*
+*Figure : Niveau 3 du jeu résolu en 25 placements testés*
 
-<img src="img/lvl39b.png" width="75%" alt="lvl39 solvé">
+<img src="img/lvl39b.png" width="75%" alt="lvl39 résolu">
 
-*Figure : Niveau 39 du jeu solvé*
+*Figure : Niveau 39 du jeu résolu en 145 placements testés*
 
 
 ### Optimisations
 
-Pour améliorer les performances de l'algorithme X, nous avons intégré des stratégies d'optimisation. Ces ajouts permettent de réduire l’espace de recherche, de prioriser des placements et d’effectuer un pruning (coupure) des branches non valides.
+Pour améliorer les performances de l'algorithme X, nous avons intégré des stratégies d'optimisation. Ces ajouts permettent de réduire l’espace de recherche, de prioriser des placements et d’effectuer un **pruning** (coupure) des branches non valides.
 
 ---
 
-#### Exploration des zones vides
+#### Pruning : Exploration des zones vides
 
 L’exploration des zones est un élément clé dans l'optimisation de notre algorithme. L'objectif est d'identifier des configurations intermédiaires qui rendent impossible la résolution du puzzle. Cela permet un pruning (coupure) des branches non valides, améliorant ainsi la rapidité de l'algorithme.
 
@@ -513,18 +565,20 @@ def can_fill_zone(self, zone_size, piece_sizes):
 
 #### Heuristiques : Poids des pièces
 
-Dans l'introduction, nous avions expliqué qu'il était plus efficace de commencer par les pièces les plus grandes. De cette observation, nous avons implémenter un choix de prorisation des placements des pièces. Nous définissons un poids à chaque polyomino selon la priorité choisie: 
+Dans l'introduction, nous avions expliqué qu'il était plus efficace de commencer par les pièces les plus grandes. De cette observation, nous avons implémenter un choix de priorisation des placements des pièces. Nous définissons un poids à chaque polyomino selon la priorité choisie : 
 
 |Heuristique|Priorité|
 |:--|:---|
-|ascender            |Petites pièces.|
-|descender           |Grandes pièces.|
+|ascender            |Petites pièces (air).|
+|descender           |Grandes pièces (air).|
 |compactness	     |Pièces compactes.|
 |compactness_inverse |Pièces non compactes (grandes disparités largeur/hauteur)|
 |perimeter	         |Petits périmètres.|
 |perimeter_inverse   |Grands périmètres.|
 |holes	             |Pièces avec peu de trous internes.|
 |holes_inverse       |Pièces avec plus de trous internes.|
+
+Certaines des heuristiques du tableau ne semblent pour le moment non pertinentes pour les pièces du IQ Puzzler Pro. Cependant, elles se révéleront utiles dans une partie suivante.
 
 ```python
 def calculate_piece_weights(self, heuristic="ascender"):
@@ -547,7 +601,7 @@ def calculate_piece_weights(self, heuristic="ascender"):
         perimeter = np.sum(np.pad(shape, pad_width=1, mode='constant', constant_values=0) != 0) - occupied_cells
         holes = np.sum(shape == 0)  # zones vides dans la forme.
 
-        #assignation du poid selon le type choisi.
+        #assignation du poids selon le type choisi.
         if heuristic == "ascender":
             weights[piece.nom] = 1 / occupied_cells
         elif heuristic == "descender":
@@ -578,8 +632,9 @@ Analysons les résultats pour un niveau.
 
 *Figure : Comparaison Temps et nombre de placements testés entre chaque heuristique*
 
-On remarque des différences notables, montrant que notre choix d'incorporer ces heuristiques est une stratégie effiace et pertinente.
-De manière générale, l'heuristique "Descender" est la plus effiace, c'est celles qui vient placer les plus grandes pièces en premier. Cependant, comme tout heuristique, qui sert à guider le résultat, cette dernière peut ne pas être la plus efficace dans certains cas.
+On remarque des différences notables, montrant que notre choix d'incorporer ces heuristiques est une stratégie efficace et pertinente.
+De manière générale, l'heuristique "Descender" est la plus efficace, c'est celle qui vise à placer les plus grandes pièces en premier.
+Cependant, comme toute heuristique, qui sert à guider le résultat, cette dernière peut ne pas être la plus efficace dans certains cas.
 
 ### Avant / Après optimisations
 
@@ -589,62 +644,402 @@ Pour commencer, comparons la version optimisée et la version de départ.
 *Figure : Comparaison résolution d'un niveau*
 
 Comparons les différences :
-- Temps : Cette valeur est très différente car nous avons retiré l'affichage de la résolution de la grille en temps réel afin de gagner en performance. Nous enregistrons désormais chaque placement dans une liste afin de rejouer les étapes une fois la résolution finie.
-- Placements testés : Cette valeur est important, et nous voyons ici que nous avons réduit de moitié (145 vs 73). Les optimisations sont donc efficaceS.
+- Temps : Cette valeur est très différente car nous avons retiré l'affichage de la résolution de la grille en temps réel afin de gagner en performance.
+Nous enregistrons désormais chaque placement dans une liste afin de rejouer les étapes une fois la résolution finie.
+- Placements testés : Cette valeur est importante, et nous voyons ici que nous les avons réduit de moitié (145 vs 73). Les optimisations sont donc efficaces.
 
 ### Projet réussi : Résolution de niveaux de IQ Puzzler Pro
 
-Nous avons désormais montré que notre projet était fonctionnel, il est capable de résoudre des niveaux en quelques millisecondes de manière efficace.
+Nous avons désormais montré que notre projet était fonctionnel : il est capable de résoudre des niveaux en quelques (dizaines de) millisecondes de manière efficace.
 Avec une base de projet solide, nous avons souhaité aller plus loin. Pour cela, nous allons rapidement expliqué certains points clés de l'interface. 
 
 ## IV/Interface
 
 L'explication de cette partie permet de comprendre l'utilisation de notre classe AlgorithmX. 
 
-#### a) Classes indépendantes explications
+### Lancer la résolution
 
-#### b) bridge vers interface
+La classe de l'interface contient de nombreuses méthodes, mais seulement une nous intéresse : `start_resolution()`. Cette dernière interagit avec le stack gérant l'algorithme :
+```python
+    def start_resolution(self):
+        # réinitialise les variables précédentes
+        self.step_progress_label.config(text="") 
+        self.solution = []
 
-#### c) interface
+        # ajoute les pieces placées comme pieces fixes
+        fixed_pieces = {}
+        for piece_name, info in self.placed_pieces.items():
+            fixed_pieces[piece_name] = {
+                'variante_index': info['variante_index'],
+                'position': info['position']
+            }
 
-#### d) récupérer les stats
+        # Créer un nouvel objet Plateau pour le résoudre
+        plateau_copy = Plateau()
+        plateau_copy.lignes = self.grid_y
+        plateau_copy.colonnes = self.grid_x
+        plateau_copy.plateau = np.copy(self.plateau.plateau)
+        heuristic = self.heuristic_choice.get()
 
-### VI/ Pour aller plus loin : Augmentation de la grille
+        # lance la résolution
+        self.manager = SolverManager(
+            plateau_copy,
+            self.pieces,
+            heuristic,
+            fixed_pieces
+        )
 
-Pour voir si l'algorithme fonctionnait même avec d'autres pièces et d'autres tailles de plateau, on a premièrement découpé manuellement un plateau `6x12` pour faire 14 pièces de formes différentes. Une fois cela fait on a utilisé l'éditeur de pièces <u>editor.py</u>. Et après avoir ajouté les pièces dans le tableau `pieces_definitions` le programme marchait déjà
+        # désactive l'interaction de certains controls
+        self.disable_controls()
+        self.is_solving = True
 
-![quadrillage 6x12](https://hackmd.io/_uploads/rJ1t7DNNkl.png)
+        # manager lance dans un thread
+        self.manager_thread = threading.Thread(target=self.manager.run)
+        self.manager_thread.start()
+        self.update_feedback()
+```
 
-#### 1) Grilles et Pièces non conventionnelles
+Pour lancer une résolution, il suffit simplement de donner les paramètres attendus par le SolverManager :
+```python
+        # Lance la résolution
+        self.manager = SolverManager(
+            plateau_copy, # objet Plateau
+            self.pieces,  # dictionnaire des pièces à placer
+            heuristic,    # string du nom heuristique
+            fixed_pieces  # dictionnaire des pièces placées (optionnel)
+        )
+```    
 
-**Test avec algo polyomnio et taille 400x5000 ?**
+Nous lançons la résolution dans un thread à part afin de pouvoir récupérer dans le thread principal de l'interface les statistiques et le temps écoulé en direct.
 
-#### a) contexte explication
-<i>test avec grille différentes et pièces différentes</i>
+```python
+        # manager lance dans un thread
+        self.manager_thread = threading.Thread(target=self.manager.run)
+        self.manager_thread.start()
+```
 
-#### b) challenge de grille customizable + algo découpe pièces aléaoires
+### Interface changeable
 
-#### c) on est des GOATS et on peut tout résoudre
+Ainsi, nous avons vu que le lancement de la résolution est très simple à utiliser.
+En effet, nous avons choisi une architecture de classes modulaires dans le cas où nous voulions changer l'interface.
 
-#### d) Drop the Mike.
+![Diagramme UML de séquence](img/diagseq2.png)    
+*Figure : Diagramme de séquence UML simplifié du projet* 
 
-### VII/Projet Annexes non aboutis
+Dans cette architecture, nous pouvons facilement choisir une autre librairie python, ou alors créer une passerelle vers un autre langage permettant plus permissif que Tkinter. 
+
+### Limitations de notre interface
+
+En effet, une fois la résolution optimisée fonctionnelle, nous avons voulu encore augmenter l'efficacité de notre algorithme en utilisant le multi-threading.
+Cependant, il est très difficile d'exploiter le multi-threading avec Tkinter.
+Malgré le fait que l'interface soit censée être indépendante, nous avons rencontré de nombreuses difficultés à faire fonctionner le parallélisme de notre algorithme.
+
+Si nous devions refaire l'interface en C++, nous aurions bien plus de facilité à intégrer le multi-threading car ce langage permet une meilleure gestion du parallélisme.
+
+## VI/ Pour aller plus loin : Augmentation des dimensions de la grille
+
+Étant donné que le programme fonctionnait déjà pour des grilles de `5x11`, nous avons voulu tester les limites de notre algorithme.
+Notamment en augmentant la taille de la grille, et tester de résoudre n'importe quelle configuration de polyominos sur une grille de taille `x` et `y` variable.
+Alors, nous avons premièrement découpé manuellement un plateau `6x12` pour faire 14 pièces de formes différentes.
+Nous avons implémenté ces pièces dans notre programme, et lancé la résolution.
+
+![quadrillage 6x12](img/nvgrille.png)
+
+*Figure : Grille découpée en 14 polyominos*
+
+On a lancé la résolution sans aucune pièce placée.
+
+![avant 6x12](img/nvgrille_start.png)
+*Figure : Nouvelle grille et pièces implémentées*
+
+Avec 2 heuristiques différentes (Descender, Ascender).
+![apres 6x12](img/nvgrill_resolue.jpg)
+*Figure : Résolution de la nouvelle grille*
+
+Notre hypothèse est validée, bien que logique et prédictible, nous pouvons ne pas nous limiter à la grille par défaut du jeu IQ Puzzler Pro, et ainsi s'amuser sur de plus grandes grilles.
+
+#### Algorithme de découpe de grille en polyominos
+
+Afin de ne pas avoir à créer manuellement chaque découpage, nous avons conçu un algorithme pour découper une grille de taille X et Y en Z polyominos tout en favorisant l'unicité de ces derniers.
+
+**Procédé :**
+- On initialise une grille vide de taille X×Y.
+- Pour chaque cellule non visitée :
+   - On crée un polyomino de taille aléatoire.
+   - On étend le polyomino en ajoutant des cellules adjacentes jusqu'à atteindre la taille souhaitée.
+   - Si la taille souhaitée n'est pas atteinte, annuler le polyomino.
+- On rempli les cellules vides restantes en les assignant au plus petit polyomino voisin.
 
 
+**Exemple :**
+Grille 3x3
 
-#### a) Tests Réseau neuronal
+1. **Initialisation :**
+   - Grille vide de taille 3x3.
+   - Toutes les cellules sont marquées comme non visitées.
 
-L'un des objectifs abandonnés était d'avoir un réseau neuronnal qui pourrait jouer tout seul, le principe était de lui donner une pièce à placer (ou plutôt une variante) ainsi que le plateau `5x11` et d'attendre en sortie le tableau avec la pièce placée.
-Cette ambition vaine du fait de la <i>complexité</i> du projet et de l'entraînement nécessaire pour que le réseau neuronal puisse placer les pièces aux bons endroits, sans qu'il n'y ait de modification du plateau initial ni de faux positifs : 2 pièces superposées
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | -1| -1| -1|
+| 1 | -1| -1| -1|
+| 2 | -1| -1| -1|
 
-Plusieurs logiciels étaient disponibles mais nécessitaient une license, ou n'était disponible que trop peu de temps (essai gratuit).
+2. **Création du premier polyomino (A) :**
+   - Départ en (0,0).
+   - Taille aléatoire choisie : 2.
+   - Étendre à la cellule adjacente (0,1).
 
-Le problème avec les réseaux neuronnaux est qu'il est assez difficile de construire le réseau de la bonne manière, de sorte à pouvoir lui transmettre des données et une couche finale qui donne un résultat exploitable par un intermédiaire (si l'on voulait exploiter le réseau en temps réel une fois entraîné).
-Vient aussi le problème de l'entraînement, il aurait fallu beaucoup de données sûres, et un temps d'entraînement assez faible pour pouvoir tester ses performances et modifier le réseau en temps restraint. Ce projet a été abandonné dans les quelques semaines après le début du projet, et nous ne l'avons pas abordé à nouveau depuis.
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | -1|
+| 1 | -1| -1| -1|
+| 2 | -1| -1| -1|
 
-#### b) Portabilité CUDA
+3. **Création du deuxième polyomino (B) :**
+   - Départ en (0,2).
+   - Taille aléatoire choisie : 3.
+   - Étendre à la cellule adjacente (1,2), puis (1,1).
 
-`Cuda` est un langage de programmation lancé en 2007 par `NVIDIA` permettant de faire des calculs sur sa carte graphique.
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | B |
+| 1 | -1| B | B |
+| 2 | -1| -1| -1|
+
+4. **Création du troisième polyomino (C) :**
+   - Départ en (1,0).
+   - Taille aléatoire choisie : 3.
+   - Étendre à la cellule adjacente (2,0), puis (2,1).
+
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | B |
+| 1 | C | B | B |
+| 2 | C | C | -1|
+
+5. **Création du quatrième polyomino (D) :**
+   - Départ en (2,2).
+   - Taille aléatoire choisie : 2.
+   - Pas d'extension possible, taille non atteinte.
+
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | B |
+| 1 | C | B | B |
+| 2 | C | C | -1|
+
+6. **Fusion des cases vides adjacentes**
+    - Dans l'ordre, on vérifie les cases adjacentes vides.
+
+|   | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | A | A | B |
+| 1 | C | B | B |
+| 2 | C | C | B |
+
+**Implémentation :**
+
+1. **Initialisation :** Création d'une grille vide et d'une liste pour stocker les polyominos générés.
+
+```python
+def __init__(self, rows, cols, max_pieces=50):
+    self.rows = rows
+    self.cols = cols
+    self.grid = [[-1 for _ in range(cols)] for _ in range(rows)] #-1 partout
+
+    self.polyominos = []
+    self.max_pieces = min(max_pieces, len(self.PIECE_COLORS))
+```
+
+2. **Génération des polyominos :** Pour chaque cellule non visitée, on tente de créer un nouveau polyomino de taille aléatoire.
+
+```python
+def generate(self):
+    # Grille pour suivre les cellules visitées
+    visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
+    label = 0  # label pour chaque polyomino
+
+    # Création de chaque polyomino
+    for i in range(self.rows):
+        for j in range(self.cols):
+            if not visited[i][j] and label < self.max_pieces:
+                size = random.randint(2, min(self.rows, self.cols))
+                # Création du polyomino
+                polyomino = self._create_polyomino(i, j, size, visited, label)
+                if polyomino:
+                    self.polyominos.append(polyomino)
+                    label += 1
+
+    # Remplissage des cases restantes
+    self._fill_remaining_cells()
+```
+
+3. **Création d'un polyomino :** À partir d'une position de départ, on étend le polyomino en ajoutant des cellules adjacentes jusqu'à atteindre la taille souhaitée.
+
+```python
+def _create_polyomino(self, start_x, start_y, size, visited, label):
+    """
+    Crée un polyomino à partir d'une position de départ.
+
+    Paramètres:
+    - start_x (int): Ligne de départ.
+    - start_y (int): Colonne de départ.
+    - size (int): Taille souhaitée du polyomino.
+    - visited (list): Grille des cellules visitées.
+    - label (int): Étiquette du polyomino.
+
+    Retourne:
+    - list: Liste des coordonnées du polyomino ou None si impossible.
+    """
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Droite, Bas, Gauche, Haut
+    queue = deque([(start_x, start_y)])
+    polyomino = []
+
+    while queue and len(polyomino) < size:
+        x, y = queue.popleft()
+        if 0 <= x < self.rows and 0 <= y < self.cols and not visited[x][y]:
+            visited[x][y] = True
+            self.grid[x][y] = label
+            polyomino.append((x, y))
+
+            random.shuffle(directions)  # Mélange des directions pour l'aléatoire
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.rows and 0 <= ny < self.cols and not visited[nx][ny]:
+                    queue.append((nx, ny))
+
+    # Si on n'a pas pu atteindre la taille souhaitée, annuler
+    if len(polyomino) < size:
+        for x, y in polyomino:
+            visited[x][y] = False
+            self.grid[x][y] = -1
+        return None
+
+    return polyomino
+```
+
+4. **Remplissage des cases restantes :** Les cellules non assignées sont attribuées au plus petit polyomino voisin.
+
+```python
+def _fill_remaining_cells(self):
+    """
+    Remplit les cases restantes (étiquetées -1) en les assignant
+    au polyomino voisin le plus petit.
+    """
+    for i in range(self.rows):
+        for j in range(self.cols):
+            if self.grid[i][j] == -1:  # Case non assignée
+                # voisins valides
+                neighbors = self._get_neighbors(i, j)
+                if neighbors:
+                    # Trouver le polyomino le plus petit parmi les voisins
+                    neighbor_sizes = {self.grid[x][y]: len(self.polyominos[self.grid[x][y]]) for x, y in neighbors}
+                    smallest_poly_label = min(neighbor_sizes, key=neighbor_sizes.get)
+
+                    # Assigner cette case au polyomino le plus petit
+                    self.grid[i][j] = smallest_poly_label
+                    self.polyominos[smallest_poly_label].append((i, j))
+```
+
+5. **Trouver les voisins valides :** Cette méthode aide à trouver les voisins d'une cellule donnée.
+
+```python
+def _get_neighbors(self, x, y):
+    """
+    Trouve les voisins valides d'une case donnée.
+
+    Paramètres:
+    - x (int): Ligne de la case.
+    - y (int): Colonne de la case.
+
+    Retourne:
+    - list: Liste des coordonnées des voisins ayant des labels valides.
+    """
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    neighbors = []
+    for dx, dy in directions:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < self.rows and 0 <= ny < self.cols and self.grid[nx][ny] != -1:
+            neighbors.append((nx, ny))
+    return neighbors
+```
+
+Nous avons ensuite d'implémenter le générateur à notre interface. Voici notre toute première grille générée en 16x10 :
+
+![grille](img/16x10_start.png)
+*Figure : Pièces d'un tableau 16x10*
+
+Nous avons ensuite lancé la résolution avec à ce moment un prototype du multithreading qui lance une résolution avec chaque heuristique dans chaque thread :
+
+![16x10_solved](img/16x10_solved.png)
+*Figure : Pièces d'un tableau 16x10 résolu*
+
+L'heuristique `Descender` a essayé 6396 placements pour résoudre la grille vide en 5 secondes.
+
+#### Démonstrations de résolutions de grilles
+
+Nous avons ensuite ajouté des couleurs uniques à chaque pièce, puis réadapté l'interface. Nous pouvons maintenant nous amuser avec de nouvelles grilles.
+
+Reprenons une grille 16x10. En partant d'une grille vide, avec l'heuristique `Descender`, la résolution n'a testé que 37 placements.
+
+![16x10](img/coloredgrid.jpg)
+*Figure : Tableau 16x10 résolu à partir d'une grille vide*
+
+En plaçant des pièces, on va restreindre le nombre de solutions possibles, mais cela ne décourage pas notre algorithme.
+
+![16x10](img/newcolore_restrains.jpg)
+*Figure : Tableau 16x10 résolu à partir avec restrictions*
+
+Ici, il a fallu plus de 27000 tests de placements effectués en plus de 6 secondes. Ce nombre paraît grand, mais nous sommes très loin de la complexité temporelle d'un algorithme déterministe O(b^d) montrant ainsi que nos optimisations sont puissantes.
+
+![12x12](img/12x12.png)
+*Figure : Tableau 12x12 résolu à partir d'une grille vide en 1s et 4313 placements testés*
+
+#### Limitations de notre outil & améliorations possibles
+
+![60x5](img/60x5.png)
+*Figure : Tableau 60x5 résolu à partir d'une grille vide*
+
+![60x6](img/60x6.jpg)
+*Figure : Tableau 60x6 non résolu à partir d'une grille vide : 15min et 840 000 placements testés (arrêt manuel)*
+
+Sur les **grandes grilles**, nous remarquons que la résolution atteint des **centaines de milliers** de branches explorées et que notre **exploration** de zones vides faiblit.
+
+
+Cela s'explique par plusieurs raisons :
+- Une grille grande implique une **complexité** de calcul croissante.
+- Notre **algorithme de découpage** peut générer, via l'**aléatoire**, des pièces aux formes très complexes sur de grandes surfaces.
+- Le découpage peut créer des pièces **similaires** qui seront testées indépendamment alors qu'elles produiront un résultat identique.
+- La résolution est **mono-thread** et n'exploite qu'une fraction de la puissance de calcul disponible.
+
+![cpu6%](img/cpu6.png)
+
+*Figure : Algo ne prenant que 6% du cpu d'un processeur I9-13900HX*
+
+Les améliorations possibles seraient donc :
+- D'optimiser le **découpage des polyominos** avec des contraintes sur la taille et la forme.
+- D'implémenter la **détection des pièces similaires** pour éviter les calculs redondants.
+- De **Paralléliser** la résolution via du **multi-threading** sur le CPU. Cependant, **Tkinter** présente des limitations pour la gestion multi-thread. Une migration vers **C++** avec SFML/TGUI (librairie graphique bas niveau) était envisagée mais le projet étant déjà bien avancé, le temps manquait pour une réécriture complète.
+
+Nous avons voulu toujours pousser plus loin les performances et les défis à résoudre. L'objectif initial était de résoudre un tableau `5x11`. Ce sont des pistes d'améliorations pour rendre notre algorithme robuste à toutes situations initiales.
+
+## VII/Projet Annexes non aboutis
+
+Voici quelques idées que nous avions eu pour aller plus loin dans la conception de la résolution du jeu.
+
+### Réseau neuronal
+
+L'un des objectifs abandonnés était d'avoir un réseau neuronal qui pourrait jouer tout seul, le principe était de lui donner une pièce à placer (ou plutôt une variante) ainsi que le plateau `5x11` et d'attendre en sortie le tableau avec la pièce placée.
+Cette ambition vaine du fait de la <i>complexité</i> du projet et de l'entraînement nécessaire pour que le réseau neuronal puisse placer les pièces aux bons endroits, sans qu'il n'y ait de modification du plateau initial ni de faux positifs : 2 pièces superposées.
+
+Plusieurs logiciels étaient disponibles mais nécessitaient une license, ou n'était disponible que pour trop peu de temps (essai gratuit).
+
+Le problème avec les réseaux neuronaux est qu'il est assez difficile de construire le réseau de la bonne manière, de sorte à pouvoir lui transmettre des données et une couche finale qui donne un résultat exploitable par un intermédiaire (si l'on voulait exploiter le réseau en temps réel une fois entraîné).
+Vient aussi le problème de l'entraînement, il aurait fallu beaucoup de données sûres et un temps d'entraînement assez faible pour pouvoir tester ses performances et modifier le réseau en temps restraint. Ce projet a été abandonné dans les quelques semaines après le début du projet, et nous ne l'avons pas abordé à nouveau depuis.
+
+### Portabilité CUDA
+
+`CUDA` est un langage de programmation lancé en 2007 par `NVIDIA` permettant de faire des calculs sur sa carte graphique.
 
 L'objectif était de porter l'algorithme `Python` en un algorithme `C/C++` `CUDA`.
 Effectivement, les programmes qui n'utilisent pas d'interfaces/logiciels intermédiaires (ex: Unity, Blender, OpenGL etc) ne fonctionnent que sur le `CPU`, ce qui convient à quasiment toutes les utilisations basiques.
@@ -653,4 +1048,12 @@ Mais ici il a aussi été question d'améliorer les performances jusqu'à diminu
 
 
 Pour résoudre ce problème, il existe une version `Python` de CUDA
-Nonobstant le potentiel remplacement de la carte graphique cramée à cause du projet, et de la potentielle taille de la grille non plus en `5x11`, mais bien en `55x121` (eh oui faut bien s'amuser) et des pièces qui ne seraient plus contraintes dans des matrices `4x4` mais pourrait adopter des dimensions moins conventionnelles (ex: `42x69`).
+Nonobstant le potentiel remplacement de la carte graphique cramée à cause du projet, et de la potentielle taille de la grille non plus en `5x11`, mais bien en `55x121` (eh oui faut bien s'amuser) et des pièces qui ne seraient plus contraintes dans des matrices `4x4` mais pourrait adopter des dimensions moins conventionnelles (ex: `42x69`), il a été choisi d'également abandonner cette ambition.
+
+## Conclusion 
+
+Nous avons pris plaisir à réaliser ce projet qui nous a permis de développer un solveur pour le jeu IQ Puzzler Pro. En partant de l'algorithme X de Knuth comme base, nous avons progressivement ajouté nos propres améliorations comme les heuristiques, l'exploration de zone, des optimisations diverses et variées et mathématiquement probantes
+
+Nous ne nous sommes pas arrêtés à la simple résolution du jeu: Notre curiosité nous a poussés à explorer de nouvelles possibilités comme la création de grilles personnalisées ou l'utilisation de nouveaux outils (CUDA, réseaux neuronaux, etc). Ces explorations, même si certaines n'ont pas abouti, nous ont permis d'apprendre et de comprendre de nouveaux concepts.
+
+En programmation, il y a toujours de nouvelles choses à apprendre et de nouvelles approches à explorer. Les notions que nous avons abordées nous serviront indubitablement dans nos futurs projets.
