@@ -1,44 +1,47 @@
 # Rapport IA41 : IQ Puzzler Pro
+#### Antoine PERRIN & Traïan BEAUJARD
 
 <!-- TOC -->
-
+## Sommaire
 - [Rapport IA41 : IQ Puzzler Pro](#rapport-ia41--iq-puzzler-pro)
-    - [I/ Présentation du projet](#i-pr%C3%A9sentation-du-projet)
-        - [Contextualisation](#contextualisation)
-        - [Vue globale du projet](#vue-globale-du-projet)
-            - [Classes](#classes)
-            - [Séquences](#s%C3%A9quences)
-            - [États et transitions](#%C3%A9tats-et-transitions)
-        - [Les outils utilisés](#les-outils-utilis%C3%A9s)
-    - [II/ Création du jeu : Pièces et Tableau](#ii-cr%C3%A9ation-du-jeu--pi%C3%A8ces-et-tableau)
-        - [Représentation des éléments du jeu](#repr%C3%A9sentation-des-%C3%A9l%C3%A9ments-du-jeu)
-        - [Placer les pieces sur l'interface](#placer-les-pieces-sur-linterface)
-    - [III/ L'algorithme de résolution](#iii-lalgorithme-de-r%C3%A9solution)
-        - [Les recherches techniques](#les-recherches-techniques)
-            - [Polyominos](#polyominos)
-            - [Problème de couverture exacte](#probl%C3%A8me-de-couverture-exacte)
-        - [Point de départ : Algorithme X de Donald Knuth](#point-de-d%C3%A9part--algorithme-x-de-donald-knuth)
-            - [- Condition d'une solution trouvée](#--condition-dune-solution-trouv%C3%A9e)
-            - [- Sélection d'une colonne avec MRV Minimum Remaining Values](#--s%C3%A9lection-dune-colonne-avec-mrv-minimum-remaining-values)
-            - [- Exploration des lignes couvrant la colonne sélectionnée](#--exploration-des-lignes-couvrant-la-colonne-s%C3%A9lectionn%C3%A9e)
-            - [- Réduction de la matrice](#--r%C3%A9duction-de-la-matrice)
-        - [Optimisations](#optimisations)
-            - [Pruning : Exploration des zones vides](#pruning--exploration-des-zones-vides)
-            - [Heuristiques : Poids des pièces](#heuristiques--poids-des-pi%C3%A8ces)
-        - [Avant / Après optimisations](#avant--apr%C3%A8s-optimisations)
-        - [Projet réussi : Résolution de niveaux de IQ Puzzler Pro](#projet-r%C3%A9ussi--r%C3%A9solution-de-niveaux-de-iq-puzzler-pro)
-    - [IV/Interface](#ivinterface)
-        - [Lancer la résolution](#lancer-la-r%C3%A9solution)
-        - [Interface changeable](#interface-changeable)
-        - [Limitations de notre interface](#limitations-de-notre-interface)
-    - [VI/ Pour aller plus loin : Augmentation des dimensions de la grille](#vi-pour-aller-plus-loin--augmentation-des-dimensions-de-la-grille)
-            - [Algorithme de découpe de grille en polyominos](#algorithme-de-d%C3%A9coupe-de-grille-en-polyominos)
-            - [Démonstrations de résolutions de grilles](#d%C3%A9monstrations-de-r%C3%A9solutions-de-grilles)
-            - [Limitations de notre outil & améliorations possibles](#limitations-de-notre-outil--am%C3%A9liorations-possibles)
-    - [VII/Projet Annexes non aboutis](#viiprojet-annexes-non-aboutis)
-        - [Réseau neuronal](#r%C3%A9seau-neuronal)
-        - [Portabilité CUDA](#portabilit%C3%A9-cuda)
-    - [Conclusion](#conclusion)
+      - [Antoine PERRIN \& Traïan BEAUJARD](#antoine-perrin--traïan-beaujard)
+  - [Sommaire](#sommaire)
+  - [I/ Présentation du projet](#i-présentation-du-projet)
+    - [Contextualisation](#contextualisation)
+    - [Vue globale du projet](#vue-globale-du-projet)
+      - [Classes](#classes)
+      - [Séquences](#séquences)
+      - [États et transitions](#états-et-transitions)
+    - [Les outils utilisés](#les-outils-utilisés)
+  - [II/ Création du jeu : Pièces et Tableau](#ii-création-du-jeu--pièces-et-tableau)
+    - [Représentation des éléments du jeu](#représentation-des-éléments-du-jeu)
+    - [Placer les pieces sur l'interface](#placer-les-pieces-sur-linterface)
+  - [III/ L'algorithme de résolution](#iii-lalgorithme-de-résolution)
+    - [Les recherches techniques](#les-recherches-techniques)
+      - [Polyominos](#polyominos)
+      - [Problème de couverture exacte](#problème-de-couverture-exacte)
+    - [Point de départ : Algorithme X de Donald Knuth](#point-de-départ--algorithme-x-de-donald-knuth)
+      - [1 - Condition d'une solution trouvée](#1---condition-dune-solution-trouvée)
+      - [2 - Sélection d'une colonne avec MRV (Minimum Remaining Values)](#2---sélection-dune-colonne-avec-mrv-minimum-remaining-values)
+      - [3 - Exploration des lignes couvrant la colonne sélectionnée](#3---exploration-des-lignes-couvrant-la-colonne-sélectionnée)
+      - [4 - Réduction de la matrice](#4---réduction-de-la-matrice)
+    - [Optimisations](#optimisations)
+      - [Pruning : Exploration des zones vides](#pruning--exploration-des-zones-vides)
+      - [Heuristiques : Poids des pièces](#heuristiques--poids-des-pièces)
+    - [Avant / Après optimisations](#avant--après-optimisations)
+    - [Projet réussi : Résolution de niveaux de IQ Puzzler Pro](#projet-réussi--résolution-de-niveaux-de-iq-puzzler-pro)
+  - [IV/Interface](#ivinterface)
+    - [Lancer la résolution](#lancer-la-résolution)
+    - [Interface changeable](#interface-changeable)
+    - [Limitations de notre interface](#limitations-de-notre-interface)
+  - [VI/ Pour aller plus loin : Augmentation des dimensions de la grille](#vi-pour-aller-plus-loin--augmentation-des-dimensions-de-la-grille)
+      - [Algorithme de découpe de grille en polyominos](#algorithme-de-découpe-de-grille-en-polyominos)
+      - [Démonstrations de résolutions de grilles](#démonstrations-de-résolutions-de-grilles)
+      - [Limitations de notre outil \& améliorations possibles](#limitations-de-notre-outil--améliorations-possibles)
+  - [VII/Projet Annexes non aboutis](#viiprojet-annexes-non-aboutis)
+    - [Réseau neuronal](#réseau-neuronal)
+    - [Portabilité CUDA](#portabilité-cuda)
+  - [Conclusion](#conclusion)
 
 <!-- /TOC -->
 
@@ -384,11 +387,11 @@ def algorithm_x(self, matrix, header, solution):
 
 Maintenant, testons notre algorithme :
 
-<img src="img/lvl3.png" width="75%" alt="lvl3 résolu">
+<img src="img/lvl3.png" width="33%" alt="lvl3 résolu">
 
 *Figure : Niveau 3 du jeu résolu en 25 placements testés*
 
-<img src="img/lvl39b.png" width="75%" alt="lvl39 résolu">
+<img src="img/lvl39b.png" width="33%" alt="lvl39 résolu">
 
 *Figure : Niveau 39 du jeu résolu en 145 placements testés*
 
@@ -625,7 +628,8 @@ def calculate_piece_weights(self, heuristic="ascender"):
 
 Analysons les résultats pour un niveau.
 
-![meme niveau avec chaque heuristic](img/heuristics_benchmark.jpg)
+<img src="img/heuristics_benchmark.jpg" width="100%" alt="meme niveau avec chaque heuristic">
+
 *Figure : Un même niveau résolu avec les différentes heuristiques*
 
 <img src="img/heuristiques_stats.png" width="80%" alt="description">  
@@ -640,7 +644,8 @@ Cependant, comme toute heuristique, qui sert à guider le résultat, cette derni
 
 Pour commencer, comparons la version optimisée et la version de départ.
 
-![Niveau de ref](img/lvl39_comp.jpg)  
+<img src="img/lvl39_comp.jpg" width="60%" alt="Niveau de ref">  
+
 *Figure : Comparaison résolution d'un niveau*
 
 Comparons les différences :
@@ -747,14 +752,11 @@ Nous avons implémenté ces pièces dans notre programme, et lancé la résoluti
 
 *Figure : Grille découpée en 14 polyominos*
 
-On a lancé la résolution sans aucune pièce placée.
+On a lancé la résolution sans aucune pièce placée Avec 2 heuristiques différentes (Descender, Ascender).
 
-![avant 6x12](img/nvgrille_start.png)
+<img src="img/nvgrille_start.png" width="80%" alt="6x12">  
+
 *Figure : Nouvelle grille et pièces implémentées*
-
-Avec 2 heuristiques différentes (Descender, Ascender).
-![apres 6x12](img/nvgrill_resolue.jpg)
-*Figure : Résolution de la nouvelle grille*
 
 Notre hypothèse est validée, bien que logique et prédictible, nous pouvons ne pas nous limiter à la grille par défaut du jeu IQ Puzzler Pro, et ainsi s'amuser sur de plus grandes grilles.
 

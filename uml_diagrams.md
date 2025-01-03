@@ -4,6 +4,7 @@ https://www.plantuml.com/
 
 - [seq](#seq)
 - [seq 2](#seq-2)
+- [states](#states)
 
 <!-- /TOC -->
 
@@ -137,4 +138,37 @@ activate UI
 
 UI --> User: display_solution()
 deactivate UI
+@enduml
+
+# states
+@startuml
+left to right direction
+
+[*] --> Init
+
+state Init {
+    state "PlacingPieces" as Placing
+    Placing --> Placing : rotatePiece()\nplacePiece()
+}
+
+Init --> Run : start resolution()
+
+state Run {
+    state "Computing" as Comp
+    Comp --> Comp : findNextSolution()
+    
+    Comp -down-> SolutionFound : solution found
+    Comp -down-> NoSolution : no solution possible
+    
+    state "SolutionFound" as SolutionFound
+    state "NoSolution" as NoSolution
+}
+
+Run --> End : DisplayResult
+
+state End {
+    state Fin
+}
+
+End --> [*]
 @enduml
