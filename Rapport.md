@@ -678,7 +678,8 @@ La classe de l'interface contient de nombreuses méthodes, mais seulement une no
                 'variante_index': info['variante_index'],
                 'position': info['position']
             }
-
+```
+```python
         # Créer un nouvel objet Plateau pour le résoudre
         plateau_copy = Plateau()
         plateau_copy.lignes = self.grid_y
@@ -738,7 +739,6 @@ Dans cette architecture, nous pouvons facilement choisir une autre librairie pyt
 En effet, une fois la résolution optimisée fonctionnelle, nous avons voulu encore augmenter l'efficacité de notre algorithme en utilisant le multi-threading.
 Cependant, il est très difficile d'exploiter le multi-threading avec Tkinter.
 Malgré le fait que l'interface soit censée être indépendante, nous avons rencontré de nombreuses difficultés à faire fonctionner le parallélisme de notre algorithme.
-
 Si nous devions refaire l'interface en C++, nous aurions bien plus de facilité à intégrer le multi-threading car ce langage permet une meilleure gestion du parallélisme.
 
 ## VI/ Pour aller plus loin : Augmentation des dimensions de la grille
@@ -754,7 +754,7 @@ Nous avons implémenté ces pièces dans notre programme, et lancé la résoluti
 
 On a lancé la résolution sans aucune pièce placée Avec 2 heuristiques différentes (Descender, Ascender).
 
-<img src="img/nvgrille_start.png" width="80%" alt="6x12">  
+<img src="img/nvgrille_start.png" width="85%" alt="6x12">  
 
 *Figure : Nouvelle grille et pièces implémentées*
 
@@ -775,69 +775,70 @@ Afin de ne pas avoir à créer manuellement chaque découpage, nous avons conçu
 
 **Exemple :**
 Grille 3x3
+**Création des polyominos pas à pas :**
 
-1. **Initialisation :**
-   - Grille vide de taille 3x3.
-   - Toutes les cellules sont marquées comme non visitées.
+<div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8em;">
+    <div>
+        <p>1. Initialisation</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>-1</td><td>-1</td><td>-1</td></tr>
+            <tr><td>1</td><td>-1</td><td>-1</td><td>-1</td></tr>
+            <tr><td>2</td><td>-1</td><td>-1</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>2. 1er polyomino A</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>-1</td></tr>
+            <tr><td>1</td><td>-1</td><td>-1</td><td>-1</td></tr>
+            <tr><td>2</td><td>-1</td><td>-1</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>3. 2e polyomino B</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
+            <tr><td>1</td><td>-1</td><td>B</td><td>B</td></tr>
+            <tr><td>2</td><td>-1</td><td>-1</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>4. 3e polyomino C</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
+            <tr><td>1</td><td>C</td><td>B</td><td>B</td></tr>
+            <tr><td>2</td><td>C</td><td>C</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>5. 4e polyomino D</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
+            <tr><td>1</td><td>C</td><td>B</td><td>B</td></tr>
+            <tr><td>2</td><td>C</td><td>C</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>6. Fusion cases vides</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
+            <tr><td>1</td><td>C</td><td>B</td><td>B</td></tr>
+            <tr><td>2</td><td>C</td><td>C</td><td>B</td></tr>
+        </table>
+    </div>
+</div>
 
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | -1| -1| -1|
-| 1 | -1| -1| -1|
-| 2 | -1| -1| -1|
-
-2. **Création du premier polyomino (A) :**
-   - Départ en (0,0).
-   - Taille aléatoire choisie : 2.
-   - Étendre à la cellule adjacente (0,1).
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | -1|
-| 1 | -1| -1| -1|
-| 2 | -1| -1| -1|
-
-3. **Création du deuxième polyomino (B) :**
-   - Départ en (0,2).
-   - Taille aléatoire choisie : 3.
-   - Étendre à la cellule adjacente (1,2), puis (1,1).
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | B |
-| 1 | -1| B | B |
-| 2 | -1| -1| -1|
-
-4. **Création du troisième polyomino (C) :**
-   - Départ en (1,0).
-   - Taille aléatoire choisie : 3.
-   - Étendre à la cellule adjacente (2,0), puis (2,1).
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | B |
-| 1 | C | B | B |
-| 2 | C | C | -1|
-
-5. **Création du quatrième polyomino (D) :**
-   - Départ en (2,2).
-   - Taille aléatoire choisie : 2.
-   - Pas d'extension possible, taille non atteinte.
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | B |
-| 1 | C | B | B |
-| 2 | C | C | -1|
-
-6. **Fusion des cases vides adjacentes**
-    - Dans l'ordre, on vérifie les cases adjacentes vides.
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | B |
-| 1 | C | B | B |
-| 2 | C | C | B |
 
 **Implémentation :**
 
@@ -861,19 +862,16 @@ def generate(self):
     visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
     label = 0  # label pour chaque polyomino
 
-    # Création de chaque polyomino
-    for i in range(self.rows):
+    for i in range(self.rows): # Création de chaque polyomino
         for j in range(self.cols):
             if not visited[i][j] and label < self.max_pieces:
                 size = random.randint(2, min(self.rows, self.cols))
-                # Création du polyomino
-                polyomino = self._create_polyomino(i, j, size, visited, label)
+                polyomino = self._create_polyomino(i, j, size, visited, label) # Création du polyomino
                 if polyomino:
                     self.polyominos.append(polyomino)
                     label += 1
 
-    # Remplissage des cases restantes
-    self._fill_remaining_cells()
+    self._fill_remaining_cells() # Remplissage des cases restantes
 ```
 
 3. **Création d'un polyomino :** À partir d'une position de départ, on étend le polyomino en ajoutant des cellules adjacentes jusqu'à atteindre la taille souhaitée.
@@ -968,13 +966,11 @@ def _get_neighbors(self, x, y):
 
 Nous avons ensuite d'implémenter le générateur à notre interface. Voici notre toute première grille générée en 16x10 :
 
-![grille](img/16x10_start.png)
+<img src="img/16x10_solved.png" width="85%" alt="img/16x10_solved.png">   
+
 *Figure : Pièces d'un tableau 16x10*
 
 Nous avons ensuite lancé la résolution avec à ce moment un prototype du multithreading qui lance une résolution avec chaque heuristique dans chaque thread :
-
-![16x10_solved](img/16x10_solved.png)
-*Figure : Pièces d'un tableau 16x10 résolu*
 
 L'heuristique `Descender` a essayé 6396 placements pour résoudre la grille vide en 5 secondes.
 
@@ -985,6 +981,7 @@ Nous avons ensuite ajouté des couleurs uniques à chaque pièce, puis réadapt�
 Reprenons une grille 16x10. En partant d'une grille vide, avec l'heuristique `Descender`, la résolution n'a testé que 37 placements.
 
 ![16x10](img/coloredgrid.jpg)
+
 *Figure : Tableau 16x10 résolu à partir d'une grille vide*
 
 En plaçant des pièces, on va restreindre le nombre de solutions possibles, mais cela ne décourage pas notre algorithme.
@@ -994,15 +991,19 @@ En plaçant des pièces, on va restreindre le nombre de solutions possibles, mai
 
 Ici, il a fallu plus de 27000 tests de placements effectués en plus de 6 secondes. Ce nombre paraît grand, mais nous sommes très loin de la complexité temporelle d'un algorithme déterministe O(b^d) montrant ainsi que nos optimisations sont puissantes.
 
-![12x12](img/12x12.png)
+<img src="img/12x12.png" width="70%" alt="img/12x12.png">  
+
 *Figure : Tableau 12x12 résolu à partir d'une grille vide en 1s et 4313 placements testés*
 
 #### Limitations de notre outil & améliorations possibles
 
-![60x5](img/60x5.png)
+<img src="img/60x5.png" width="75%" alt="img/60x5.png">  
+
 *Figure : Tableau 60x5 résolu à partir d'une grille vide*
 
-![60x6](img/60x6.jpg)
+<img src="img/60x6.jpg" width="75%" alt="img/60x6.jpg">  
+
+
 *Figure : Tableau 60x6 non résolu à partir d'une grille vide : 15min et 840 000 placements testés (arrêt manuel)*
 
 Sur les **grandes grilles**, nous remarquons que la résolution atteint des **centaines de milliers** de branches explorées et que notre **exploration** de zones vides faiblit.

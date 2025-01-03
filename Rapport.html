@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Rapport IA41 &colon; IQ Puzzler Pro</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="rapport-ia41--iq-puzzler-pro">Rapport IA41 : IQ Puzzler Pro</h1>
+<h4 id="antoine-perrin--traïan-beaujard">Antoine PERRIN &amp; Traïan BEAUJARD</h4>
+<!-- TOC -->
+<h2 id="sommaire">Sommaire</h2>
+<ul>
+<li><a href="#rapport-ia41--iq-puzzler-pro">Rapport IA41 : IQ Puzzler Pro</a>
+- <a href="#antoine-perrin--tra%C3%AFan-beaujard">Antoine PERRIN &amp; Traïan BEAUJARD</a>
+<ul>
+<li><a href="#sommaire">Sommaire</a></li>
+<li><a href="#i-pr%C3%A9sentation-du-projet">I/ Présentation du projet</a>
+<ul>
+<li><a href="#contextualisation">Contextualisation</a></li>
+<li><a href="#vue-globale-du-projet">Vue globale du projet</a>
+<ul>
+<li><a href="#classes">Classes</a></li>
+<li><a href="#s%C3%A9quences">Séquences</a></li>
+<li><a href="#%C3%A9tats-et-transitions">États et transitions</a></li>
+</ul>
+</li>
+<li><a href="#les-outils-utilis%C3%A9s">Les outils utilisés</a></li>
+</ul>
+</li>
+<li><a href="#ii-cr%C3%A9ation-du-jeu--pi%C3%A8ces-et-tableau">II/ Création du jeu : Pièces et Tableau</a>
+<ul>
+<li><a href="#repr%C3%A9sentation-des-%C3%A9l%C3%A9ments-du-jeu">Représentation des éléments du jeu</a></li>
+<li><a href="#placer-les-pieces-sur-linterface">Placer les pieces sur l'interface</a></li>
+</ul>
+</li>
+<li><a href="#iii-lalgorithme-de-r%C3%A9solution">III/ L'algorithme de résolution</a>
+<ul>
+<li><a href="#les-recherches-techniques">Les recherches techniques</a>
+<ul>
+<li><a href="#polyominos">Polyominos</a></li>
+<li><a href="#probl%C3%A8me-de-couverture-exacte">Problème de couverture exacte</a></li>
+</ul>
+</li>
+<li><a href="#point-de-d%C3%A9part--algorithme-x-de-donald-knuth">Point de départ : Algorithme X de Donald Knuth</a>
+<ul>
+<li><a href="#1---condition-dune-solution-trouv%C3%A9e">1 - Condition d'une solution trouvée</a></li>
+<li><a href="#2---s%C3%A9lection-dune-colonne-avec-mrv-minimum-remaining-values">2 - Sélection d'une colonne avec MRV (Minimum Remaining Values)</a></li>
+<li><a href="#3---exploration-des-lignes-couvrant-la-colonne-s%C3%A9lectionn%C3%A9e">3 - Exploration des lignes couvrant la colonne sélectionnée</a></li>
+<li><a href="#4---r%C3%A9duction-de-la-matrice">4 - Réduction de la matrice</a></li>
+</ul>
+</li>
+<li><a href="#optimisations">Optimisations</a>
+<ul>
+<li><a href="#pruning--exploration-des-zones-vides">Pruning : Exploration des zones vides</a></li>
+<li><a href="#heuristiques--poids-des-pi%C3%A8ces">Heuristiques : Poids des pièces</a></li>
+</ul>
+</li>
+<li><a href="#avant--apr%C3%A8s-optimisations">Avant / Après optimisations</a></li>
+<li><a href="#projet-r%C3%A9ussi--r%C3%A9solution-de-niveaux-de-iq-puzzler-pro">Projet réussi : Résolution de niveaux de IQ Puzzler Pro</a></li>
+</ul>
+</li>
+<li><a href="#ivinterface">IV/Interface</a>
+<ul>
+<li><a href="#lancer-la-r%C3%A9solution">Lancer la résolution</a></li>
+<li><a href="#interface-changeable">Interface changeable</a></li>
+<li><a href="#limitations-de-notre-interface">Limitations de notre interface</a></li>
+</ul>
+</li>
+<li><a href="#vi-pour-aller-plus-loin--augmentation-des-dimensions-de-la-grille">VI/ Pour aller plus loin : Augmentation des dimensions de la grille</a>
+<ul>
+<li><a href="#algorithme-de-d%C3%A9coupe-de-grille-en-polyominos">Algorithme de découpe de grille en polyominos</a></li>
+<li><a href="#d%C3%A9monstrations-de-r%C3%A9solutions-de-grilles">Démonstrations de résolutions de grilles</a></li>
+<li><a href="#limitations-de-notre-outil--am%C3%A9liorations-possibles">Limitations de notre outil &amp; améliorations possibles</a></li>
+</ul>
+</li>
+<li><a href="#viiprojet-annexes-non-aboutis">VII/Projet Annexes non aboutis</a>
+<ul>
+<li><a href="#r%C3%A9seau-neuronal">Réseau neuronal</a></li>
+<li><a href="#portabilit%C3%A9-cuda">Portabilité CUDA</a></li>
+</ul>
+</li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+<!-- /TOC -->
+<h2 id="i-présentation-du-projet">I/ Présentation du projet</h2>
+<h3 id="contextualisation">Contextualisation</h3>
+<p>Le projet porte sur le jeu IQ Puzzler Pro, un puzzle assez connu dont l’objectif est de compléter des grilles en positionnant correctement des pièces de formes variées.</p>
+<p>Nous avons identifié trois questions fondamentales à résoudre dans ce contexte :</p>
+<ul>
+<li><strong>Comment représenter les différentes pièces, en tenant compte de leurs variations possibles ?</strong></li>
+<li><strong>Comment résoudre efficacement les niveaux du jeu IQ Puzzler Pro ?</strong></li>
+<li><strong>Comment concevoir et implémenter un algorithme capable de résoudre automatiquement chaque niveau ?</strong></li>
+</ul>
+<p>Pour débuter, nous avons commandé le jeu afin de l’explorer concrètement, l'objectif : commencer à manipuler les pièces, comprendre leurs interactions et pouvoir résoudre manuellement des niveaux du jeu initial. Cela nous à permis de réfléchir aux problématiques liées à la représentation du jeu, à la résolution et d’identifier des stratégies supposément efficaces.</p>
+<p>Nous avons choisi de concentrer notre travail sur le mode de jeu principal, qui repose sur une grille de 5 x 11 cases et 12 pièces avec chacune au plus 8 variantes possibles (rotations et symétries incluses).</p>
+<p>Les niveaux du jeu sont répartis en plusieurs paliers de difficultés croissantes. Grâce à nos essais pratiques et à des recherches en ligne auprès de forums de passionnés, nous avons constaté que la résolution humaine reposait sur la même stratégie : tester différentes configurations en plaçant d’abord les pièces les plus grandes, souvent le long des bords ou autour des éléments déjà positionnés.</p>
+<p>À partir de ces observations, nous avons choisi d’implémenter un algorithme de <strong>backtracking</strong> avec des optimisations comme l’exploration de l’espace des solutions, et des heuristiques comme la priorisation des pièces de plus grandes tailles afin de limiter le nombre de calculs.</p>
+<h3 id="vue-globale-du-projet">Vue globale du projet</h3>
+<h4 id="classes">Classes</h4>
+<p>Voici une représentation de notre projet sous forme de diagramme de classes UML, afin de montrer une vue d’ensemble sur la conception et la structure globale.</p>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\diagclass.png" alt="Diagramme UML de classe"><br>
+<em>Figure 1 : Diagramme de classes UML du projet</em></p>
+<p>Nous avons veillé à bien séparer la logique algorithmique de l’interface utilisateur. Cette séparation permet de réutiliser l’interface dans d’autres contextes, indépendamment de l’algorithme.</p>
+<p>L’algorithme lui-même a été structuré en plusieurs classes afin de segmenter les différents modules qui le composent pour une meilleure comprehension et lisibilité et une facilité de maintenance accrue.</p>
+<h4 id="séquences">Séquences</h4>
+<p>Voici une représentation des interactions entre les différentes classes de notre projet, illustrée par un diagramme de séquences UML.</p>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\diagseq.png" alt="Diagramme UML de séquence"><br>
+<em>Figure 2 : Diagramme de séquence UML du projet</em></p>
+<h4 id="états-et-transitions">États et transitions</h4>
+<p>Enfin, pour mieux comprendre le déroulement principal de notre programme, voici un diagramme d’états et de transitions simplifié.</p>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\diagtransitions.png" alt="Diagramme UML d’états et transitions"></p>
+<p><em>Figure 3 : Diagramme d’états et transitions UML du projet</em></p>
+<p>Nous avons 3 états principaux :</p>
+<ul>
+<li>Le début : L'utilisateur choisit de placer les pièces.</li>
+<li>La résolution : L'algorithme cherche la solution.</li>
+<li>La fin : Affichage du résultat.</li>
+</ul>
+<h3 id="les-outils-utilisés">Les outils utilisés</h3>
+<p>Pour la réalisation de ce projet, nous avons utilisé les outils suivants :</p>
+<ul>
+<li>
+<p><strong>Langage de programmation : Python</strong>
+Nous avions peur de ne pas avoir le temps d'assez explorer le projet et d'être découragés en utilisant le langage Prolog. Nous avons ainsi préféré choisir Python. Aussi le fait que Python ait des bibliothèques connues et efficaces, également assez facile d'utilisation pour tout ce qui est interface nous a fait préféré ce dernier.</p>
+</li>
+<li>
+<p><strong>Interface utilisateur : Tkinter</strong><br>
+Nous avons utilisé Tkinter pour concevoir et implémenter l’interface graphique. Afin de réaliser nos premiers tests, cet outil nous a permis de rapidement visualiser nos résultats.  Nous avons ensuite continué à développer notre classe d'interface tout au long de nos avancées, et il est finalement devenu trop tard pour envisager un changement d'interface, malgré les limites liées au multithreading.</p>
+</li>
+<li>
+<p><strong>Gestion de version : GitHub</strong><br>
+Pour la gestion de notre projet, Github est un outil indispensable que ce soit pour le <code>Version Control</code>, le système de branches pour nos tests et le travail collaboratif.</p>
+</li>
+<li>
+<p><strong>Aide diverses : ChatGPT/Github Copilot</strong><br>
+Nous avons utilisé ces outils afin de nous aider dans nos recherches comme en donnant des pistes, ou vérifiant si ce que l'on avait appris était vrai et compris. Ces outils ont aussi aidé pour la documentation Python de certains modules comme pour l'interface, et la rédaction des commentaires.</p>
+</li>
+</ul>
+<h2 id="ii-création-du-jeu--pièces-et-tableau">II/ Création du jeu : Pièces et Tableau</h2>
+<h3 id="représentation-des-éléments-du-jeu">Représentation des éléments du jeu</h3>
+<p>Le tableau est simple à représenter : c'est une matrice de la taille du plateau, <code>5x11</code>.</p>
+<pre><code class="language-python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Plateau</span>:
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, lignes=<span class="hljs-number">5</span>, colonnes=<span class="hljs-number">11</span></span>):
+        self.lignes = lignes  
+        self.colonnes = colonnes  
+        self.plateau = np.zeros((lignes, colonnes), dtype=<span class="hljs-built_in">int</span>) <span class="hljs-comment"># remplissage du tableau avec des 0</span>
+</code></pre>
+<p>Puis, pour faciliter l’interaction avec ce dernier, nous avons ajouté 3 méthodes explicites :</p>
+<pre><code class="language-python">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">placer_piece</span>(<span class="hljs-params">self, piece, variante_index, position</span>):
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">peut_placer</span>(<span class="hljs-params">self, variante, position</span>):
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">retirer_piece</span>(<span class="hljs-params">self, piece, variante_index, position</span>):
+</code></pre>
+<p>Afin de représenter les pièces, nous devons avoir le <strong>nom</strong> de la pièce pour la couleur, ainsi que sa <strong>forme de base</strong> représentée par une matrice.</p>
+<pre><code class="language-python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Piece</span>:
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, nom, forme_base</span>):
+        self.nom = nom
+        self.forme_base = np.array(forme_base)
+        self.variantes = self.generer_variantes()
+</code></pre>
+<p>Pour que l'algorithme puisse utiliser les variantes, nous avons implémenté une méthode qui vient retourner les au plus <strong>8 variantes</strong> possibles. Selon les pièces, une variante peut redonner la même forme qu'une autre variante précédemment calculée. De ce fait, nous enlevons à la fin les doublons pour éviter la redondance de calculs.</p>
+<pre><code class="language-python">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">generer_variantes</span>(<span class="hljs-params">self</span>):
+        variantes = []
+        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">4</span>):  <span class="hljs-comment"># (0°, 90°, 180°, 270°)</span>
+            rotation = np.rot90(self.forme_base, i)
+            variantes.append(rotation)
+            <span class="hljs-comment"># symétrie horizontale</span>
+            symetrie = np.fliplr(rotation)
+            variantes.append(symetrie)
+
+        <span class="hljs-comment"># retire les doublons</span>
+        variantes_uniques = []
+        <span class="hljs-keyword">for</span> var <span class="hljs-keyword">in</span> variantes:
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">any</span>(np.array_equal(var, existante) <span class="hljs-keyword">for</span> existante <span class="hljs-keyword">in</span> variantes_uniques):
+                variantes_uniques.append(var)
+
+        <span class="hljs-keyword">return</span> variantes_uniques
+</code></pre>
+<h3 id="placer-les-pieces-sur-linterface">Placer les pieces sur l'interface</h3>
+<p>Désormais,  l'utilisateur doit pouvoir placer les pièces souhaitées pour son niveau.
+L'explication complète de l'interface sera faite dans une autre partie. Ici nous nous contenterons de seulement expliquer les parties essentielles pour le placement des pièces.</p>
+<p><em>explications des méthodes de la classe interface liées au placement</em></p>
+<h2 id="iii-lalgorithme-de-résolution">III/ L'algorithme de résolution</h2>
+<h3 id="les-recherches-techniques">Les recherches techniques</h3>
+<p>Comme expliqué dans l'introduction, le choix d'un algorithme de type <strong>backtracking</strong> nous semblait pertinent, mais c'était la seule notion que nous connaissions. Nous avons ainsi commencé à faire des recherches plus techniques afin de mieux comprendre les concepts mathématiques et informatiques associés au projet.</p>
+<h4 id="polyominos">Polyominos</h4>
+<p>En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelés des &quot;Polyominos&quot;. C'est une forme crée par des carrés connectés où chaque carré est adjacent à au moins un autre.
+<a href="https://fr.wikipedia.org/wiki/Polyomino">Source</a></p>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\iqpolyominos.png" alt="screen nos polyominos">
+<em>Figure 4 : Les 12 polyominos du jeu IQ Puzzler Pro</em></p>
+<h4 id="problème-de-couverture-exacte">Problème de couverture exacte</h4>
+<p>Ensuite, notre projet est à un <strong>problème de couverture exacte</strong>. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  <a href="https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte">Source</a> <br>
+Ce problème est un problème <strong>NP-complet</strong>, c'est à dire qu’il est difficile à résoudre de manière optimale en raison de sa complexité temporelle. Trouver une solution rapide pour des instances de grande taille devient rapidement impraticable.</p>
+<p>En effet, on pourrait simplifier la complexité temporelle de notre problème tel que : <br>
+<strong>O(b^d)</strong> <br>
+où :
+<strong>b</strong> est le facteur de branchement, c'est-à-dire le nombre moyen de choix possibles à chaque étape (ici, les pièces à placer avec leurs variantes).<br>
+et
+<strong>d</strong> est la profondeur maximale de l’arbre de recherche (ici, le nombre de pièces à placer).</p>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\iqsolve.png" alt="image exemple solution"><br>
+<em>Figure 5 : Exemple de couverture des polyominos</em></p>
+<h3 id="point-de-départ--algorithme-x-de-donald-knuth">Point de départ : Algorithme X de Donald Knuth</h3>
+<p>L’algorithme X, proposé par Donald Knuth, est conçu pour résoudre des <strong>problèmes de couverture exacte</strong>. Dans notre projet, il permet de déterminer les placements valides des pièces sur le plateau du jeu IQ Puzzler Pro tout en respectant les contraintes du puzzle.</p>
+<h4 id="1---condition-dune-solution-trouvée">1 - Condition d'une solution trouvée</h4>
+<p>La première étape de l'algorithme consiste à vérifier si la matrice de contraintes est vide. Une matrice vide indique que toutes les contraintes ont été satisfaites, donc une solution a été trouvée.</p>
+<pre><code class="language-python"><span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> matrix:  <span class="hljs-comment"># si la matrice est vide</span>
+    validator = SolutionValidator(self.pieces, self.plateau)
+    <span class="hljs-keyword">if</span> validator.validate_solution(solution):  <span class="hljs-comment"># on vérifie la solution</span>
+        self.solutions.append(solution.copy())  <span class="hljs-comment"># on ajoute notre solution trouvée</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
+</code></pre>
+<ul>
+<li>La méthode <code>validate_solution</code> de la classe SolutionValidator est utilisée pour s'assurer que la solution est correcte en vérifiant :
+<ul>
+<li>Que chaque pièce est utilisée une seule fois.</li>
+<li>Qu'aucune cellule n'est couverte par deux pièces (pas de chevauchement).</li>
+<li>Que toutes les cellules du plateau sont couvertes (solution complète).</li>
+</ul>
+</li>
+<li>Si une solution est valide, elle est ajoutée à la liste des solutions.
+<ul>
+<li>Note : Notre classe est prévue pour lister toutes les solutions possibles. Cependant, dans le contexte de notre projet où nous devons trouver qu'une solution au puzzle, depuis une classe extérieure, nous demandons d'arrêter l'algorithme dès la première solution trouvée.</li>
+</ul>
+</li>
+</ul>
+<h4 id="2---sélection-dune-colonne-avec-mrv-minimum-remaining-values">2 - Sélection d'une colonne avec MRV (Minimum Remaining Values)</h4>
+<p>Si la matrice n'est pas vide, l'algorithme sélectionne une colonne. Nous utilisons l’heuristique <strong>MRV (Minimum Remaining Values)</strong>, qui choisit la colonne ayant le moins d'options possibles.<br>
+Cette approche vise à réduire l’espace de recherche en choisissant en priorité les contraintes les plus difficiles à satisfaire.</p>
+<p><strong>Fonctionnement</strong></p>
+<p>La méthode <code>select_min_column</code> compte, pour chaque colonne, le nombre de lignes qui la couvrent. La colonne avec le plus petit nombre est sélectionnée, car elle représente la contrainte la plus restrictive.</p>
+<p>Admettons une matrice de contraintes où :</p>
+<ul>
+<li>Les colonnes représentent des cellules du plateau.</li>
+<li>Les lignes représentent des placements possibles.</li>
+</ul>
+<table style="border-collapse: collapse; border: 2px solid rgb(140 140 140); letter-spacing: 0.5px; margin-left: 40px;">
+    <thead style = "background-color: rgb(228 240 245);">
+        <tr style = "border: 1px solid black;">
+            <th style = "text-align: center;" scope="col">Lignes / Colonnes </th>
+            <th style = "text-align: center;" scope="col">A</th>
+            <th style = "text-align: center;" scope="col">B</th>
+            <th style = "text-align: center;" scope="col">C</th>
+            <th style = "text-align: center;" scope="col">D</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr style = "border: 1px solid rgb(160 160 160); padding: 8px 10px; background-color: rgb(245, 245, 245);">
+            <td scope="row" style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">Placement 1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+        </tr>
+        <tr style = "border: 1px solid rgb(160 160 160); padding: 8px 10px; background-color: rgb(228, 240, 245)">
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;" scope="row">Placement 2</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px; ">0</td>
+        </tr>
+        <tr style = "border: 1px solid rgb(160 160 160); padding: 8px 10px; background-color: rgb(245, 245, 245);">
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;" scope="row">Placement 3</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">0</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+            <td style = "border: 1px solid rgb(160 160 160); padding: 8px 10px;">1</td>
+        </tr>
+    </tbody>
+</table>
+<ul>
+<li>La colonne A est couverte par 1 ligne.</li>
+<li>La colonne B est couverte par 1 ligne.</li>
+<li>La colonne C est couverte par 3 lignes.</li>
+<li>La colonne D est couverte par 1 ligne.</li>
+</ul>
+<p>L'heuristique MRV choisit une colonne parmi A, B, ou D, car elles ont le moins de lignes associées.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">select_min_column</span>(<span class="hljs-params">self, matrix, header</span>):
+    <span class="hljs-string">&quot;&quot;&quot;
+    Sélectionne la colonne avec le moins d&#x27;options (heuristique MRV).
+    &quot;&quot;&quot;</span>
+    counts = [<span class="hljs-number">0</span>] * <span class="hljs-built_in">len</span>(header)  <span class="hljs-comment"># compteur par colonne</span>
+
+    <span class="hljs-comment"># parcourt la matrice pour compter les couvertures par colonne</span>
+    <span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> matrix:
+        <span class="hljs-keyword">for</span> idx, val <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(row[<span class="hljs-string">&#x27;row&#x27;</span>]):
+            <span class="hljs-keyword">if</span> val == <span class="hljs-number">1</span>:
+                counts[idx] += <span class="hljs-number">1</span>  <span class="hljs-comment"># incrémente le compteur pour chaque occurrence</span>
+
+    <span class="hljs-comment"># remplace les colonnes non couvertes par une valeur infinie</span>
+    counts = [c <span class="hljs-keyword">if</span> c &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">else</span> <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;inf&#x27;</span>) <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> counts]
+
+    <span class="hljs-comment"># sélectionne la colonne avec le minimum d&#x27;options</span>
+    m = <span class="hljs-built_in">min</span>(counts)
+    <span class="hljs-keyword">if</span> m == <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;inf&#x27;</span>):  <span class="hljs-comment"># Si aucune colonne n&#x27;est disponible</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span>
+    <span class="hljs-keyword">return</span> counts.index(m)  <span class="hljs-comment"># Retourne l&#x27;indice de la colonne choisie</span>
+</code></pre>
+<p>Si aucune colonne n’est couverte, cela signifie que la matrice est incohérente, et l'algorithme retourne <code>None</code> pour faire un retour arrière.</p>
+<pre><code class="language-python">column = self.select_min_column(matrix, header)  <span class="hljs-comment"># sélectionne la colonne la plus contraignante</span>
+<span class="hljs-keyword">if</span> column <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:  <span class="hljs-comment"># aucune colonne n&#x27;est disponible : retour en arrière</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
+</code></pre>
+<h4 id="3---exploration-des-lignes-couvrant-la-colonne-sélectionnée">3 - Exploration des lignes couvrant la colonne sélectionnée</h4>
+<p>Une fois une colonne choisie, l’algorithme identifie toutes les lignes qui couvrent cette colonne. Chaque ligne correspond à un placement possible pour une pièce. L'algorithme essaye ces placements un par un.</p>
+<pre><code class="language-python">rows_to_cover = [row <span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> matrix <span class="hljs-keyword">if</span> row[<span class="hljs-string">&#x27;row&#x27;</span>][column] == <span class="hljs-number">1</span>]  <span class="hljs-comment"># récupère les lignes couvrant la colonne</span>
+</code></pre>
+<p>Un tri des lignes peut être effectué pour prioriser les options les plus probables :</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">prioritize_rows</span>(<span class="hljs-params">self, rows</span>):
+    rows.sort(key=<span class="hljs-keyword">lambda</span> r: -self.piece_weights[r[<span class="hljs-string">&#x27;piece&#x27;</span>].nom])  <span class="hljs-comment"># Tri décroissant par poids</span>
+    <span class="hljs-keyword">return</span> rows
+</code></pre>
+<p>Chaque ligne est ensuite testée :</p>
+<pre><code class="language-python"><span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> rows_to_cover:
+    solution.append(row)  <span class="hljs-comment"># ajout de la ligne à la solution actuelle</span>
+    new_matrix = self.cover_columns(matrix, columns_to_remove, row)  <span class="hljs-comment"># réduction de la matrice</span>
+
+    <span class="hljs-keyword">if</span> self.algorithm_x(new_matrix, header, solution):  <span class="hljs-comment"># Appel récursif</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span>
+    solution.pop()  <span class="hljs-comment"># Retour arrière</span>
+</code></pre>
+<h4 id="4---réduction-de-la-matrice">4 - Réduction de la matrice</h4>
+<p>Après avoir choisi une ligne (un placement), l’algorithme réduit la matrice en supprimant :</p>
+<ol>
+<li>Toutes les colonnes couvertes par cette ligne.</li>
+<li>Toutes les lignes conflictuelles (celles qui couvrent les mêmes colonnes).</li>
+</ol>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">cover_columns</span>(<span class="hljs-params">self, matrix, columns_to_remove, selected_row</span>):
+    new_matrix = []
+    <span class="hljs-keyword">for</span> r <span class="hljs-keyword">in</span> matrix:
+        <span class="hljs-keyword">if</span> r == selected_row:  <span class="hljs-comment"># ignore la ligne sélectionnée</span>
+            <span class="hljs-keyword">continue</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-built_in">all</span>(r[<span class="hljs-string">&#x27;row&#x27;</span>][idx] == <span class="hljs-number">0</span> <span class="hljs-keyword">for</span> idx <span class="hljs-keyword">in</span> columns_to_remove):  <span class="hljs-comment"># conserve les lignes non conflictuelles</span>
+            new_matrix.append(r)
+    <span class="hljs-keyword">return</span> new_matrix
+</code></pre>
+<ul>
+<li>Si la colonne A est couverte par la ligne sélectionnée, toutes les lignes contenant A sont supprimées.</li>
+</ul>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">algorithm_x</span>(<span class="hljs-params">self, matrix, header, solution</span>):
+    <span class="hljs-comment"># Étape 1 : Vérification de solution</span>
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> matrix:  <span class="hljs-comment"># si la matrice est vide</span>
+        validator = SolutionValidator(self.pieces, self.plateau)
+        <span class="hljs-keyword">if</span> validator.validate_solution(solution):  <span class="hljs-comment"># Valide la solution trouvée</span>
+            self.solutions.append(solution.copy())  <span class="hljs-comment"># Ajoute la solution ce qui déclenchera la fin dans notre projet.</span>
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span> <span class="hljs-comment"># retour arrière</span>
+
+    <span class="hljs-comment"># Étape 2 : Sélectionner une colonne (heuristique MRV)</span>
+    column = self.select_min_column(matrix, header)
+    <span class="hljs-keyword">if</span> column <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:  <span class="hljs-comment"># Aucune colonne disponible</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span> <span class="hljs-comment"># retour arrière</span>
+
+    <span class="hljs-comment"># Étape 3 : Récupérer les lignes couvrant la colonne</span>
+    rows_to_cover = [row <span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> matrix <span class="hljs-keyword">if</span> row[<span class="hljs-string">&#x27;row&#x27;</span>][column] == <span class="hljs-number">1</span>]
+    rows_to_cover = self.prioritize_rows(rows_to_cover)  <span class="hljs-comment"># Tri optionnel des lignes</span>
+
+    <span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> rows_to_cover:  <span class="hljs-comment"># Tester chaque ligne</span>
+        solution.append(row)  <span class="hljs-comment"># Ajouter le placement à la solution</span>
+        columns_to_remove = [idx <span class="hljs-keyword">for</span> idx, val <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(row[<span class="hljs-string">&#x27;row&#x27;</span>]) <span class="hljs-keyword">if</span> val == <span class="hljs-number">1</span>]
+        new_matrix = self.cover_columns(matrix, columns_to_remove, row)  <span class="hljs-comment"># Réduire la matrice</span>
+
+        <span class="hljs-comment"># Étape 4 : Appel récursif</span>
+        <span class="hljs-keyword">if</span> self.algorithm_x(new_matrix, header, solution):
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span>
+        solution.pop()  <span class="hljs-comment"># Retour arrière si échec</span>
+
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>  <span class="hljs-comment"># retour arrière</span>
+</code></pre>
+<p>Maintenant, testons notre algorithme :</p>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\lvl3.png" width="33%" alt="lvl3 résolu">
+<p><em>Figure : Niveau 3 du jeu résolu en 25 placements testés</em></p>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\lvl39b.png" width="33%" alt="lvl39 résolu">
+<p><em>Figure : Niveau 39 du jeu résolu en 145 placements testés</em></p>
+<h3 id="optimisations">Optimisations</h3>
+<p>Pour améliorer les performances de l'algorithme X, nous avons intégré des stratégies d'optimisation. Ces ajouts permettent de réduire l’espace de recherche, de prioriser des placements et d’effectuer un <strong>pruning</strong> (coupure) des branches non valides.</p>
+<hr>
+<h4 id="pruning--exploration-des-zones-vides">Pruning : Exploration des zones vides</h4>
+<p>L’exploration des zones est un élément clé dans l'optimisation de notre algorithme. L'objectif est d'identifier des configurations intermédiaires qui rendent impossible la résolution du puzzle. Cela permet un pruning (coupure) des branches non valides, améliorant ainsi la rapidité de l'algorithme.</p>
+<p>En effet, à chaque nouveau placement, nous vérifions s'il n'existe pas de zone vide (trous) impossibles à remplir avec les polyominos restants afin de directement couper la branche invalide.</p>
+<hr>
+<p><strong>Test de la solution :</strong><br>
+La méthode <code>apply_solution_to_plateau</code> applique les placements actuels à une copie du plateau, marquant les cellules occupées.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">apply_solution_to_plateau</span>(<span class="hljs-params">self, solution</span>):
+    <span class="hljs-string">&quot;&quot;&quot;
+    Applique la solution actuelle à un plateau temporaire pour simuler l&#x27;état.
+    
+    Paramètres :
+    - solution : Liste des placements effectués.
+
+    Retourne :
+    - plateau_temp : Copie du plateau avec les cellules occupées.
+    &quot;&quot;&quot;</span>
+    plateau_temp = np.copy(self.plateau.plateau)  <span class="hljs-comment"># Copie de l&#x27;état actuel du plateau</span>
+    <span class="hljs-keyword">for</span> sol <span class="hljs-keyword">in</span> solution:
+        <span class="hljs-keyword">for</span> cell <span class="hljs-keyword">in</span> sol[<span class="hljs-string">&#x27;cells_covered&#x27;</span>]:  <span class="hljs-comment"># Marque les cellules occupées par la solution</span>
+            i, j = cell
+            plateau_temp[i, j] = <span class="hljs-number">1</span>
+    <span class="hljs-keyword">return</span> plateau_temp
+</code></pre>
+<hr>
+<p><strong>Identification des zones vides :</strong><br>
+Les zones vides sont détectées en explorant le plateau temporaire pour identifier les cellules contiguës non occupées. La méthode <code>explore_zone</code> utilise un parcours en largeur (BFS) pour regrouper les cellules d’une même zone.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_empty_zones</span>(<span class="hljs-params">self, plateau_temp</span>):
+    <span class="hljs-string">&quot;&quot;&quot;
+    Identifie les zones vides (ensembles de cellules contiguës non occupées).
+
+    Paramètres :
+    - plateau_temp : Plateau temporaire avec la solution appliquée.
+
+    Retourne :
+    - empty_zones : Liste des zones vides, chaque zone étant une liste de cellules (i, j).
+    &quot;&quot;&quot;</span>
+    visited = <span class="hljs-built_in">set</span>()  <span class="hljs-comment"># Ensemble pour suivre les cellules déjà explorées</span>
+    empty_zones = []  <span class="hljs-comment"># Liste des zones vides identifiées</span>
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.plateau.lignes):
+        <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.plateau.colonnes):
+            <span class="hljs-keyword">if</span> plateau_temp[i, j] == <span class="hljs-number">0</span> <span class="hljs-keyword">and</span> (i, j) <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> visited:  <span class="hljs-comment"># Cellule vide non visitée</span>
+                zone = self.explore_zone(plateau_temp, i, j, visited)  <span class="hljs-comment"># Explore la zone</span>
+                empty_zones.append(zone)  <span class="hljs-comment"># Ajoute la zone à la liste</span>
+    <span class="hljs-keyword">return</span> empty_zones
+</code></pre>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">explore_zone</span>(<span class="hljs-params">self, plateau_temp, i, j, visited</span>):
+    <span class="hljs-string">&quot;&quot;&quot;
+    Parcours une zone vide en partant d&#x27;une cellule initiale.
+
+    Paramètres :
+    - plateau_temp : Plateau temporaire.
+    - i, j : Coordonnées de la cellule de départ.
+    - visited : Ensemble des cellules déjà explorées.
+
+    Retourne :
+    - zone : Liste des cellules formant la zone vide explorée.
+    &quot;&quot;&quot;</span>
+    queue = [(i, j)]  <span class="hljs-comment"># Initialisation de la file pour BFS</span>
+    visited.add((i, j))  <span class="hljs-comment"># Marque la cellule comme visitée</span>
+    zone = [(i, j)]  <span class="hljs-comment"># Liste des cellules de la zone actuelle</span>
+    <span class="hljs-keyword">while</span> queue:
+        ci, cj = queue.pop(<span class="hljs-number">0</span>)  <span class="hljs-comment"># Récupère la cellule actuelle</span>
+        <span class="hljs-keyword">for</span> ni, nj <span class="hljs-keyword">in</span> [(ci+<span class="hljs-number">1</span>, cj), (ci-<span class="hljs-number">1</span>, cj), (ci, cj+<span class="hljs-number">1</span>), (ci, cj-<span class="hljs-number">1</span>)]:  <span class="hljs-comment"># Directions (haut, bas, gauche, droite)</span>
+            <span class="hljs-keyword">if</span> <span class="hljs-number">0</span> &lt;= ni &lt; self.plateau.lignes <span class="hljs-keyword">and</span> <span class="hljs-number">0</span> &lt;= nj &lt; self.plateau.colonnes:
+                <span class="hljs-keyword">if</span> plateau_temp[ni, nj] == <span class="hljs-number">0</span> <span class="hljs-keyword">and</span> (ni, nj) <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> visited:  <span class="hljs-comment"># Cellule vide non visitée</span>
+                    visited.add((ni, nj))  <span class="hljs-comment"># Marque comme visitée</span>
+                    queue.append((ni, nj))  <span class="hljs-comment"># Ajoute à la file</span>
+                    zone.append((ni, nj))  <span class="hljs-comment"># Ajoute à la zone</span>
+    <span class="hljs-keyword">return</span> zone
+</code></pre>
+<hr>
+<p><strong>Validation des zones :</strong><br>
+Une fois les zones vides identifiées, elles sont comparées aux tailles des pièces restantes. Si une zone ne peut pas être comblée exactement, la branche est coupée.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">has_unfillable_voids</span>(<span class="hljs-params">self, solution</span>):
+    <span class="hljs-string">&quot;&quot;&quot;
+    Vérifie si une solution partielle conduit à des zones impossibles à remplir.
+
+    Paramètres :
+    - solution : Liste des placements actuels.
+
+    Retourne :
+    - bool : True si une zone est impossible à remplir, False sinon.
+    &quot;&quot;&quot;</span>
+    plateau_temp = self.apply_solution_to_plateau(solution)  <span class="hljs-comment"># Applique la solution courante</span>
+    empty_zones = self.get_empty_zones(plateau_temp)  <span class="hljs-comment"># Identifie les zones vides</span>
+    remaining_sizes = [np.count_nonzero(self.pieces[p].forme_base) <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> remaining_pieces]  <span class="hljs-comment"># Tailles des pièces restantes</span>
+
+    <span class="hljs-keyword">for</span> zone <span class="hljs-keyword">in</span> empty_zones:
+        zone_size = <span class="hljs-built_in">len</span>(zone)  <span class="hljs-comment"># Taille de la zone vide</span>
+        <span class="hljs-keyword">if</span> zone_size <span class="hljs-keyword">in</span> self.zone_cache:  <span class="hljs-comment"># Vérifie dans le cache si cette taille est comblable</span>
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self.zone_cache[zone_size]:
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span>  <span class="hljs-comment"># Zone non comblable détectée</span>
+        <span class="hljs-keyword">else</span>:
+            possible = self.is_zone_fillable(zone_size, remaining_sizes)  <span class="hljs-comment"># Vérifie via subset sum</span>
+            self.zone_cache[zone_size] = possible  <span class="hljs-comment"># Met à jour le cache</span>
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> possible:
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
+</code></pre>
+<hr>
+<p><strong>Vérification via la somme des sous-ensembles : <em>Subset Sum</em></strong></p>
+<p>L’objectif de cette étape est de vérifier si une zone vide de taille donnée peut être comblée par une combinaison de tailles des pièces restantes. Cette vérification repose sur une approche de <strong>programmation dynamique</strong>, appelée <em>Subset Sum</em>, qui détermine si une somme spécifique (taille de la zone) peut être atteinte avec les éléments d’un ensemble (tailles des pièces restantes).</p>
+<p><strong>Tableau dynamique (<code>dp</code>)</strong> :</p>
+<ul>
+<li><code>dp[i]</code> est <code>True</code> si une combinaison de pièces permet de former une zone de taille <code>i</code>.</li>
+<li>Initialisation : <code>dp[0] = True</code> (une zone de taille 0 peut toujours être remplie).</li>
+</ul>
+<p><strong>Mise à jour du tableau</strong> :</p>
+<ul>
+<li>Pour chaque taille de pièce, le tableau est mis à jour de manière descendante (du plus grand vers 0). Cela évite de compter plusieurs fois une même pièce.</li>
+</ul>
+<p><strong>Résultat final</strong> :<br>
+Si <code>dp[zone_size]</code> est <code>True</code>, la zone est comblable. Sinon, elle ne peut pas être remplie exactement.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">can_fill_zone</span>(<span class="hljs-params">self, zone_size, piece_sizes</span>):
+    <span class="hljs-string">&quot;&quot;&quot;
+    Vérifie si une zone de taille donnée peut être comblée par une combinaison des pièces restantes.
+
+    Paramètres :
+    - zone_size : Taille de la zone vide.
+    - piece_sizes : Liste des tailles (nombre de cellules) des pièces restantes.
+
+    Retourne :
+    - bool : True si la zone est remplissable exactement, False sinon.
+    &quot;&quot;&quot;</span>
+    dp = [<span class="hljs-literal">False</span>] * (zone_size + <span class="hljs-number">1</span>)  <span class="hljs-comment"># initialisation du tableau dynamique</span>
+    dp[<span class="hljs-number">0</span>] = <span class="hljs-literal">True</span>
+
+    <span class="hljs-keyword">for</span> size <span class="hljs-keyword">in</span> piece_sizes:
+        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(zone_size, size - <span class="hljs-number">1</span>, -<span class="hljs-number">1</span>):  <span class="hljs-comment"># Parcours descendant pour éviter les doublons</span>
+            dp[i] = dp[i] <span class="hljs-keyword">or</span> dp[i - size]  <span class="hljs-comment"># TRUE si (taille actuelle - taille de la pièce) est atteignable</span>
+
+    <span class="hljs-keyword">return</span> dp[zone_size]
+</code></pre>
+<p><strong>Exemple :</strong></p>
+<ul>
+<li>Zone vide : taille 7.</li>
+<li>Pièces restantes : tailles [2, 3, 6].</li>
+</ul>
+<ol>
+<li>Initialisation : <code>dp = [True, False, False, False, False, False, False, False]</code>.</li>
+<li>Ajout de la pièce 2 : <code>dp = [True, False, True, False, False, False, False, False]</code>.</li>
+<li>Ajout de la pièce 3 : <code>dp = [True, False, True, True, False, True, False, False]</code>.</li>
+<li>Ajout de la pièce 6 : <code>dp = [True, False, True, True, False, True, True, True]</code>.</li>
+<li><code>dp[7] = True</code>. La zone peut être remplie avec les pièces [2, 3, 2].</li>
+</ol>
+<h4 id="heuristiques--poids-des-pièces">Heuristiques : Poids des pièces</h4>
+<p>Dans l'introduction, nous avions expliqué qu'il était plus efficace de commencer par les pièces les plus grandes. De cette observation, nous avons implémenter un choix de priorisation des placements des pièces. Nous définissons un poids à chaque polyomino selon la priorité choisie :</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Heuristique</th>
+<th style="text-align:left">Priorité</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">ascender</td>
+<td style="text-align:left">Petites pièces (air).</td>
+</tr>
+<tr>
+<td style="text-align:left">descender</td>
+<td style="text-align:left">Grandes pièces (air).</td>
+</tr>
+<tr>
+<td style="text-align:left">compactness</td>
+<td style="text-align:left">Pièces compactes.</td>
+</tr>
+<tr>
+<td style="text-align:left">compactness_inverse</td>
+<td style="text-align:left">Pièces non compactes (grandes disparités largeur/hauteur)</td>
+</tr>
+<tr>
+<td style="text-align:left">perimeter</td>
+<td style="text-align:left">Petits périmètres.</td>
+</tr>
+<tr>
+<td style="text-align:left">perimeter_inverse</td>
+<td style="text-align:left">Grands périmètres.</td>
+</tr>
+<tr>
+<td style="text-align:left">holes</td>
+<td style="text-align:left">Pièces avec peu de trous internes.</td>
+</tr>
+<tr>
+<td style="text-align:left">holes_inverse</td>
+<td style="text-align:left">Pièces avec plus de trous internes.</td>
+</tr>
+</tbody>
+</table>
+<p>Certaines des heuristiques du tableau ne semblent pour le moment non pertinentes pour les pièces du IQ Puzzler Pro. Cependant, elles se révéleront utiles dans une partie suivante.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">calculate_piece_weights</span>(<span class="hljs-params">self, heuristic=<span class="hljs-string">&quot;ascender&quot;</span></span>):
+    weights = {}
+    <span class="hljs-comment">#pour chaque piece</span>
+    <span class="hljs-keyword">for</span> piece <span class="hljs-keyword">in</span> self.pieces.values():
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">hasattr</span>(piece, <span class="hljs-string">&#x27;forme_base&#x27;</span>) <span class="hljs-keyword">or</span> piece.forme_base <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+            weights[piece.nom] = <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;inf&#x27;</span>)
+            <span class="hljs-keyword">continue</span>
+
+        occupied_cells = np.count_nonzero(piece.forme_base)  <span class="hljs-comment"># nombre de cellules occupées.</span>
+        <span class="hljs-keyword">if</span> occupied_cells == <span class="hljs-number">0</span>:
+            weights[piece.nom] = <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;inf&#x27;</span>)
+            <span class="hljs-keyword">continue</span>
+
+        <span class="hljs-comment"># calcul des critères</span>
+        shape = piece.forme_base
+        height, width = shape.shape
+        compactness = <span class="hljs-built_in">min</span>(height, width) / <span class="hljs-built_in">max</span>(height, width)  <span class="hljs-comment"># Ratio compact.</span>
+        perimeter = np.<span class="hljs-built_in">sum</span>(np.pad(shape, pad_width=<span class="hljs-number">1</span>, mode=<span class="hljs-string">&#x27;constant&#x27;</span>, constant_values=<span class="hljs-number">0</span>) != <span class="hljs-number">0</span>) - occupied_cells
+        holes = np.<span class="hljs-built_in">sum</span>(shape == <span class="hljs-number">0</span>)  <span class="hljs-comment"># zones vides dans la forme.</span>
+
+        <span class="hljs-comment">#assignation du poids selon le type choisi.</span>
+        <span class="hljs-keyword">if</span> heuristic == <span class="hljs-string">&quot;ascender&quot;</span>:
+            weights[piece.nom] = <span class="hljs-number">1</span> / occupied_cells
+        <span class="hljs-keyword">elif</span> heuristic == <span class="hljs-string">&quot;descender&quot;</span>:
+            weights[piece.nom] = occupied_cells
+        <span class="hljs-keyword">elif</span> heuristic == <span class="hljs-string">&quot;compactness&quot;</span>:
+            weights[piece.nom] = compactness
+        <span class="hljs-keyword">elif</span> heuristic == <span class="hljs-string">&quot;compactness_inverse&quot;</span>:
+            weights[piece.nom] = <span class="hljs-number">1</span> / (compactness + <span class="hljs-number">1e-6</span>)
+        <span class="hljs-keyword">elif</span> heuristic == <span class="hljs-string">&quot;perimeter&quot;</span>:
+            weights[piece.nom] = <span class="hljs-number">1</span> / perimeter <span class="hljs-keyword">if</span> perimeter &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">else</span> <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;inf&#x27;</span>)
+        <span class="hljs-keyword">elif</span> heuristic == <span class="hljs-string">&quot;perimeter_inverse&quot;</span>:
+            weights[piece.nom] = perimeter
+        <span class="hljs-keyword">elif</span> heuristic == <span class="hljs-string">&quot;holes&quot;</span>:
+            weights[piece.nom] = <span class="hljs-number">1</span> / (holes + <span class="hljs-number">1</span>)
+        <span class="hljs-keyword">elif</span> heuristic == <span class="hljs-string">&quot;holes_inverse&quot;</span>:
+            weights[piece.nom] = holes
+        <span class="hljs-keyword">else</span>:
+            <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">f&quot;Unknown heuristic: <span class="hljs-subst">{heuristic}</span>&quot;</span>)
+    <span class="hljs-keyword">return</span> weights
+</code></pre>
+<p>Analysons les résultats pour un niveau.</p>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\heuristics_benchmark.jpg" width="100%" alt="meme niveau avec chaque heuristic">
+<p><em>Figure : Un même niveau résolu avec les différentes heuristiques</em></p>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\heuristiques_stats.png" width="80%" alt="description">  
+<p><em>Figure : Comparaison Temps et nombre de placements testés entre chaque heuristique</em></p>
+<p>On remarque des différences notables, montrant que notre choix d'incorporer ces heuristiques est une stratégie efficace et pertinente.
+De manière générale, l'heuristique &quot;Descender&quot; est la plus efficace, c'est celle qui vise à placer les plus grandes pièces en premier.
+Cependant, comme toute heuristique, qui sert à guider le résultat, cette dernière peut ne pas être la plus efficace dans certains cas.</p>
+<h3 id="avant--après-optimisations">Avant / Après optimisations</h3>
+<p>Pour commencer, comparons la version optimisée et la version de départ.</p>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\lvl39_comp.jpg" width="60%" alt="Niveau de ref">  
+<p><em>Figure : Comparaison résolution d'un niveau</em></p>
+<p>Comparons les différences :</p>
+<ul>
+<li>Temps : Cette valeur est très différente car nous avons retiré l'affichage de la résolution de la grille en temps réel afin de gagner en performance.
+Nous enregistrons désormais chaque placement dans une liste afin de rejouer les étapes une fois la résolution finie.</li>
+<li>Placements testés : Cette valeur est importante, et nous voyons ici que nous les avons réduit de moitié (145 vs 73). Les optimisations sont donc efficaces.</li>
+</ul>
+<h3 id="projet-réussi--résolution-de-niveaux-de-iq-puzzler-pro">Projet réussi : Résolution de niveaux de IQ Puzzler Pro</h3>
+<p>Nous avons désormais montré que notre projet était fonctionnel : il est capable de résoudre des niveaux en quelques (dizaines de) millisecondes de manière efficace.
+Avec une base de projet solide, nous avons souhaité aller plus loin. Pour cela, nous allons rapidement expliqué certains points clés de l'interface.</p>
+<h2 id="ivinterface">IV/Interface</h2>
+<p>L'explication de cette partie permet de comprendre l'utilisation de notre classe AlgorithmX.</p>
+<h3 id="lancer-la-résolution">Lancer la résolution</h3>
+<p>La classe de l'interface contient de nombreuses méthodes, mais seulement une nous intéresse : <code>start_resolution()</code>. Cette dernière interagit avec le stack gérant l'algorithme :</p>
+<pre><code class="language-python">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">start_resolution</span>(<span class="hljs-params">self</span>):
+        <span class="hljs-comment"># réinitialise les variables précédentes</span>
+        self.step_progress_label.config(text=<span class="hljs-string">&quot;&quot;</span>) 
+        self.solution = []
+
+        <span class="hljs-comment"># ajoute les pieces placées comme pieces fixes</span>
+        fixed_pieces = {}
+        <span class="hljs-keyword">for</span> piece_name, info <span class="hljs-keyword">in</span> self.placed_pieces.items():
+            fixed_pieces[piece_name] = {
+                <span class="hljs-string">&#x27;variante_index&#x27;</span>: info[<span class="hljs-string">&#x27;variante_index&#x27;</span>],
+                <span class="hljs-string">&#x27;position&#x27;</span>: info[<span class="hljs-string">&#x27;position&#x27;</span>]
+            }
+</code></pre>
+<pre><code class="language-python">        <span class="hljs-comment"># Créer un nouvel objet Plateau pour le résoudre</span>
+        plateau_copy = Plateau()
+        plateau_copy.lignes = self.grid_y
+        plateau_copy.colonnes = self.grid_x
+        plateau_copy.plateau = np.copy(self.plateau.plateau)
+        heuristic = self.heuristic_choice.get()
+
+        <span class="hljs-comment"># lance la résolution</span>
+        self.manager = SolverManager(
+            plateau_copy,
+            self.pieces,
+            heuristic,
+            fixed_pieces
+        )
+
+        <span class="hljs-comment"># désactive l&#x27;interaction de certains controls</span>
+        self.disable_controls()
+        self.is_solving = <span class="hljs-literal">True</span>
+
+        <span class="hljs-comment"># manager lance dans un thread</span>
+        self.manager_thread = threading.Thread(target=self.manager.run)
+        self.manager_thread.start()
+        self.update_feedback()
+</code></pre>
+<p>Pour lancer une résolution, il suffit simplement de donner les paramètres attendus par le SolverManager :</p>
+<pre><code class="language-python">        <span class="hljs-comment"># Lance la résolution</span>
+        self.manager = SolverManager(
+            plateau_copy, <span class="hljs-comment"># objet Plateau</span>
+            self.pieces,  <span class="hljs-comment"># dictionnaire des pièces à placer</span>
+            heuristic,    <span class="hljs-comment"># string du nom heuristique</span>
+            fixed_pieces  <span class="hljs-comment"># dictionnaire des pièces placées (optionnel)</span>
+        )
+</code></pre>
+<p>Nous lançons la résolution dans un thread à part afin de pouvoir récupérer dans le thread principal de l'interface les statistiques et le temps écoulé en direct.</p>
+<pre><code class="language-python">        <span class="hljs-comment"># manager lance dans un thread</span>
+        self.manager_thread = threading.Thread(target=self.manager.run)
+        self.manager_thread.start()
+</code></pre>
+<h3 id="interface-changeable">Interface changeable</h3>
+<p>Ainsi, nous avons vu que le lancement de la résolution est très simple à utiliser.
+En effet, nous avons choisi une architecture de classes modulaires dans le cas où nous voulions changer l'interface.</p>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\diagseq2.png" alt="Diagramme UML de séquence"><br>
+<em>Figure : Diagramme de séquence UML simplifié du projet</em></p>
+<p>Dans cette architecture, nous pouvons facilement choisir une autre librairie python, ou alors créer une passerelle vers un autre langage permettant plus permissif que Tkinter.</p>
+<h3 id="limitations-de-notre-interface">Limitations de notre interface</h3>
+<p>En effet, une fois la résolution optimisée fonctionnelle, nous avons voulu encore augmenter l'efficacité de notre algorithme en utilisant le multi-threading.
+Cependant, il est très difficile d'exploiter le multi-threading avec Tkinter.
+Malgré le fait que l'interface soit censée être indépendante, nous avons rencontré de nombreuses difficultés à faire fonctionner le parallélisme de notre algorithme.
+Si nous devions refaire l'interface en C++, nous aurions bien plus de facilité à intégrer le multi-threading car ce langage permet une meilleure gestion du parallélisme.</p>
+<h2 id="vi-pour-aller-plus-loin--augmentation-des-dimensions-de-la-grille">VI/ Pour aller plus loin : Augmentation des dimensions de la grille</h2>
+<p>Étant donné que le programme fonctionnait déjà pour des grilles de <code>5x11</code>, nous avons voulu tester les limites de notre algorithme.
+Notamment en augmentant la taille de la grille, et tester de résoudre n'importe quelle configuration de polyominos sur une grille de taille <code>x</code> et <code>y</code> variable.
+Alors, nous avons premièrement découpé manuellement un plateau <code>6x12</code> pour faire 14 pièces de formes différentes.
+Nous avons implémenté ces pièces dans notre programme, et lancé la résolution.</p>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\nvgrille.png" alt="quadrillage 6x12"></p>
+<p><em>Figure : Grille découpée en 14 polyominos</em></p>
+<p>On a lancé la résolution sans aucune pièce placée Avec 2 heuristiques différentes (Descender, Ascender).</p>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\nvgrille_start.png" width="85%" alt="6x12">  
+<p><em>Figure : Nouvelle grille et pièces implémentées</em></p>
+<p>Notre hypothèse est validée, bien que logique et prédictible, nous pouvons ne pas nous limiter à la grille par défaut du jeu IQ Puzzler Pro, et ainsi s'amuser sur de plus grandes grilles.</p>
+<h4 id="algorithme-de-découpe-de-grille-en-polyominos">Algorithme de découpe de grille en polyominos</h4>
+<p>Afin de ne pas avoir à créer manuellement chaque découpage, nous avons conçu un algorithme pour découper une grille de taille X et Y en Z polyominos tout en favorisant l'unicité de ces derniers.</p>
+<p><strong>Procédé :</strong></p>
+<ul>
+<li>On initialise une grille vide de taille X×Y.</li>
+<li>Pour chaque cellule non visitée :
+<ul>
+<li>On crée un polyomino de taille aléatoire.</li>
+<li>On étend le polyomino en ajoutant des cellules adjacentes jusqu'à atteindre la taille souhaitée.</li>
+<li>Si la taille souhaitée n'est pas atteinte, annuler le polyomino.</li>
+</ul>
+</li>
+<li>On rempli les cellules vides restantes en les assignant au plus petit polyomino voisin.</li>
+</ul>
+<p><strong>Exemple :</strong>
+Grille 3x3
+<strong>Création des polyominos pas à pas :</strong></p>
+<div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8em;">
+    <div>
+        <p>1. Initialisation</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>-1</td><td>-1</td><td>-1</td></tr>
+            <tr><td>1</td><td>-1</td><td>-1</td><td>-1</td></tr>
+            <tr><td>2</td><td>-1</td><td>-1</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>2. 1er polyomino A</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>-1</td></tr>
+            <tr><td>1</td><td>-1</td><td>-1</td><td>-1</td></tr>
+            <tr><td>2</td><td>-1</td><td>-1</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>3. 2e polyomino B</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
+            <tr><td>1</td><td>-1</td><td>B</td><td>B</td></tr>
+            <tr><td>2</td><td>-1</td><td>-1</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>4. 3e polyomino C</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
+            <tr><td>1</td><td>C</td><td>B</td><td>B</td></tr>
+            <tr><td>2</td><td>C</td><td>C</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>5. 4e polyomino D</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
+            <tr><td>1</td><td>C</td><td>B</td><td>B</td></tr>
+            <tr><td>2</td><td>C</td><td>C</td><td>-1</td></tr>
+        </table>
+    </div>
+    →
+    <div>
+        <p>6. Fusion cases vides</p>
+        <table>
+            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
+            <tr><td>1</td><td>C</td><td>B</td><td>B</td></tr>
+            <tr><td>2</td><td>C</td><td>C</td><td>B</td></tr>
+        </table>
+    </div>
+</div>
+<p><strong>Implémentation :</strong></p>
+<ol>
+<li><strong>Initialisation :</strong> Création d'une grille vide et d'une liste pour stocker les polyominos générés.</li>
+</ol>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, rows, cols, max_pieces=<span class="hljs-number">50</span></span>):
+    self.rows = rows
+    self.cols = cols
+    self.grid = [[-<span class="hljs-number">1</span> <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(cols)] <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(rows)] <span class="hljs-comment">#-1 partout</span>
+
+    self.polyominos = []
+    self.max_pieces = <span class="hljs-built_in">min</span>(max_pieces, <span class="hljs-built_in">len</span>(self.PIECE_COLORS))
+</code></pre>
+<ol start="2">
+<li><strong>Génération des polyominos :</strong> Pour chaque cellule non visitée, on tente de créer un nouveau polyomino de taille aléatoire.</li>
+</ol>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">generate</span>(<span class="hljs-params">self</span>):
+    <span class="hljs-comment"># Grille pour suivre les cellules visitées</span>
+    visited = [[<span class="hljs-literal">False</span> <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.cols)] <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.rows)]
+    label = <span class="hljs-number">0</span>  <span class="hljs-comment"># label pour chaque polyomino</span>
+
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.rows): <span class="hljs-comment"># Création de chaque polyomino</span>
+        <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.cols):
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> visited[i][j] <span class="hljs-keyword">and</span> label &lt; self.max_pieces:
+                size = random.randint(<span class="hljs-number">2</span>, <span class="hljs-built_in">min</span>(self.rows, self.cols))
+                polyomino = self._create_polyomino(i, j, size, visited, label) <span class="hljs-comment"># Création du polyomino</span>
+                <span class="hljs-keyword">if</span> polyomino:
+                    self.polyominos.append(polyomino)
+                    label += <span class="hljs-number">1</span>
+
+    self._fill_remaining_cells() <span class="hljs-comment"># Remplissage des cases restantes</span>
+</code></pre>
+<ol start="3">
+<li><strong>Création d'un polyomino :</strong> À partir d'une position de départ, on étend le polyomino en ajoutant des cellules adjacentes jusqu'à atteindre la taille souhaitée.</li>
+</ol>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_create_polyomino</span>(<span class="hljs-params">self, start_x, start_y, size, visited, label</span>):
+    <span class="hljs-string">&quot;&quot;&quot;
+    Crée un polyomino à partir d&#x27;une position de départ.
+
+    Paramètres:
+    - start_x (int): Ligne de départ.
+    - start_y (int): Colonne de départ.
+    - size (int): Taille souhaitée du polyomino.
+    - visited (list): Grille des cellules visitées.
+    - label (int): Étiquette du polyomino.
+
+    Retourne:
+    - list: Liste des coordonnées du polyomino ou None si impossible.
+    &quot;&quot;&quot;</span>
+    directions = [(<span class="hljs-number">0</span>, <span class="hljs-number">1</span>), (<span class="hljs-number">1</span>, <span class="hljs-number">0</span>), (<span class="hljs-number">0</span>, -<span class="hljs-number">1</span>), (-<span class="hljs-number">1</span>, <span class="hljs-number">0</span>)]  <span class="hljs-comment"># Droite, Bas, Gauche, Haut</span>
+    queue = deque([(start_x, start_y)])
+    polyomino = []
+
+    <span class="hljs-keyword">while</span> queue <span class="hljs-keyword">and</span> <span class="hljs-built_in">len</span>(polyomino) &lt; size:
+        x, y = queue.popleft()
+        <span class="hljs-keyword">if</span> <span class="hljs-number">0</span> &lt;= x &lt; self.rows <span class="hljs-keyword">and</span> <span class="hljs-number">0</span> &lt;= y &lt; self.cols <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> visited[x][y]:
+            visited[x][y] = <span class="hljs-literal">True</span>
+            self.grid[x][y] = label
+            polyomino.append((x, y))
+
+            random.shuffle(directions)  <span class="hljs-comment"># Mélange des directions pour l&#x27;aléatoire</span>
+            <span class="hljs-keyword">for</span> dx, dy <span class="hljs-keyword">in</span> directions:
+                nx, ny = x + dx, y + dy
+                <span class="hljs-keyword">if</span> <span class="hljs-number">0</span> &lt;= nx &lt; self.rows <span class="hljs-keyword">and</span> <span class="hljs-number">0</span> &lt;= ny &lt; self.cols <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> visited[nx][ny]:
+                    queue.append((nx, ny))
+
+    <span class="hljs-comment"># Si on n&#x27;a pas pu atteindre la taille souhaitée, annuler</span>
+    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(polyomino) &lt; size:
+        <span class="hljs-keyword">for</span> x, y <span class="hljs-keyword">in</span> polyomino:
+            visited[x][y] = <span class="hljs-literal">False</span>
+            self.grid[x][y] = -<span class="hljs-number">1</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span>
+
+    <span class="hljs-keyword">return</span> polyomino
+</code></pre>
+<ol start="4">
+<li><strong>Remplissage des cases restantes :</strong> Les cellules non assignées sont attribuées au plus petit polyomino voisin.</li>
+</ol>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_fill_remaining_cells</span>(<span class="hljs-params">self</span>):
+    <span class="hljs-string">&quot;&quot;&quot;
+    Remplit les cases restantes (étiquetées -1) en les assignant
+    au polyomino voisin le plus petit.
+    &quot;&quot;&quot;</span>
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.rows):
+        <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.cols):
+            <span class="hljs-keyword">if</span> self.grid[i][j] == -<span class="hljs-number">1</span>:  <span class="hljs-comment"># Case non assignée</span>
+                <span class="hljs-comment"># voisins valides</span>
+                neighbors = self._get_neighbors(i, j)
+                <span class="hljs-keyword">if</span> neighbors:
+                    <span class="hljs-comment"># Trouver le polyomino le plus petit parmi les voisins</span>
+                    neighbor_sizes = {self.grid[x][y]: <span class="hljs-built_in">len</span>(self.polyominos[self.grid[x][y]]) <span class="hljs-keyword">for</span> x, y <span class="hljs-keyword">in</span> neighbors}
+                    smallest_poly_label = <span class="hljs-built_in">min</span>(neighbor_sizes, key=neighbor_sizes.get)
+
+                    <span class="hljs-comment"># Assigner cette case au polyomino le plus petit</span>
+                    self.grid[i][j] = smallest_poly_label
+                    self.polyominos[smallest_poly_label].append((i, j))
+</code></pre>
+<ol start="5">
+<li><strong>Trouver les voisins valides :</strong> Cette méthode aide à trouver les voisins d'une cellule donnée.</li>
+</ol>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_get_neighbors</span>(<span class="hljs-params">self, x, y</span>):
+    <span class="hljs-string">&quot;&quot;&quot;
+    Trouve les voisins valides d&#x27;une case donnée.
+
+    Paramètres:
+    - x (int): Ligne de la case.
+    - y (int): Colonne de la case.
+
+    Retourne:
+    - list: Liste des coordonnées des voisins ayant des labels valides.
+    &quot;&quot;&quot;</span>
+    directions = [(<span class="hljs-number">0</span>, <span class="hljs-number">1</span>), (<span class="hljs-number">1</span>, <span class="hljs-number">0</span>), (<span class="hljs-number">0</span>, -<span class="hljs-number">1</span>), (-<span class="hljs-number">1</span>, <span class="hljs-number">0</span>)]
+    neighbors = []
+    <span class="hljs-keyword">for</span> dx, dy <span class="hljs-keyword">in</span> directions:
+        nx, ny = x + dx, y + dy
+        <span class="hljs-keyword">if</span> <span class="hljs-number">0</span> &lt;= nx &lt; self.rows <span class="hljs-keyword">and</span> <span class="hljs-number">0</span> &lt;= ny &lt; self.cols <span class="hljs-keyword">and</span> self.grid[nx][ny] != -<span class="hljs-number">1</span>:
+            neighbors.append((nx, ny))
+    <span class="hljs-keyword">return</span> neighbors
+</code></pre>
+<p>Nous avons ensuite d'implémenter le générateur à notre interface. Voici notre toute première grille générée en 16x10 :</p>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\16x10_solved.png" width="85%" alt="img/16x10_solved.png">   
+<p><em>Figure : Pièces d'un tableau 16x10</em></p>
+<p>Nous avons ensuite lancé la résolution avec à ce moment un prototype du multithreading qui lance une résolution avec chaque heuristique dans chaque thread :</p>
+<p>L'heuristique <code>Descender</code> a essayé 6396 placements pour résoudre la grille vide en 5 secondes.</p>
+<h4 id="démonstrations-de-résolutions-de-grilles">Démonstrations de résolutions de grilles</h4>
+<p>Nous avons ensuite ajouté des couleurs uniques à chaque pièce, puis réadapté l'interface. Nous pouvons maintenant nous amuser avec de nouvelles grilles.</p>
+<p>Reprenons une grille 16x10. En partant d'une grille vide, avec l'heuristique <code>Descender</code>, la résolution n'a testé que 37 placements.</p>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\coloredgrid.jpg" alt="16x10"></p>
+<p><em>Figure : Tableau 16x10 résolu à partir d'une grille vide</em></p>
+<p>En plaçant des pièces, on va restreindre le nombre de solutions possibles, mais cela ne décourage pas notre algorithme.</p>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\newcolore_restrains.jpg" alt="16x10">
+<em>Figure : Tableau 16x10 résolu à partir avec restrictions</em></p>
+<p>Ici, il a fallu plus de 27000 tests de placements effectués en plus de 6 secondes. Ce nombre paraît grand, mais nous sommes très loin de la complexité temporelle d'un algorithme déterministe O(b^d) montrant ainsi que nos optimisations sont puissantes.</p>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\12x12.png" width="70%" alt="img/12x12.png">  
+<p><em>Figure : Tableau 12x12 résolu à partir d'une grille vide en 1s et 4313 placements testés</em></p>
+<h4 id="limitations-de-notre-outil--améliorations-possibles">Limitations de notre outil &amp; améliorations possibles</h4>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\60x5.png" width="75%" alt="img/60x5.png">  
+<p><em>Figure : Tableau 60x5 résolu à partir d'une grille vide</em></p>
+<img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\60x6.jpg" width="75%" alt="img/60x6.jpg">  
+<p><em>Figure : Tableau 60x6 non résolu à partir d'une grille vide : 15min et 840 000 placements testés (arrêt manuel)</em></p>
+<p>Sur les <strong>grandes grilles</strong>, nous remarquons que la résolution atteint des <strong>centaines de milliers</strong> de branches explorées et que notre <strong>exploration</strong> de zones vides faiblit.</p>
+<p>Cela s'explique par plusieurs raisons :</p>
+<ul>
+<li>Une grille grande implique une <strong>complexité</strong> de calcul croissante.</li>
+<li>Notre <strong>algorithme de découpage</strong> peut générer, via l'<strong>aléatoire</strong>, des pièces aux formes très complexes sur de grandes surfaces.</li>
+<li>Le découpage peut créer des pièces <strong>similaires</strong> qui seront testées indépendamment alors qu'elles produiront un résultat identique.</li>
+<li>La résolution est <strong>mono-thread</strong> et n'exploite qu'une fraction de la puissance de calcul disponible.</li>
+</ul>
+<p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\cpu6.png" alt="cpu6%"></p>
+<p><em>Figure : Algo ne prenant que 6% du cpu d'un processeur I9-13900HX</em></p>
+<p>Les améliorations possibles seraient donc :</p>
+<ul>
+<li>D'optimiser le <strong>découpage des polyominos</strong> avec des contraintes sur la taille et la forme.</li>
+<li>D'implémenter la <strong>détection des pièces similaires</strong> pour éviter les calculs redondants.</li>
+<li>De <strong>Paralléliser</strong> la résolution via du <strong>multi-threading</strong> sur le CPU. Cependant, <strong>Tkinter</strong> présente des limitations pour la gestion multi-thread. Une migration vers <strong>C++</strong> avec SFML/TGUI (librairie graphique bas niveau) était envisagée mais le projet étant déjà bien avancé, le temps manquait pour une réécriture complète.</li>
+</ul>
+<p>Nous avons voulu toujours pousser plus loin les performances et les défis à résoudre. L'objectif initial était de résoudre un tableau <code>5x11</code>. Ce sont des pistes d'améliorations pour rendre notre algorithme robuste à toutes situations initiales.</p>
+<h2 id="viiprojet-annexes-non-aboutis">VII/Projet Annexes non aboutis</h2>
+<p>Voici quelques idées que nous avions eu pour aller plus loin dans la conception de la résolution du jeu.</p>
+<h3 id="réseau-neuronal">Réseau neuronal</h3>
+<p>L'un des objectifs abandonnés était d'avoir un réseau neuronal qui pourrait jouer tout seul, le principe était de lui donner une pièce à placer (ou plutôt une variante) ainsi que le plateau <code>5x11</code> et d'attendre en sortie le tableau avec la pièce placée.
+Cette ambition vaine du fait de la <i>complexité</i> du projet et de l'entraînement nécessaire pour que le réseau neuronal puisse placer les pièces aux bons endroits, sans qu'il n'y ait de modification du plateau initial ni de faux positifs : 2 pièces superposées.</p>
+<p>Plusieurs logiciels étaient disponibles mais nécessitaient une license, ou n'était disponible que pour trop peu de temps (essai gratuit).</p>
+<p>Le problème avec les réseaux neuronaux est qu'il est assez difficile de construire le réseau de la bonne manière, de sorte à pouvoir lui transmettre des données et une couche finale qui donne un résultat exploitable par un intermédiaire (si l'on voulait exploiter le réseau en temps réel une fois entraîné).
+Vient aussi le problème de l'entraînement, il aurait fallu beaucoup de données sûres et un temps d'entraînement assez faible pour pouvoir tester ses performances et modifier le réseau en temps restraint. Ce projet a été abandonné dans les quelques semaines après le début du projet, et nous ne l'avons pas abordé à nouveau depuis.</p>
+<h3 id="portabilité-cuda">Portabilité CUDA</h3>
+<p><code>CUDA</code> est un langage de programmation lancé en 2007 par <code>NVIDIA</code> permettant de faire des calculs sur sa carte graphique.</p>
+<p>L'objectif était de porter l'algorithme <code>Python</code> en un algorithme <code>C/C++</code> <code>CUDA</code>.
+Effectivement, les programmes qui n'utilisent pas d'interfaces/logiciels intermédiaires (ex: Unity, Blender, OpenGL etc) ne fonctionnent que sur le <code>CPU</code>, ce qui convient à quasiment toutes les utilisations basiques.</p>
+<p>Mais ici il a aussi été question d'améliorer les performances jusqu'à diminuer le temps de calcul par 10 (exemple avec l'UV PC40, qui nous fait programmer en CUDA et nous fait comparer les vitesses de calculs de multiplication de matrices notamment).</p>
+<p>Pour résoudre ce problème, il existe une version <code>Python</code> de CUDA
+Nonobstant le potentiel remplacement de la carte graphique cramée à cause du projet, et de la potentielle taille de la grille non plus en <code>5x11</code>, mais bien en <code>55x121</code> (eh oui faut bien s'amuser) et des pièces qui ne seraient plus contraintes dans des matrices <code>4x4</code> mais pourrait adopter des dimensions moins conventionnelles (ex: <code>42x69</code>), il a été choisi d'également abandonner cette ambition.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Nous avons pris plaisir à réaliser ce projet qui nous a permis de développer un solveur pour le jeu IQ Puzzler Pro. En partant de l'algorithme X de Knuth comme base, nous avons progressivement ajouté nos propres améliorations comme les heuristiques, l'exploration de zone, des optimisations diverses et variées et mathématiquement probantes</p>
+<p>Nous ne nous sommes pas arrêtés à la simple résolution du jeu: Notre curiosité nous a poussés à explorer de nouvelles possibilités comme la création de grilles personnalisées ou l'utilisation de nouveaux outils (CUDA, réseaux neuronaux, etc). Ces explorations, même si certaines n'ont pas abouti, nous ont permis d'apprendre et de comprendre de nouveaux concepts.</p>
+<p>En programmation, il y a toujours de nouvelles choses à apprendre et de nouvelles approches à explorer. Les notions que nous avons abordées nous serviront indubitablement dans nos futurs projets.</p>
+
+            
+            
+        </body>
+        </html>
