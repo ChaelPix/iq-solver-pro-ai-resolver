@@ -198,6 +198,13 @@ et
 ![image exemple solution](img/iqsolve.png)  
 *Figure 5 : Exemple de couverture des polyominos*  
 
+### Variables d'états
+Nous devrons utiliser les variables d'états suivantes:
+- État du plateau (matrice représentant les cellules occupées)
+- Liste des pièces placées
+- Liste des pièces restantes
+- Points de décision (choix de placement possibles)
+
 ### Point de départ : Algorithme X de Donald Knuth
 
 L’algorithme X, proposé par Donald Knuth, est conçu pour résoudre des **problèmes de couverture exacte**. Dans notre projet, il permet de déterminer les placements valides des pièces sur le plateau du jeu IQ Puzzler Pro tout en respectant les contraintes du puzzle.
@@ -1060,3 +1067,140 @@ Nous avons pris plaisir à réaliser ce projet qui nous a permis de développer 
 Nous ne nous sommes pas arrêtés à la simple résolution du jeu: Notre curiosité nous a poussés à explorer de nouvelles possibilités comme la création de grilles personnalisées ou l'utilisation de nouveaux outils (CUDA, réseaux neuronaux, etc). Ces explorations, même si certaines n'ont pas abouti, nous ont permis d'apprendre et de comprendre de nouveaux concepts.
 
 En programmation, il y a toujours de nouvelles choses à apprendre et de nouvelles approches à explorer. Les notions que nous avons abordées nous serviront indubitablement dans nos futurs projets.
+
+## Annexe prédicats essentiels
+
+```python
+def algorithm_x(self, matrix, header, solution)
+```
+Ce prédicat représente le cœur de l'algorithme de résolution. Il effectue une recherche récursive pour trouver une solution valide.
+
+**Termes requis:**
+- `matrix`: Matrice de contraintes représentant l'état actuel du problème
+- `header`: En-têtes des colonnes de la matrice identifiant les contraintes
+- `solution`: Liste des placements de pièces sélectionnés jusqu'à présent
+
+**Fonctionnement:**
+1. Vérifie si une solution est trouvée (matrice vide)
+2. Sélectionne la colonne la plus contraignante
+3. Pour chaque ligne couvrant cette colonne:
+    - Ajoute le placement à la solution
+    - Met à jour la matrice 
+    - Appelle récursivement algorithm_x
+4. Effectue un retour arrière si nécessaire
+
+```python
+    def algorithm_x(self, matrix, header, solution):
+        """
+        Méthode récursive qui implémente l'algorithme X:
+        1. Si la matrice est vide, on valide la solution. Si valide, on la stocke.
+        2. Sinon, on choisit la colonne la plus contraignante (peu d'options).
+        3. Pour chaque ligne (placement) qui couvre cette colonne, on sélectionne
+           ce placement, on met à jour la matrice (on "couvre" les colonnes correspondantes),
+           puis on appelle récursivement algorithm_x.
+        4. Si l'on trouve une solution complète, on peut s'arrêter ou continuer
+           pour trouver toutes les solutions (selon les besoins).
+
+        Paramètres:
+        - matrix (list): Matrice actuelle de contraintes.
+        - header (list): En-tête de la matrice (nom des colonnes).
+        - solution (list): Liste des placements choisis jusqu'ici.
+
+        Retourne:
+        - bool: True si une solution a été trouvée, False sinon.
+        """
+        if self.stop_requested:
+            return False
+        self.stats.increment_branches_explored()
+        self.stats.increment_depth()
+
+        if not matrix:
+            validator = SolutionValidator(self.pieces, self.plateau)
+            if validator.validate_solution(solution):
+                self.solutions.append(solution.copy())
+                self.stats.add_solution(solution)
+                self.stats.decrement_depth()
+                self.stats.stop_timer()
+                return True
+            self.stats.decrement_depth()
+            return False
+
+        column = self.select_min_column(matrix, header)
+        if column is None:
+            self.stats.decrement_depth()
+            return False
+
+        rows_to_cover = [row for row in matrix if row['row'][column] == 1]
+        rows_to_cover = self.prioritize_rows(rows_to_cover)
+
+        checker = ZoneChecker(self.plateau, self.pieces, self.zone_cache)
+
+        for row in rows_to_cover:
+            if self.stop_requested:
+                self.stats.decrement_depth()
+                return False
+
+            solution.append(row)
+            self.stats.set_current_solution_steps(solution)
+            self.stats.record_intermediate_steps(solution)
+            self.stats.increment_placements_testes()
+
+            columns_to_remove = [idx for idx, val in enumerate(row['row']) if val == 1]
+            new_matrix = self.cover_columns(matrix, columns_to_remove, row)
+
+            # Vérification des zones vides résiduelles (pruning)
+            if not checker.has_unfillable_voids(solution):
+                if self.algorithm_x(new_matrix, header, solution):
+                    self.stats.decrement_depth()
+                    return True
+            else:
+                self.stats.increment_branches_pruned()
+
+            solution.pop()
+            self.stats.increment_calculs()
+
+        self.stats.decrement_depth()
+        return False
+```
+
+```python
+def select_min_column(self, matrix, header)
+```
+Ce prédicat implémente l'heuristique MRV (Minimum Remaining Values) pour choisir la colonne la plus contraignante.
+
+**Termes requis:**
+- `matrix`: Matrice de contraintes actuelle
+- `header`: Noms des colonnes de la matrice
+
+**Fonctionnement:**
+1. Pour chaque colonne, compte le nombre de lignes qui la couvrent
+2. Sélectionne la colonne avec le moins d'options (plus contraignante)
+3. Retourne l'indice de la colonne choisie ou None si matrice vide
+
+
+```python
+def select_min_column(self, matrix, header):
+        """
+        Sélectionne la colonne avec le moins d'options (heuristique MRV - Minimum Remaining Values).
+        On compte pour chaque colonne le nombre de lignes (placements) qui la couvrent.
+        La colonne avec le moins d'options est choisie car plus contraignante,
+        réduisant l'espace de recherche.
+
+        Paramètres:
+        - matrix (list): Matrice de contraintes
+        - header (list): Noms des colonnes (non utilisé directement ici)
+
+        Retourne:
+        - int ou None: L'indice de colonne choisie, ou None si aucune (matrice vide).
+        """
+        counts = [0] * len(header)
+        for row in matrix:
+            for idx, val in enumerate(row['row']):
+                if val == 1:
+                    counts[idx] += 1
+        counts = [c if c > 0 else float('inf') for c in counts]
+        m = min(counts)
+        if m == float('inf'):
+            return None
+        return counts.index(m)
+```
