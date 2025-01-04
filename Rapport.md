@@ -184,7 +184,7 @@ En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelé
 *Figure 4 : Les 12 polyominos du jeu IQ Puzzler Pro*  
 
 #### Problème de couverture exacte
-Ensuite, notre projet est à un **problème de couverture exacte**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  [Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte) <br>
+Ensuite, notre projet correspond à un **problème de couverture exacte** ou encore un **problème de satisfaction de contraintes (CSP)**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  [Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte) <br>
 Ce problème est un problème **NP-complet**, c'est à dire qu’il est difficile à résoudre de manière optimale en raison de sa complexité temporelle. Trouver une solution rapide pour des instances de grande taille devient rapidement impraticable.
 
 En effet, on pourrait simplifier la complexité temporelle de notre problème tel que : <br> 
@@ -1030,6 +1030,8 @@ Les améliorations possibles seraient donc :
 - D'optimiser le **découpage des polyominos** avec des contraintes sur la taille et la forme.
 - D'implémenter la **détection des pièces similaires** pour éviter les calculs redondants.
 - De **Paralléliser** la résolution via du **multi-threading** sur le CPU. Cependant, **Tkinter** présente des limitations pour la gestion multi-thread. Une migration vers **C++** avec SFML/TGUI (librairie graphique bas niveau) était envisagée mais le projet étant déjà bien avancé, le temps manquait pour une réécriture complète.
+- Optimiser la matrice des contraintes qui grandit expodentiellement avec la taille de la grille
+- Intégrer les Liens Dansants qui utilise des pointeurs pour la gestion de matrice et ainsi avoir une complexité o(1) au lieu de O(n) comme nous avons actuellement car nous faisons des copies des matrices initiales.
 
 Nous avons voulu toujours pousser plus loin les performances et les défis à résoudre. L'objectif initial était de résoudre un tableau `5x11`. Ce sont des pistes d'améliorations pour rendre notre algorithme robuste à toutes situations initiales.
 
