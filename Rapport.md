@@ -54,7 +54,7 @@ Le projet porte sur le jeu IQ Puzzler Pro, un puzzle assez connu dont l’object
 Nous avons identifié trois questions fondamentales à résoudre dans ce contexte :  
 - **Comment représenter les différentes pièces, en tenant compte de leurs variations possibles ?**
 - **Comment résoudre efficacement les niveaux du jeu IQ Puzzler Pro ?**
-- **Comment concevoir et implémenter un algorithme capable de résoudre automatiquement chaque niveau ?**
+- **Comment implémenter et optimiser un algorithme capable de résoudre chaque niveau le plus efficacement possible ?**
 
 Pour débuter, nous avons commandé le jeu afin de l’explorer concrètement, l'objectif : commencer à manipuler les pièces, comprendre leurs interactions et pouvoir résoudre manuellement des niveaux du jeu initial. Cela nous à permis de réfléchir aux problématiques liées à la représentation du jeu, à la résolution et d’identifier des stratégies supposément efficaces.
 
@@ -194,6 +194,28 @@ où :
 et
 **d** est la profondeur maximale de l’arbre de recherche (ici, le nombre de pièces à placer).
 
+**CSP :**
+
+**Variables (X):**
+- 12 pièces à placer, chacune définie par un tuple `(x, y, r)` 
+- `(x,y)` : position de la pièce
+- `r` : numéro de la variante (rotation/symétrie)
+
+**Domaines (D):**  
+```
+x ∈ [0,10] : position horizontale 
+y ∈ [0,4]  : position verticale
+r ∈ [0,7]  : indice de variante
+```
+
+**Contraintes (C):**
+- Pas de superposition entre les pièces
+- La grille doit être entièrement remplie
+- Chaque pièce doit être utilisée exactement une fois
+
+Ainsi, une solution est valide si et seulement si toutes les contraintes sont respectées.
+
+
 
 ![image exemple solution](img/iqsolve.png)  
 *Figure 5 : Exemple de couverture des polyominos*  
@@ -204,6 +226,21 @@ Nous devrons utiliser les variables d'états suivantes:
 - Liste des pièces placées
 - Liste des pièces restantes
 - Points de décision (choix de placement possibles)
+
+```sh
+Plateau : Matrice (5x11) 
+    S = {-1, 0, …, N} où N est le nombre de pièces.
+
+Pièces : Matrices (4x4)
+    P = {0, i} où i est le numéro de la pièce.
+
+Suivi des pièces : Dict[str, Info]  # "rouge": {pos:(0,0), var:2} 
+
+Condition de fin : 
+    ∄ case = -1
+    ∀ i ∈ [0,N] présent une fois
+    Positions entre Dict et le Plateau cohérentes
+```
 
 ### Point de départ : Algorithme X de Donald Knuth
 
@@ -610,7 +647,8 @@ def calculate_piece_weights(self, heuristic="ascender"):
         compactness = min(height, width) / max(height, width)  # Ratio compact.
         perimeter = np.sum(np.pad(shape, pad_width=1, mode='constant', constant_values=0) != 0) - occupied_cells
         holes = np.sum(shape == 0)  # zones vides dans la forme.
-
+```
+```python
         #assignation du poids selon le type choisi.
         if heuristic == "ascender":
             weights[piece.nom] = 1 / occupied_cells
@@ -1149,7 +1187,8 @@ Ce prédicat représente le cœur de l'algorithme de résolution. Il effectue un
 
             columns_to_remove = [idx for idx, val in enumerate(row['row']) if val == 1]
             new_matrix = self.cover_columns(matrix, columns_to_remove, row)
-
+```
+```python
             # Vérification des zones vides résiduelles (pruning)
             if not checker.has_unfillable_voids(solution):
                 if self.algorithm_x(new_matrix, header, solution):

@@ -224,7 +224,7 @@
 <ul>
 <li><strong>Comment représenter les différentes pièces, en tenant compte de leurs variations possibles ?</strong></li>
 <li><strong>Comment résoudre efficacement les niveaux du jeu IQ Puzzler Pro ?</strong></li>
-<li><strong>Comment concevoir et implémenter un algorithme capable de résoudre automatiquement chaque niveau ?</strong></li>
+<li><strong>Comment implémenter et optimiser un algorithme capable de résoudre chaque niveau le plus efficacement possible ?</strong></li>
 </ul>
 <p>Pour débuter, nous avons commandé le jeu afin de l’explorer concrètement, l'objectif : commencer à manipuler les pièces, comprendre leurs interactions et pouvoir résoudre manuellement des niveaux du jeu initial. Cela nous à permis de réfléchir aux problématiques liées à la représentation du jeu, à la résolution et d’identifier des stratégies supposément efficaces.</p>
 <p>Nous avons choisi de concentrer notre travail sur le mode de jeu principal, qui repose sur une grille de 5 x 11 cases et 12 pièces avec chacune au plus 8 variantes possibles (rotations et symétries incluses).</p>
@@ -323,7 +323,7 @@ L'explication complète de l'interface sera faite dans une autre partie. Ici nou
 <p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\iqpolyominos.png" alt="screen nos polyominos">
 <em>Figure 4 : Les 12 polyominos du jeu IQ Puzzler Pro</em></p>
 <h4 id="problème-de-couverture-exacte">Problème de couverture exacte</h4>
-<p>Ensuite, notre projet est à un <strong>problème de couverture exacte</strong>. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  <a href="https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte">Source</a> <br>
+<p>Ensuite, notre projet correspond à un <strong>problème de couverture exacte</strong> ou encore un <strong>problème de satisfaction de contraintes (CSP)</strong>. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  <a href="https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte">Source</a> <br>
 Ce problème est un problème <strong>NP-complet</strong>, c'est à dire qu’il est difficile à résoudre de manière optimale en raison de sa complexité temporelle. Trouver une solution rapide pour des instances de grande taille devient rapidement impraticable.</p>
 <p>En effet, on pourrait simplifier la complexité temporelle de notre problème tel que : <br>
 <strong>O(b^d)</strong> <br>
@@ -331,8 +331,48 @@ où :
 <strong>b</strong> est le facteur de branchement, c'est-à-dire le nombre moyen de choix possibles à chaque étape (ici, les pièces à placer avec leurs variantes).<br>
 et
 <strong>d</strong> est la profondeur maximale de l’arbre de recherche (ici, le nombre de pièces à placer).</p>
+<p><strong>CSP :</strong></p>
+<p><strong>Variables (X):</strong></p>
+<ul>
+<li>12 pièces à placer, chacune définie par un tuple <code>(x, y, r)</code></li>
+<li><code>(x,y)</code> : position de la pièce</li>
+<li><code>r</code> : numéro de la variante (rotation/symétrie)</li>
+</ul>
+<p><strong>Domaines (D):</strong></p>
+<pre><code>x ∈ [0,10] : position horizontale 
+y ∈ [0,4]  : position verticale
+r ∈ [0,7]  : indice de variante
+</code></pre>
+<p><strong>Contraintes (C):</strong></p>
+<ul>
+<li>Pas de superposition entre les pièces</li>
+<li>La grille doit être entièrement remplie</li>
+<li>Chaque pièce doit être utilisée exactement une fois</li>
+</ul>
+<p>Ainsi, une solution est valide si et seulement si toutes les contraintes sont respectées.</p>
 <p><img src="file:///c:\Users\traia\OneDrive\Documents\GitHub\iq-solver-pro-ai-resolver\img\iqsolve.png" alt="image exemple solution"><br>
 <em>Figure 5 : Exemple de couverture des polyominos</em></p>
+<h3 id="variables-détats">Variables d'états</h3>
+<p>Nous devrons utiliser les variables d'états suivantes:</p>
+<ul>
+<li>État du plateau (matrice représentant les cellules occupées)</li>
+<li>Liste des pièces placées</li>
+<li>Liste des pièces restantes</li>
+<li>Points de décision (choix de placement possibles)</li>
+</ul>
+<pre><code class="language-sh">Plateau : Matrice (5x11) 
+    S = {-1, 0, …, N} où N est le nombre de pièces.
+
+Pièces : Matrices (4x4)
+    P = {0, i} où i est le numéro de la pièce.
+
+Suivi des pièces : Dict[str, Info]  <span class="hljs-comment"># &quot;rouge&quot;: {pos:(0,0), var:2} </span>
+
+Condition de fin : 
+    ∄ <span class="hljs-keyword">case</span> = -1
+    ∀ i ∈ [0,N] <span class="hljs-built_in">pr</span>ésent une fois
+    Positions entre Dict et le Plateau cohérentes
+</code></pre>
 <h3 id="point-de-départ--algorithme-x-de-donald-knuth">Point de départ : Algorithme X de Donald Knuth</h3>
 <p>L’algorithme X, proposé par Donald Knuth, est conçu pour résoudre des <strong>problèmes de couverture exacte</strong>. Dans notre projet, il permet de déterminer les placements valides des pièces sur le plateau du jeu IQ Puzzler Pro tout en respectant les contraintes du puzzle.</p>
 <h4 id="1---condition-dune-solution-trouvée">1 - Condition d'une solution trouvée</h4>
@@ -718,8 +758,8 @@ Si <code>dp[zone_size]</code> est <code>True</code>, la zone est comblable. Sino
         compactness = <span class="hljs-built_in">min</span>(height, width) / <span class="hljs-built_in">max</span>(height, width)  <span class="hljs-comment"># Ratio compact.</span>
         perimeter = np.<span class="hljs-built_in">sum</span>(np.pad(shape, pad_width=<span class="hljs-number">1</span>, mode=<span class="hljs-string">&#x27;constant&#x27;</span>, constant_values=<span class="hljs-number">0</span>) != <span class="hljs-number">0</span>) - occupied_cells
         holes = np.<span class="hljs-built_in">sum</span>(shape == <span class="hljs-number">0</span>)  <span class="hljs-comment"># zones vides dans la forme.</span>
-
-        <span class="hljs-comment">#assignation du poids selon le type choisi.</span>
+</code></pre>
+<pre><code class="language-python">        <span class="hljs-comment">#assignation du poids selon le type choisi.</span>
         <span class="hljs-keyword">if</span> heuristic == <span class="hljs-string">&quot;ascender&quot;</span>:
             weights[piece.nom] = <span class="hljs-number">1</span> / occupied_cells
         <span class="hljs-keyword">elif</span> heuristic == <span class="hljs-string">&quot;descender&quot;</span>:
@@ -1070,6 +1110,8 @@ Grille 3x3
 <li>D'optimiser le <strong>découpage des polyominos</strong> avec des contraintes sur la taille et la forme.</li>
 <li>D'implémenter la <strong>détection des pièces similaires</strong> pour éviter les calculs redondants.</li>
 <li>De <strong>Paralléliser</strong> la résolution via du <strong>multi-threading</strong> sur le CPU. Cependant, <strong>Tkinter</strong> présente des limitations pour la gestion multi-thread. Une migration vers <strong>C++</strong> avec SFML/TGUI (librairie graphique bas niveau) était envisagée mais le projet étant déjà bien avancé, le temps manquait pour une réécriture complète.</li>
+<li>Optimiser la matrice des contraintes qui grandit expodentiellement avec la taille de la grille</li>
+<li>Intégrer les Liens Dansants qui utilise des pointeurs pour la gestion de matrice et ainsi avoir une complexité o(1) au lieu de O(n) comme nous avons actuellement car nous faisons des copies des matrices initiales.</li>
 </ul>
 <p>Nous avons voulu toujours pousser plus loin les performances et les défis à résoudre. L'objectif initial était de résoudre un tableau <code>5x11</code>. Ce sont des pistes d'améliorations pour rendre notre algorithme robuste à toutes situations initiales.</p>
 <h2 id="viiprojet-annexes-non-aboutis">VII/Projet Annexes non aboutis</h2>
@@ -1091,6 +1133,140 @@ Nonobstant le potentiel remplacement de la carte graphique cramée à cause du p
 <p>Nous avons pris plaisir à réaliser ce projet qui nous a permis de développer un solveur pour le jeu IQ Puzzler Pro. En partant de l'algorithme X de Knuth comme base, nous avons progressivement ajouté nos propres améliorations comme les heuristiques, l'exploration de zone, des optimisations diverses et variées et mathématiquement probantes</p>
 <p>Nous ne nous sommes pas arrêtés à la simple résolution du jeu: Notre curiosité nous a poussés à explorer de nouvelles possibilités comme la création de grilles personnalisées ou l'utilisation de nouveaux outils (CUDA, réseaux neuronaux, etc). Ces explorations, même si certaines n'ont pas abouti, nous ont permis d'apprendre et de comprendre de nouveaux concepts.</p>
 <p>En programmation, il y a toujours de nouvelles choses à apprendre et de nouvelles approches à explorer. Les notions que nous avons abordées nous serviront indubitablement dans nos futurs projets.</p>
+<h2 id="annexe-prédicats-essentiels">Annexe prédicats essentiels</h2>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">algorithm_x</span>(<span class="hljs-params">self, matrix, header, solution</span>)
+</code></pre>
+<p>Ce prédicat représente le cœur de l'algorithme de résolution. Il effectue une recherche récursive pour trouver une solution valide.</p>
+<p><strong>Termes requis:</strong></p>
+<ul>
+<li><code>matrix</code>: Matrice de contraintes représentant l'état actuel du problème</li>
+<li><code>header</code>: En-têtes des colonnes de la matrice identifiant les contraintes</li>
+<li><code>solution</code>: Liste des placements de pièces sélectionnés jusqu'à présent</li>
+</ul>
+<p><strong>Fonctionnement:</strong></p>
+<ol>
+<li>Vérifie si une solution est trouvée (matrice vide)</li>
+<li>Sélectionne la colonne la plus contraignante</li>
+<li>Pour chaque ligne couvrant cette colonne:
+<ul>
+<li>Ajoute le placement à la solution</li>
+<li>Met à jour la matrice</li>
+<li>Appelle récursivement algorithm_x</li>
+</ul>
+</li>
+<li>Effectue un retour arrière si nécessaire</li>
+</ol>
+<pre><code class="language-python">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">algorithm_x</span>(<span class="hljs-params">self, matrix, header, solution</span>):
+        <span class="hljs-string">&quot;&quot;&quot;
+        Méthode récursive qui implémente l&#x27;algorithme X:
+        1. Si la matrice est vide, on valide la solution. Si valide, on la stocke.
+        2. Sinon, on choisit la colonne la plus contraignante (peu d&#x27;options).
+        3. Pour chaque ligne (placement) qui couvre cette colonne, on sélectionne
+           ce placement, on met à jour la matrice (on &quot;couvre&quot; les colonnes correspondantes),
+           puis on appelle récursivement algorithm_x.
+        4. Si l&#x27;on trouve une solution complète, on peut s&#x27;arrêter ou continuer
+           pour trouver toutes les solutions (selon les besoins).
+
+        Paramètres:
+        - matrix (list): Matrice actuelle de contraintes.
+        - header (list): En-tête de la matrice (nom des colonnes).
+        - solution (list): Liste des placements choisis jusqu&#x27;ici.
+
+        Retourne:
+        - bool: True si une solution a été trouvée, False sinon.
+        &quot;&quot;&quot;</span>
+        <span class="hljs-keyword">if</span> self.stop_requested:
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
+        self.stats.increment_branches_explored()
+        self.stats.increment_depth()
+
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> matrix:
+            validator = SolutionValidator(self.pieces, self.plateau)
+            <span class="hljs-keyword">if</span> validator.validate_solution(solution):
+                self.solutions.append(solution.copy())
+                self.stats.add_solution(solution)
+                self.stats.decrement_depth()
+                self.stats.stop_timer()
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span>
+            self.stats.decrement_depth()
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
+
+        column = self.select_min_column(matrix, header)
+        <span class="hljs-keyword">if</span> column <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+            self.stats.decrement_depth()
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
+
+        rows_to_cover = [row <span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> matrix <span class="hljs-keyword">if</span> row[<span class="hljs-string">&#x27;row&#x27;</span>][column] == <span class="hljs-number">1</span>]
+        rows_to_cover = self.prioritize_rows(rows_to_cover)
+
+        checker = ZoneChecker(self.plateau, self.pieces, self.zone_cache)
+
+        <span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> rows_to_cover:
+            <span class="hljs-keyword">if</span> self.stop_requested:
+                self.stats.decrement_depth()
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
+
+            solution.append(row)
+            self.stats.set_current_solution_steps(solution)
+            self.stats.record_intermediate_steps(solution)
+            self.stats.increment_placements_testes()
+
+            columns_to_remove = [idx <span class="hljs-keyword">for</span> idx, val <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(row[<span class="hljs-string">&#x27;row&#x27;</span>]) <span class="hljs-keyword">if</span> val == <span class="hljs-number">1</span>]
+            new_matrix = self.cover_columns(matrix, columns_to_remove, row)
+</code></pre>
+<pre><code class="language-python">            <span class="hljs-comment"># Vérification des zones vides résiduelles (pruning)</span>
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> checker.has_unfillable_voids(solution):
+                <span class="hljs-keyword">if</span> self.algorithm_x(new_matrix, header, solution):
+                    self.stats.decrement_depth()
+                    <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span>
+            <span class="hljs-keyword">else</span>:
+                self.stats.increment_branches_pruned()
+
+            solution.pop()
+            self.stats.increment_calculs()
+
+        self.stats.decrement_depth()
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
+</code></pre>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">select_min_column</span>(<span class="hljs-params">self, matrix, header</span>)
+</code></pre>
+<p>Ce prédicat implémente l'heuristique MRV (Minimum Remaining Values) pour choisir la colonne la plus contraignante.</p>
+<p><strong>Termes requis:</strong></p>
+<ul>
+<li><code>matrix</code>: Matrice de contraintes actuelle</li>
+<li><code>header</code>: Noms des colonnes de la matrice</li>
+</ul>
+<p><strong>Fonctionnement:</strong></p>
+<ol>
+<li>Pour chaque colonne, compte le nombre de lignes qui la couvrent</li>
+<li>Sélectionne la colonne avec le moins d'options (plus contraignante)</li>
+<li>Retourne l'indice de la colonne choisie ou None si matrice vide</li>
+</ol>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">select_min_column</span>(<span class="hljs-params">self, matrix, header</span>):
+        <span class="hljs-string">&quot;&quot;&quot;
+        Sélectionne la colonne avec le moins d&#x27;options (heuristique MRV - Minimum Remaining Values).
+        On compte pour chaque colonne le nombre de lignes (placements) qui la couvrent.
+        La colonne avec le moins d&#x27;options est choisie car plus contraignante,
+        réduisant l&#x27;espace de recherche.
+
+        Paramètres:
+        - matrix (list): Matrice de contraintes
+        - header (list): Noms des colonnes (non utilisé directement ici)
+
+        Retourne:
+        - int ou None: L&#x27;indice de colonne choisie, ou None si aucune (matrice vide).
+        &quot;&quot;&quot;</span>
+        counts = [<span class="hljs-number">0</span>] * <span class="hljs-built_in">len</span>(header)
+        <span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> matrix:
+            <span class="hljs-keyword">for</span> idx, val <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(row[<span class="hljs-string">&#x27;row&#x27;</span>]):
+                <span class="hljs-keyword">if</span> val == <span class="hljs-number">1</span>:
+                    counts[idx] += <span class="hljs-number">1</span>
+        counts = [c <span class="hljs-keyword">if</span> c &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">else</span> <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;inf&#x27;</span>) <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> counts]
+        m = <span class="hljs-built_in">min</span>(counts)
+        <span class="hljs-keyword">if</span> m == <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;inf&#x27;</span>):
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span>
+        <span class="hljs-keyword">return</span> counts.index(m)
+</code></pre>
 
             
             

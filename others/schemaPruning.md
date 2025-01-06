@@ -865,7 +865,7 @@ Header → C1 ⇄ C2 ⇄ C3
         <table>
             <tr><td>Zone</td><td>Taille</td><td>Pièces restantes</td><td>Possible?</td></tr>
             <tr><td>Z1</td><td>3</td><td>4</td><td>❌</td></tr>
-            <tr><td>Z1</td><td>1</td><td>4</td><td>❌</td></tr>
+            <tr><td>Z2</td><td>1</td><td>4</td><td>❌</td></tr>
         </table>
     </div>
 </div>
