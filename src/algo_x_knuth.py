@@ -3,6 +3,45 @@ from constraint_matrix_builder import ConstraintMatrixBuilder
 from zone_checker import ZoneChecker
 from solution_validator import SolutionValidator
 import numpy as np
+import ctypes
+from ctypes import c_int, c_size_t, POINTER, Structure
+from tempfile import NamedTemporaryFile
+import os
+import platform
+
+try:
+    if platform.system() == "Windows":
+        os.system(f"gcc -shared -o functions.dll functions.c")
+    else:
+        os.system(f"gcc -shared -fPIC -o functions.so functions.c")
+except Exception as e:
+    print(f"Error compiling the shared library: {e}")
+
+try:
+    try:
+        lib = ctypes.CDLL("./functions.so")  # Linux/Mac
+    except OSError:
+        lib = ctypes.CDLL("./functions.dll")  # Windows
+        find_min_column = lib.find_min_column
+except Exception as e:
+    print(f"Error loading the shared library: {e}")
+
+
+class MatrixRow(Structure):
+    _fields_ = [
+        ("values", POINTER(c_int)),
+        ("size", c_size_t)
+    ]
+        
+class Matrix(Structure):
+    _fields_ = [
+        ("rows", POINTER(MatrixRow)),
+        ("row_count", c_size_t),
+        ("col_count", c_size_t)
+    ]
+
+find_min_column.argtypes = [POINTER(Matrix)]
+find_min_column.restype = c_int
 
 class AlgorithmX:
     """
@@ -216,28 +255,48 @@ class AlgorithmX:
 
     def select_min_column(self, matrix, header):
         """
-        Sélectionne la colonne avec le moins d'options (heuristique MRV - Minimum Remaining Values).
-        On compte pour chaque colonne le nombre de lignes (placements) qui la couvrent.
-        La colonne avec le moins d'options est choisie car plus contraignante,
-        réduisant l'espace de recherche.
-
+        Sélectionne la colonne avec le moins d'options (heuristique MRV - Minimum Remaining Values)
+        en utilisant une implémentation C via ctypes pour des performances accrues.
+        
+        Cette méthode:
+        1. Convertit la matrice Python en structure C compatible
+        2. Appelle une fonction C qui identifie la colonne avec le moins de 1s
+        3. Gère les cas spéciaux (matrice vide, colonnes sans options)
+        
         Paramètres:
         - matrix (list): Matrice de contraintes
-        - header (list): Noms des colonnes (non utilisé directement ici)
-
+        - header (list): Noms des colonnes
+        
         Retourne:
-        - int ou None: L'indice de colonne choisie, ou None si aucune (matrice vide).
+        - int ou None: L'indice de colonne choisie, ou None si aucune
         """
-        counts = [0] * len(header)
-        for row in matrix:
-            for idx, val in enumerate(row['row']):
-                if val == 1:
-                    counts[idx] += 1
-        counts = [c if c > 0 else float('inf') for c in counts]
-        m = min(counts)
-        if m == float('inf'):
+        
+        if not matrix:
             return None
-        return counts.index(m)
+        
+        # Conversion de la matrice Python en structure C
+        col_count = len(header)
+        row_count = len(matrix)
+        
+        # Allocation des structures C
+        c_rows = (MatrixRow * row_count)()
+        
+        for i, row_dict in enumerate(matrix):
+            row_data = row_dict['row']
+            c_row_data = (c_int * len(row_data))(*row_data)
+            c_rows[i].values = c_row_data
+            c_rows[i].size = len(row_data)
+        
+        c_matrix = Matrix()
+        c_matrix.rows = c_rows
+        c_matrix.row_count = row_count
+        c_matrix.col_count = col_count
+        
+        # Appel de la fonction C
+        result = find_min_column(ctypes.byref(c_matrix))
+        
+        # Traitement du résultat
+        return None if result == -1 else result
 
     def prioritize_rows(self, rows):
         """
