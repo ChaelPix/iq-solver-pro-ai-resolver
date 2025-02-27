@@ -1,4 +1,5 @@
 # Rapport IA41 : IQ Puzzler Pro
+
 #### Antoine PERRIN & Traïan BEAUJARD
 
 <!-- TOC -->
@@ -43,8 +44,6 @@
     - [Portabilité CUDA](#portabilité-cuda)
   - [Conclusion](#conclusion)
 
-<!-- /TOC -->
-
 ## I/ Présentation du projet
 
 ### Contextualisation
@@ -54,7 +53,7 @@ Le projet porte sur le jeu IQ Puzzler Pro, un puzzle assez connu dont l’object
 Nous avons identifié trois questions fondamentales à résoudre dans ce contexte :  
 - **Comment représenter les différentes pièces, en tenant compte de leurs variations possibles ?**
 - **Comment résoudre efficacement les niveaux du jeu IQ Puzzler Pro ?**
-- **Comment implémenter et optimiser un algorithme capable de résoudre chaque niveau le plus efficacement possible ?**
+
 
 Pour débuter, nous avons commandé le jeu afin de l’explorer concrètement, l'objectif : commencer à manipuler les pièces, comprendre leurs interactions et pouvoir résoudre manuellement des niveaux du jeu initial. Cela nous à permis de réfléchir aux problématiques liées à la représentation du jeu, à la résolution et d’identifier des stratégies supposément efficaces.
 
@@ -207,15 +206,6 @@ x ∈ [0,10] : position horizontale
 y ∈ [0,4]  : position verticale
 r ∈ [0,7]  : indice de variante
 ```
-
-**Contraintes (C):**
-- Pas de superposition entre les pièces
-- La grille doit être entièrement remplie
-- Chaque pièce doit être utilisée exactement une fois
-
-Ainsi, une solution est valide si et seulement si toutes les contraintes sont respectées.
-
-
 
 ![image exemple solution](img/iqsolve.png)  
 *Figure 5 : Exemple de couverture des polyominos*  
@@ -431,11 +421,7 @@ def algorithm_x(self, matrix, header, solution):
 
 Maintenant, testons notre algorithme :
 
-<img src="img/lvl3.png" width="33%" alt="lvl3 résolu">
 
-*Figure : Niveau 3 du jeu résolu en 25 placements testés*
-
-<img src="img/lvl39b.png" width="33%" alt="lvl39 résolu">
 
 *Figure : Niveau 39 du jeu résolu en 145 placements testés*
 
@@ -647,8 +633,7 @@ def calculate_piece_weights(self, heuristic="ascender"):
         compactness = min(height, width) / max(height, width)  # Ratio compact.
         perimeter = np.sum(np.pad(shape, pad_width=1, mode='constant', constant_values=0) != 0) - occupied_cells
         holes = np.sum(shape == 0)  # zones vides dans la forme.
-```
-```python
+
         #assignation du poids selon le type choisi.
         if heuristic == "ascender":
             weights[piece.nom] = 1 / occupied_cells
@@ -723,8 +708,7 @@ La classe de l'interface contient de nombreuses méthodes, mais seulement une no
                 'variante_index': info['variante_index'],
                 'position': info['position']
             }
-```
-```python
+
         # Créer un nouvel objet Plateau pour le résoudre
         plateau_copy = Plateau()
         plateau_copy.lignes = self.grid_y
@@ -784,6 +768,7 @@ Dans cette architecture, nous pouvons facilement choisir une autre librairie pyt
 En effet, une fois la résolution optimisée fonctionnelle, nous avons voulu encore augmenter l'efficacité de notre algorithme en utilisant le multi-threading.
 Cependant, il est très difficile d'exploiter le multi-threading avec Tkinter.
 Malgré le fait que l'interface soit censée être indépendante, nous avons rencontré de nombreuses difficultés à faire fonctionner le parallélisme de notre algorithme.
+
 Si nous devions refaire l'interface en C++, nous aurions bien plus de facilité à intégrer le multi-threading car ce langage permet une meilleure gestion du parallélisme.
 
 ## VI/ Pour aller plus loin : Augmentation des dimensions de la grille
@@ -797,11 +782,7 @@ Nous avons implémenté ces pièces dans notre programme, et lancé la résoluti
 
 *Figure : Grille découpée en 14 polyominos*
 
-On a lancé la résolution sans aucune pièce placée Avec 2 heuristiques différentes (Descender, Ascender).
 
-<img src="img/nvgrille_start.png" width="85%" alt="6x12">  
-
-*Figure : Nouvelle grille et pièces implémentées*
 
 Notre hypothèse est validée, bien que logique et prédictible, nous pouvons ne pas nous limiter à la grille par défaut du jeu IQ Puzzler Pro, et ainsi s'amuser sur de plus grandes grilles.
 
@@ -820,70 +801,6 @@ Afin de ne pas avoir à créer manuellement chaque découpage, nous avons conçu
 
 **Exemple :**
 Grille 3x3
-**Création des polyominos pas à pas :**
-
-<div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8em;">
-    <div>
-        <p>1. Initialisation</p>
-        <table>
-            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
-            <tr><td>0</td><td>-1</td><td>-1</td><td>-1</td></tr>
-            <tr><td>1</td><td>-1</td><td>-1</td><td>-1</td></tr>
-            <tr><td>2</td><td>-1</td><td>-1</td><td>-1</td></tr>
-        </table>
-    </div>
-    →
-    <div>
-        <p>2. 1er polyomino A</p>
-        <table>
-            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
-            <tr><td>0</td><td>A</td><td>A</td><td>-1</td></tr>
-            <tr><td>1</td><td>-1</td><td>-1</td><td>-1</td></tr>
-            <tr><td>2</td><td>-1</td><td>-1</td><td>-1</td></tr>
-        </table>
-    </div>
-    →
-    <div>
-        <p>3. 2e polyomino B</p>
-        <table>
-            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
-            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
-            <tr><td>1</td><td>-1</td><td>B</td><td>B</td></tr>
-            <tr><td>2</td><td>-1</td><td>-1</td><td>-1</td></tr>
-        </table>
-    </div>
-    →
-    <div>
-        <p>4. 3e polyomino C</p>
-        <table>
-            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
-            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
-            <tr><td>1</td><td>C</td><td>B</td><td>B</td></tr>
-            <tr><td>2</td><td>C</td><td>C</td><td>-1</td></tr>
-        </table>
-    </div>
-    →
-    <div>
-        <p>5. 4e polyomino D</p>
-        <table>
-            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
-            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
-            <tr><td>1</td><td>C</td><td>B</td><td>B</td></tr>
-            <tr><td>2</td><td>C</td><td>C</td><td>-1</td></tr>
-        </table>
-    </div>
-    →
-    <div>
-        <p>6. Fusion cases vides</p>
-        <table>
-            <tr><td> </td><td>0</td><td>1</td><td>2</td></tr>
-            <tr><td>0</td><td>A</td><td>A</td><td>B</td></tr>
-            <tr><td>1</td><td>C</td><td>B</td><td>B</td></tr>
-            <tr><td>2</td><td>C</td><td>C</td><td>B</td></tr>
-        </table>
-    </div>
-</div>
-
 
 **Implémentation :**
 
@@ -900,187 +817,6 @@ def __init__(self, rows, cols, max_pieces=50):
 ```
 
 2. **Génération des polyominos :** Pour chaque cellule non visitée, on tente de créer un nouveau polyomino de taille aléatoire.
-
-```python
-def generate(self):
-    # Grille pour suivre les cellules visitées
-    visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
-    label = 0  # label pour chaque polyomino
-
-    for i in range(self.rows): # Création de chaque polyomino
-        for j in range(self.cols):
-            if not visited[i][j] and label < self.max_pieces:
-                size = random.randint(2, min(self.rows, self.cols))
-                polyomino = self._create_polyomino(i, j, size, visited, label) # Création du polyomino
-                if polyomino:
-                    self.polyominos.append(polyomino)
-                    label += 1
-
-    self._fill_remaining_cells() # Remplissage des cases restantes
-```
-
-3. **Création d'un polyomino :** À partir d'une position de départ, on étend le polyomino en ajoutant des cellules adjacentes jusqu'à atteindre la taille souhaitée.
-
-```python
-def _create_polyomino(self, start_x, start_y, size, visited, label):
-    """
-    Crée un polyomino à partir d'une position de départ.
-
-    Paramètres:
-    - start_x (int): Ligne de départ.
-    - start_y (int): Colonne de départ.
-    - size (int): Taille souhaitée du polyomino.
-    - visited (list): Grille des cellules visitées.
-    - label (int): Étiquette du polyomino.
-
-    Retourne:
-    - list: Liste des coordonnées du polyomino ou None si impossible.
-    """
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Droite, Bas, Gauche, Haut
-    queue = deque([(start_x, start_y)])
-    polyomino = []
-
-    while queue and len(polyomino) < size:
-        x, y = queue.popleft()
-        if 0 <= x < self.rows and 0 <= y < self.cols and not visited[x][y]:
-            visited[x][y] = True
-            self.grid[x][y] = label
-            polyomino.append((x, y))
-
-            random.shuffle(directions)  # Mélange des directions pour l'aléatoire
-            for dx, dy in directions:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < self.rows and 0 <= ny < self.cols and not visited[nx][ny]:
-                    queue.append((nx, ny))
-
-    # Si on n'a pas pu atteindre la taille souhaitée, annuler
-    if len(polyomino) < size:
-        for x, y in polyomino:
-            visited[x][y] = False
-            self.grid[x][y] = -1
-        return None
-
-    return polyomino
-```
-
-4. **Remplissage des cases restantes :** Les cellules non assignées sont attribuées au plus petit polyomino voisin.
-
-```python
-def _fill_remaining_cells(self):
-    """
-    Remplit les cases restantes (étiquetées -1) en les assignant
-    au polyomino voisin le plus petit.
-    """
-    for i in range(self.rows):
-        for j in range(self.cols):
-            if self.grid[i][j] == -1:  # Case non assignée
-                # voisins valides
-                neighbors = self._get_neighbors(i, j)
-                if neighbors:
-                    # Trouver le polyomino le plus petit parmi les voisins
-                    neighbor_sizes = {self.grid[x][y]: len(self.polyominos[self.grid[x][y]]) for x, y in neighbors}
-                    smallest_poly_label = min(neighbor_sizes, key=neighbor_sizes.get)
-
-                    # Assigner cette case au polyomino le plus petit
-                    self.grid[i][j] = smallest_poly_label
-                    self.polyominos[smallest_poly_label].append((i, j))
-```
-
-5. **Trouver les voisins valides :** Cette méthode aide à trouver les voisins d'une cellule donnée.
-
-```python
-def _get_neighbors(self, x, y):
-    """
-    Trouve les voisins valides d'une case donnée.
-
-    Paramètres:
-    - x (int): Ligne de la case.
-    - y (int): Colonne de la case.
-
-    Retourne:
-    - list: Liste des coordonnées des voisins ayant des labels valides.
-    """
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    neighbors = []
-    for dx, dy in directions:
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < self.rows and 0 <= ny < self.cols and self.grid[nx][ny] != -1:
-            neighbors.append((nx, ny))
-    return neighbors
-```
-
-Nous avons ensuite d'implémenter le générateur à notre interface. Voici notre toute première grille générée en 16x10 :
-
-<img src="img/16x10_solved.png" width="85%" alt="img/16x10_solved.png">   
-
-*Figure : Pièces d'un tableau 16x10*
-
-Nous avons ensuite lancé la résolution avec à ce moment un prototype du multithreading qui lance une résolution avec chaque heuristique dans chaque thread :
-
-L'heuristique `Descender` a essayé 6396 placements pour résoudre la grille vide en 5 secondes.
-
-#### Démonstrations de résolutions de grilles
-
-Nous avons ensuite ajouté des couleurs uniques à chaque pièce, puis réadapté l'interface. Nous pouvons maintenant nous amuser avec de nouvelles grilles.
-
-Reprenons une grille 16x10. En partant d'une grille vide, avec l'heuristique `Descender`, la résolution n'a testé que 37 placements.
-
-![16x10](img/coloredgrid.jpg)
-
-*Figure : Tableau 16x10 résolu à partir d'une grille vide*
-
-En plaçant des pièces, on va restreindre le nombre de solutions possibles, mais cela ne décourage pas notre algorithme.
-
-![16x10](img/newcolore_restrains.jpg)
-*Figure : Tableau 16x10 résolu à partir avec restrictions*
-
-Ici, il a fallu plus de 27000 tests de placements effectués en plus de 6 secondes. Ce nombre paraît grand, mais nous sommes très loin de la complexité temporelle d'un algorithme déterministe O(b^d) montrant ainsi que nos optimisations sont puissantes.
-
-<img src="img/12x12.png" width="70%" alt="img/12x12.png">  
-
-*Figure : Tableau 12x12 résolu à partir d'une grille vide en 1s et 4313 placements testés*
-
-#### Limitations de notre outil & améliorations possibles
-
-<img src="img/60x5.png" width="75%" alt="img/60x5.png">  
-
-*Figure : Tableau 60x5 résolu à partir d'une grille vide*
-
-<img src="img/60x6.jpg" width="75%" alt="img/60x6.jpg">  
-
-
-*Figure : Tableau 60x6 non résolu à partir d'une grille vide : 15min et 840 000 placements testés (arrêt manuel)*
-
-Sur les **grandes grilles**, nous remarquons que la résolution atteint des **centaines de milliers** de branches explorées et que notre **exploration** de zones vides faiblit.
-
-
-Cela s'explique par plusieurs raisons :
-- Une grille grande implique une **complexité** de calcul croissante.
-- Notre **algorithme de découpage** peut générer, via l'**aléatoire**, des pièces aux formes très complexes sur de grandes surfaces.
-- Le découpage peut créer des pièces **similaires** qui seront testées indépendamment alors qu'elles produiront un résultat identique.
-- La résolution est **mono-thread** et n'exploite qu'une fraction de la puissance de calcul disponible.
-
-![cpu6%](img/cpu6.png)
-
-*Figure : Algo ne prenant que 6% du cpu d'un processeur I9-13900HX*
-
-Les améliorations possibles seraient donc :
-- D'optimiser le **découpage des polyominos** avec des contraintes sur la taille et la forme.
-- D'implémenter la **détection des pièces similaires** pour éviter les calculs redondants.
-- De **Paralléliser** la résolution via du **multi-threading** sur le CPU. Cependant, **Tkinter** présente des limitations pour la gestion multi-thread. Une migration vers **C++** avec SFML/TGUI (librairie graphique bas niveau) était envisagée mais le projet étant déjà bien avancé, le temps manquait pour une réécriture complète.
-- Optimiser la matrice des contraintes qui grandit expodentiellement avec la taille de la grille
-- Intégrer les Liens Dansants qui utilise des pointeurs pour la gestion de matrice et ainsi avoir une complexité o(1) au lieu de O(n) comme nous avons actuellement car nous faisons des copies des matrices initiales.
-
-Nous avons voulu toujours pousser plus loin les performances et les défis à résoudre. L'objectif initial était de résoudre un tableau `5x11`. Ce sont des pistes d'améliorations pour rendre notre algorithme robuste à toutes situations initiales.
-
-## VII/Projet Annexes non aboutis
-
-Voici quelques idées que nous avions eu pour aller plus loin dans la conception de la résolution du jeu.
-
-### Réseau neuronal
-
-L'un des objectifs abandonnés était d'avoir un réseau neuronal qui pourrait jouer tout seul, le principe était de lui donner une pièce à placer (ou plutôt une variante) ainsi que le plateau `5x11` et d'attendre en sortie le tableau avec la pièce placée.
-Cette ambition vaine du fait de la <i>complexité</i> du projet et de l'entraînement nécessaire pour que le réseau neuronal puisse placer les pièces aux bons endroits, sans qu'il n'y ait de modification du plateau initial ni de faux positifs : 2 pièces superposées.
 
 Plusieurs logiciels étaient disponibles mais nécessitaient une license, ou n'était disponible que pour trop peu de temps (essai gratuit).
 
@@ -1106,142 +842,3 @@ Nous avons pris plaisir à réaliser ce projet qui nous a permis de développer 
 
 Nous ne nous sommes pas arrêtés à la simple résolution du jeu: Notre curiosité nous a poussés à explorer de nouvelles possibilités comme la création de grilles personnalisées ou l'utilisation de nouveaux outils (CUDA, réseaux neuronaux, etc). Ces explorations, même si certaines n'ont pas abouti, nous ont permis d'apprendre et de comprendre de nouveaux concepts.
 
-En programmation, il y a toujours de nouvelles choses à apprendre et de nouvelles approches à explorer. Les notions que nous avons abordées nous serviront indubitablement dans nos futurs projets.
-
-## Annexe prédicats essentiels
-
-```python
-def algorithm_x(self, matrix, header, solution)
-```
-Ce prédicat représente le cœur de l'algorithme de résolution. Il effectue une recherche récursive pour trouver une solution valide.
-
-**Termes requis:**
-- `matrix`: Matrice de contraintes représentant l'état actuel du problème
-- `header`: En-têtes des colonnes de la matrice identifiant les contraintes
-- `solution`: Liste des placements de pièces sélectionnés jusqu'à présent
-
-**Fonctionnement:**
-1. Vérifie si une solution est trouvée (matrice vide)
-2. Sélectionne la colonne la plus contraignante
-3. Pour chaque ligne couvrant cette colonne:
-    - Ajoute le placement à la solution
-    - Met à jour la matrice 
-    - Appelle récursivement algorithm_x
-4. Effectue un retour arrière si nécessaire
-
-```python
-    def algorithm_x(self, matrix, header, solution):
-        """
-        Méthode récursive qui implémente l'algorithme X:
-        1. Si la matrice est vide, on valide la solution. Si valide, on la stocke.
-        2. Sinon, on choisit la colonne la plus contraignante (peu d'options).
-        3. Pour chaque ligne (placement) qui couvre cette colonne, on sélectionne
-           ce placement, on met à jour la matrice (on "couvre" les colonnes correspondantes),
-           puis on appelle récursivement algorithm_x.
-        4. Si l'on trouve une solution complète, on peut s'arrêter ou continuer
-           pour trouver toutes les solutions (selon les besoins).
-
-        Paramètres:
-        - matrix (list): Matrice actuelle de contraintes.
-        - header (list): En-tête de la matrice (nom des colonnes).
-        - solution (list): Liste des placements choisis jusqu'ici.
-
-        Retourne:
-        - bool: True si une solution a été trouvée, False sinon.
-        """
-        if self.stop_requested:
-            return False
-        self.stats.increment_branches_explored()
-        self.stats.increment_depth()
-
-        if not matrix:
-            validator = SolutionValidator(self.pieces, self.plateau)
-            if validator.validate_solution(solution):
-                self.solutions.append(solution.copy())
-                self.stats.add_solution(solution)
-                self.stats.decrement_depth()
-                self.stats.stop_timer()
-                return True
-            self.stats.decrement_depth()
-            return False
-
-        column = self.select_min_column(matrix, header)
-        if column is None:
-            self.stats.decrement_depth()
-            return False
-
-        rows_to_cover = [row for row in matrix if row['row'][column] == 1]
-        rows_to_cover = self.prioritize_rows(rows_to_cover)
-
-        checker = ZoneChecker(self.plateau, self.pieces, self.zone_cache)
-
-        for row in rows_to_cover:
-            if self.stop_requested:
-                self.stats.decrement_depth()
-                return False
-
-            solution.append(row)
-            self.stats.set_current_solution_steps(solution)
-            self.stats.record_intermediate_steps(solution)
-            self.stats.increment_placements_testes()
-
-            columns_to_remove = [idx for idx, val in enumerate(row['row']) if val == 1]
-            new_matrix = self.cover_columns(matrix, columns_to_remove, row)
-```
-```python
-            # Vérification des zones vides résiduelles (pruning)
-            if not checker.has_unfillable_voids(solution):
-                if self.algorithm_x(new_matrix, header, solution):
-                    self.stats.decrement_depth()
-                    return True
-            else:
-                self.stats.increment_branches_pruned()
-
-            solution.pop()
-            self.stats.increment_calculs()
-
-        self.stats.decrement_depth()
-        return False
-```
-
-```python
-def select_min_column(self, matrix, header)
-```
-Ce prédicat implémente l'heuristique MRV (Minimum Remaining Values) pour choisir la colonne la plus contraignante.
-
-**Termes requis:**
-- `matrix`: Matrice de contraintes actuelle
-- `header`: Noms des colonnes de la matrice
-
-**Fonctionnement:**
-1. Pour chaque colonne, compte le nombre de lignes qui la couvrent
-2. Sélectionne la colonne avec le moins d'options (plus contraignante)
-3. Retourne l'indice de la colonne choisie ou None si matrice vide
-
-
-```python
-def select_min_column(self, matrix, header):
-        """
-        Sélectionne la colonne avec le moins d'options (heuristique MRV - Minimum Remaining Values).
-        On compte pour chaque colonne le nombre de lignes (placements) qui la couvrent.
-        La colonne avec le moins d'options est choisie car plus contraignante,
-        réduisant l'espace de recherche.
-
-        Paramètres:
-        - matrix (list): Matrice de contraintes
-        - header (list): Noms des colonnes (non utilisé directement ici)
-
-        Retourne:
-        - int ou None: L'indice de colonne choisie, ou None si aucune (matrice vide).
-        """
-        counts = [0] * len(header)
-        for row in matrix:
-            for idx, val in enumerate(row['row']):
-                if val == 1:
-                    counts[idx] += 1
-        counts = [c if c > 0 else float('inf') for c in counts]
-        m = min(counts)
-        if m == float('inf'):
-            return None
-        return counts.index(m)
-```
