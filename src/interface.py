@@ -797,7 +797,7 @@ class IQPuzzlerInterface:
 
             info_text = (
                 f"Nombre de pièces: {nbr_pieces}\n"
-                f"Nombre de possibilités: {nbr_possibilites if nbr_possibilites < 10000000000 else "{:.2e}".format(nbr_possibilites)}\n"
+                f"Nombre de possibilités: {nbr_possibilites if nbr_possibilites < 10000000000 else '{:.2e}'.format(nbr_possibilites)}\n"
                 f"Temps écoulé: {elapsed_time:.2f} s\n"
                 #f"Calculs effectués: {calculs}\n"
                 f"Placements testés: {placements_testes}\n"

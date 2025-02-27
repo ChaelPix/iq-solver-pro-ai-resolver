@@ -1,8 +1,12 @@
 # Rapport IA41 : IQ Puzzler Pro
 
-[<!-- TOC -->
+#### Antoine PERRIN & Traïan BEAUJARD
 
+<!-- TOC -->
+## Sommaire
 - [Rapport IA41 : IQ Puzzler Pro](#rapport-ia41--iq-puzzler-pro)
+      - [Antoine PERRIN \& Traïan BEAUJARD](#antoine-perrin--traïan-beaujard)
+  - [Sommaire](#sommaire)
   - [I/ Présentation du projet](#i-présentation-du-projet)
     - [Contextualisation](#contextualisation)
     - [Vue globale du projet](#vue-globale-du-projet)
@@ -40,8 +44,6 @@
     - [Portabilité CUDA](#portabilité-cuda)
   - [Conclusion](#conclusion)
 
-<!-- /TOC -->]
-
 ## I/ Présentation du projet
 
 ### Contextualisation
@@ -51,7 +53,7 @@ Le projet porte sur le jeu IQ Puzzler Pro, un puzzle assez connu dont l’object
 Nous avons identifié trois questions fondamentales à résoudre dans ce contexte :  
 - **Comment représenter les différentes pièces, en tenant compte de leurs variations possibles ?**
 - **Comment résoudre efficacement les niveaux du jeu IQ Puzzler Pro ?**
-- **Comment concevoir et implémenter un algorithme capable de résoudre automatiquement chaque niveau ?**
+
 
 Pour débuter, nous avons commandé le jeu afin de l’explorer concrètement, l'objectif : commencer à manipuler les pièces, comprendre leurs interactions et pouvoir résoudre manuellement des niveaux du jeu initial. Cela nous à permis de réfléchir aux problématiques liées à la représentation du jeu, à la résolution et d’identifier des stratégies supposément efficaces.
 
@@ -181,7 +183,7 @@ En premier lieu, les pièces du jeu IQ Puzzle Pro sont mathématiquement appelé
 *Figure 4 : Les 12 polyominos du jeu IQ Puzzler Pro*  
 
 #### Problème de couverture exacte
-Ensuite, notre projet est à un **problème de couverture exacte**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  [Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte) <br>
+Ensuite, notre projet correspond à un **problème de couverture exacte** ou encore un **problème de satisfaction de contraintes (CSP)**. Ce type de problème consiste à couvrir intégralement un ensemble donné (le tableau du jeu) à l’aide de sous-ensembles spécifiques (les polyominos), sans qu’aucun ne se chevauche.  [Source](https://fr.wikipedia.org/wiki/Probl%C3%A8me_de_la_couverture_exacte) <br>
 Ce problème est un problème **NP-complet**, c'est à dire qu’il est difficile à résoudre de manière optimale en raison de sa complexité temporelle. Trouver une solution rapide pour des instances de grande taille devient rapidement impraticable.
 
 En effet, on pourrait simplifier la complexité temporelle de notre problème tel que : <br> 
@@ -191,9 +193,44 @@ où :
 et
 **d** est la profondeur maximale de l’arbre de recherche (ici, le nombre de pièces à placer).
 
+**CSP :**
+
+**Variables (X):**
+- 12 pièces à placer, chacune définie par un tuple `(x, y, r)` 
+- `(x,y)` : position de la pièce
+- `r` : numéro de la variante (rotation/symétrie)
+
+**Domaines (D):**  
+```
+x ∈ [0,10] : position horizontale 
+y ∈ [0,4]  : position verticale
+r ∈ [0,7]  : indice de variante
+```
 
 ![image exemple solution](img/iqsolve.png)  
 *Figure 5 : Exemple de couverture des polyominos*  
+
+### Variables d'états
+Nous devrons utiliser les variables d'états suivantes:
+- État du plateau (matrice représentant les cellules occupées)
+- Liste des pièces placées
+- Liste des pièces restantes
+- Points de décision (choix de placement possibles)
+
+```sh
+Plateau : Matrice (5x11) 
+    S = {-1, 0, …, N} où N est le nombre de pièces.
+
+Pièces : Matrices (4x4)
+    P = {0, i} où i est le numéro de la pièce.
+
+Suivi des pièces : Dict[str, Info]  # "rouge": {pos:(0,0), var:2} 
+
+Condition de fin : 
+    ∄ case = -1
+    ∀ i ∈ [0,N] présent une fois
+    Positions entre Dict et le Plateau cohérentes
+```
 
 ### Point de départ : Algorithme X de Donald Knuth
 
@@ -384,11 +421,7 @@ def algorithm_x(self, matrix, header, solution):
 
 Maintenant, testons notre algorithme :
 
-<img src="img/lvl3.png" width="75%" alt="lvl3 résolu">
 
-*Figure : Niveau 3 du jeu résolu en 25 placements testés*
-
-<img src="img/lvl39b.png" width="75%" alt="lvl39 résolu">
 
 *Figure : Niveau 39 du jeu résolu en 145 placements testés*
 
@@ -625,7 +658,8 @@ def calculate_piece_weights(self, heuristic="ascender"):
 
 Analysons les résultats pour un niveau.
 
-![meme niveau avec chaque heuristic](img/heuristics_benchmark.jpg)
+<img src="img/heuristics_benchmark.jpg" width="100%" alt="meme niveau avec chaque heuristic">
+
 *Figure : Un même niveau résolu avec les différentes heuristiques*
 
 <img src="img/heuristiques_stats.png" width="80%" alt="description">  
@@ -640,7 +674,8 @@ Cependant, comme toute heuristique, qui sert à guider le résultat, cette derni
 
 Pour commencer, comparons la version optimisée et la version de départ.
 
-![Niveau de ref](img/lvl39_comp.jpg)  
+<img src="img/lvl39_comp.jpg" width="60%" alt="Niveau de ref">  
+
 *Figure : Comparaison résolution d'un niveau*
 
 Comparons les différences :
@@ -747,14 +782,7 @@ Nous avons implémenté ces pièces dans notre programme, et lancé la résoluti
 
 *Figure : Grille découpée en 14 polyominos*
 
-On a lancé la résolution sans aucune pièce placée.
 
-![avant 6x12](img/nvgrille_start.png)
-*Figure : Nouvelle grille et pièces implémentées*
-
-Avec 2 heuristiques différentes (Descender, Ascender).
-![apres 6x12](img/nvgrill_resolue.jpg)
-*Figure : Résolution de la nouvelle grille*
 
 Notre hypothèse est validée, bien que logique et prédictible, nous pouvons ne pas nous limiter à la grille par défaut du jeu IQ Puzzler Pro, et ainsi s'amuser sur de plus grandes grilles.
 
@@ -774,69 +802,6 @@ Afin de ne pas avoir à créer manuellement chaque découpage, nous avons conçu
 **Exemple :**
 Grille 3x3
 
-1. **Initialisation :**
-   - Grille vide de taille 3x3.
-   - Toutes les cellules sont marquées comme non visitées.
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | -1| -1| -1|
-| 1 | -1| -1| -1|
-| 2 | -1| -1| -1|
-
-2. **Création du premier polyomino (A) :**
-   - Départ en (0,0).
-   - Taille aléatoire choisie : 2.
-   - Étendre à la cellule adjacente (0,1).
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | -1|
-| 1 | -1| -1| -1|
-| 2 | -1| -1| -1|
-
-3. **Création du deuxième polyomino (B) :**
-   - Départ en (0,2).
-   - Taille aléatoire choisie : 3.
-   - Étendre à la cellule adjacente (1,2), puis (1,1).
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | B |
-| 1 | -1| B | B |
-| 2 | -1| -1| -1|
-
-4. **Création du troisième polyomino (C) :**
-   - Départ en (1,0).
-   - Taille aléatoire choisie : 3.
-   - Étendre à la cellule adjacente (2,0), puis (2,1).
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | B |
-| 1 | C | B | B |
-| 2 | C | C | -1|
-
-5. **Création du quatrième polyomino (D) :**
-   - Départ en (2,2).
-   - Taille aléatoire choisie : 2.
-   - Pas d'extension possible, taille non atteinte.
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | B |
-| 1 | C | B | B |
-| 2 | C | C | -1|
-
-6. **Fusion des cases vides adjacentes**
-    - Dans l'ordre, on vérifie les cases adjacentes vides.
-
-|   | 0 | 1 | 2 |
-|---|---|---|---|
-| 0 | A | A | B |
-| 1 | C | B | B |
-| 2 | C | C | B |
-
 **Implémentation :**
 
 1. **Initialisation :** Création d'une grille vide et d'une liste pour stocker les polyominos générés.
@@ -852,185 +817,6 @@ def __init__(self, rows, cols, max_pieces=50):
 ```
 
 2. **Génération des polyominos :** Pour chaque cellule non visitée, on tente de créer un nouveau polyomino de taille aléatoire.
-
-```python
-def generate(self):
-    # Grille pour suivre les cellules visitées
-    visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
-    label = 0  # label pour chaque polyomino
-
-    # Création de chaque polyomino
-    for i in range(self.rows):
-        for j in range(self.cols):
-            if not visited[i][j] and label < self.max_pieces:
-                size = random.randint(2, min(self.rows, self.cols))
-                # Création du polyomino
-                polyomino = self._create_polyomino(i, j, size, visited, label)
-                if polyomino:
-                    self.polyominos.append(polyomino)
-                    label += 1
-
-    # Remplissage des cases restantes
-    self._fill_remaining_cells()
-```
-
-3. **Création d'un polyomino :** À partir d'une position de départ, on étend le polyomino en ajoutant des cellules adjacentes jusqu'à atteindre la taille souhaitée.
-
-```python
-def _create_polyomino(self, start_x, start_y, size, visited, label):
-    """
-    Crée un polyomino à partir d'une position de départ.
-
-    Paramètres:
-    - start_x (int): Ligne de départ.
-    - start_y (int): Colonne de départ.
-    - size (int): Taille souhaitée du polyomino.
-    - visited (list): Grille des cellules visitées.
-    - label (int): Étiquette du polyomino.
-
-    Retourne:
-    - list: Liste des coordonnées du polyomino ou None si impossible.
-    """
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Droite, Bas, Gauche, Haut
-    queue = deque([(start_x, start_y)])
-    polyomino = []
-
-    while queue and len(polyomino) < size:
-        x, y = queue.popleft()
-        if 0 <= x < self.rows and 0 <= y < self.cols and not visited[x][y]:
-            visited[x][y] = True
-            self.grid[x][y] = label
-            polyomino.append((x, y))
-
-            random.shuffle(directions)  # Mélange des directions pour l'aléatoire
-            for dx, dy in directions:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < self.rows and 0 <= ny < self.cols and not visited[nx][ny]:
-                    queue.append((nx, ny))
-
-    # Si on n'a pas pu atteindre la taille souhaitée, annuler
-    if len(polyomino) < size:
-        for x, y in polyomino:
-            visited[x][y] = False
-            self.grid[x][y] = -1
-        return None
-
-    return polyomino
-```
-
-4. **Remplissage des cases restantes :** Les cellules non assignées sont attribuées au plus petit polyomino voisin.
-
-```python
-def _fill_remaining_cells(self):
-    """
-    Remplit les cases restantes (étiquetées -1) en les assignant
-    au polyomino voisin le plus petit.
-    """
-    for i in range(self.rows):
-        for j in range(self.cols):
-            if self.grid[i][j] == -1:  # Case non assignée
-                # voisins valides
-                neighbors = self._get_neighbors(i, j)
-                if neighbors:
-                    # Trouver le polyomino le plus petit parmi les voisins
-                    neighbor_sizes = {self.grid[x][y]: len(self.polyominos[self.grid[x][y]]) for x, y in neighbors}
-                    smallest_poly_label = min(neighbor_sizes, key=neighbor_sizes.get)
-
-                    # Assigner cette case au polyomino le plus petit
-                    self.grid[i][j] = smallest_poly_label
-                    self.polyominos[smallest_poly_label].append((i, j))
-```
-
-5. **Trouver les voisins valides :** Cette méthode aide à trouver les voisins d'une cellule donnée.
-
-```python
-def _get_neighbors(self, x, y):
-    """
-    Trouve les voisins valides d'une case donnée.
-
-    Paramètres:
-    - x (int): Ligne de la case.
-    - y (int): Colonne de la case.
-
-    Retourne:
-    - list: Liste des coordonnées des voisins ayant des labels valides.
-    """
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    neighbors = []
-    for dx, dy in directions:
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < self.rows and 0 <= ny < self.cols and self.grid[nx][ny] != -1:
-            neighbors.append((nx, ny))
-    return neighbors
-```
-
-Nous avons ensuite d'implémenter le générateur à notre interface. Voici notre toute première grille générée en 16x10 :
-
-![grille](img/16x10_start.png)
-*Figure : Pièces d'un tableau 16x10*
-
-Nous avons ensuite lancé la résolution avec à ce moment un prototype du multithreading qui lance une résolution avec chaque heuristique dans chaque thread :
-
-![16x10_solved](img/16x10_solved.png)
-*Figure : Pièces d'un tableau 16x10 résolu*
-
-L'heuristique `Descender` a essayé 6396 placements pour résoudre la grille vide en 5 secondes.
-
-#### Démonstrations de résolutions de grilles
-
-Nous avons ensuite ajouté des couleurs uniques à chaque pièce, puis réadapté l'interface. Nous pouvons maintenant nous amuser avec de nouvelles grilles.
-
-Reprenons une grille 16x10. En partant d'une grille vide, avec l'heuristique `Descender`, la résolution n'a testé que 37 placements.
-
-![16x10](img/coloredgrid.jpg)
-*Figure : Tableau 16x10 résolu à partir d'une grille vide*
-
-En plaçant des pièces, on va restreindre le nombre de solutions possibles, mais cela ne décourage pas notre algorithme.
-
-![16x10](img/newcolore_restrains.jpg)
-*Figure : Tableau 16x10 résolu à partir avec restrictions*
-
-Ici, il a fallu plus de 27000 tests de placements effectués en plus de 6 secondes. Ce nombre paraît grand, mais nous sommes très loin de la complexité temporelle d'un algorithme déterministe O(b^d) montrant ainsi que nos optimisations sont puissantes.
-
-![12x12](img/12x12.png)
-*Figure : Tableau 12x12 résolu à partir d'une grille vide en 1s et 4313 placements testés*
-
-#### Limitations de notre outil & améliorations possibles
-
-![60x5](img/60x5.png)
-*Figure : Tableau 60x5 résolu à partir d'une grille vide*
-
-![60x6](img/60x6.jpg)
-*Figure : Tableau 60x6 non résolu à partir d'une grille vide : 15min et 840 000 placements testés (arrêt manuel)*
-
-Sur les **grandes grilles**, nous remarquons que la résolution atteint des **centaines de milliers** de branches explorées et que notre **exploration** de zones vides faiblit.
-
-
-Cela s'explique par plusieurs raisons :
-- Une grille grande implique une **complexité** de calcul croissante.
-- Notre **algorithme de découpage** peut générer, via l'**aléatoire**, des pièces aux formes très complexes sur de grandes surfaces.
-- Le découpage peut créer des pièces **similaires** qui seront testées indépendamment alors qu'elles produiront un résultat identique.
-- La résolution est **mono-thread** et n'exploite qu'une fraction de la puissance de calcul disponible.
-
-![cpu6%](img/cpu6.png)
-
-*Figure : Algo ne prenant que 6% du cpu d'un processeur I9-13900HX*
-
-Les améliorations possibles seraient donc :
-- D'optimiser le **découpage des polyominos** avec des contraintes sur la taille et la forme.
-- D'implémenter la **détection des pièces similaires** pour éviter les calculs redondants.
-- De **Paralléliser** la résolution via du **multi-threading** sur le CPU. Cependant, **Tkinter** présente des limitations pour la gestion multi-thread. Une migration vers **C++** avec SFML/TGUI (librairie graphique bas niveau) était envisagée mais le projet étant déjà bien avancé, le temps manquait pour une réécriture complète.
-
-Nous avons voulu toujours pousser plus loin les performances et les défis à résoudre. L'objectif initial était de résoudre un tableau `5x11`. Ce sont des pistes d'améliorations pour rendre notre algorithme robuste à toutes situations initiales.
-
-## VII/Projet Annexes non aboutis
-
-Voici quelques idées que nous avions eu pour aller plus loin dans la conception de la résolution du jeu.
-
-### Réseau neuronal
-
-L'un des objectifs abandonnés était d'avoir un réseau neuronal qui pourrait jouer tout seul, le principe était de lui donner une pièce à placer (ou plutôt une variante) ainsi que le plateau `5x11` et d'attendre en sortie le tableau avec la pièce placée.
-Cette ambition vaine du fait de la <i>complexité</i> du projet et de l'entraînement nécessaire pour que le réseau neuronal puisse placer les pièces aux bons endroits, sans qu'il n'y ait de modification du plateau initial ni de faux positifs : 2 pièces superposées.
 
 Plusieurs logiciels étaient disponibles mais nécessitaient une license, ou n'était disponible que pour trop peu de temps (essai gratuit).
 
@@ -1056,4 +842,3 @@ Nous avons pris plaisir à réaliser ce projet qui nous a permis de développer 
 
 Nous ne nous sommes pas arrêtés à la simple résolution du jeu: Notre curiosité nous a poussés à explorer de nouvelles possibilités comme la création de grilles personnalisées ou l'utilisation de nouveaux outils (CUDA, réseaux neuronaux, etc). Ces explorations, même si certaines n'ont pas abouti, nous ont permis d'apprendre et de comprendre de nouveaux concepts.
 
-En programmation, il y a toujours de nouvelles choses à apprendre et de nouvelles approches à explorer. Les notions que nous avons abordées nous serviront indubitablement dans nos futurs projets.
