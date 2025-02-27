@@ -1,4 +1,4 @@
-from algo_x_knuth import AlgorithmX
+from algo_x_dlx import AlgorithmXDLX
 
 class SolverManager:
     """
@@ -44,11 +44,12 @@ class SolverManager:
         mais ici on la lance directement. L'interface peut régulièrement
         consulter get_stats() et get_current_solution_steps() pour suivre la progression.
         """
-        self.algo = AlgorithmX(
+        self.algo = AlgorithmXDLX(
             self.plateau,
             self.pieces,
             self.heuristic,
-            self.fixed_pieces
+            self.fixed_pieces,
+            find_all_solutions=True  # Set to False if you only want the first solution
         )
         self.running = True
         self.algo.solve()

@@ -2,7 +2,13 @@ from algorithm_stats import AlgorithmStats
 from constraint_matrix_builder import ConstraintMatrixBuilder
 from zone_checker import ZoneChecker
 from solution_validator import SolutionValidator
+from algo_x_c_bridge import select_min_column_c, cover_columns_c
 import numpy as np
+import os
+import logging
+from algo_x_profiler import reset_performance_metrics, print_performance_report
+
+logger = logging.getLogger("algo_x_knuth")
 
 class AlgorithmX:
     """
@@ -136,10 +142,16 @@ class AlgorithmX:
         Retourne:
         - solutions (list): Liste des solutions complètes trouvées.
         """
+        reset_performance_metrics()
         builder = ConstraintMatrixBuilder(self.plateau, self.pieces, self.piece_weights, self.fixed_pieces)
         matrix, header = builder.create_constraint_matrix()
         solution = []
         self.algorithm_x(matrix, header, solution)
+        
+        # Print performance report at the end
+        logger.info(f"Performance report after solving (found {len(self.solutions)} solutions):")
+        print_performance_report()
+        
         return self.solutions
 
     def algorithm_x(self, matrix, header, solution):
@@ -217,27 +229,17 @@ class AlgorithmX:
     def select_min_column(self, matrix, header):
         """
         Sélectionne la colonne avec le moins d'options (heuristique MRV - Minimum Remaining Values).
-        On compte pour chaque colonne le nombre de lignes (placements) qui la couvrent.
-        La colonne avec le moins d'options est choisie car plus contraignante,
-        réduisant l'espace de recherche.
+        Utilise une implémentation C pour les performances.
 
         Paramètres:
         - matrix (list): Matrice de contraintes
-        - header (list): Noms des colonnes (non utilisé directement ici)
+        - header (list): Noms des colonnes
 
         Retourne:
         - int ou None: L'indice de colonne choisie, ou None si aucune (matrice vide).
         """
-        counts = [0] * len(header)
-        for row in matrix:
-            for idx, val in enumerate(row['row']):
-                if val == 1:
-                    counts[idx] += 1
-        counts = [c if c > 0 else float('inf') for c in counts]
-        m = min(counts)
-        if m == float('inf'):
-            return None
-        return counts.index(m)
+        # Use C implementation for better performance
+        return select_min_column_c(matrix, header)
 
     def prioritize_rows(self, rows):
         """
@@ -257,7 +259,7 @@ class AlgorithmX:
     def cover_columns(self, matrix, columns_to_remove, selected_row):
         """
         Met à jour la matrice après avoir sélectionné un placement.
-        On retire toutes les lignes qui couvrent les mêmes colonnes pour maintenir la cohérence.
+        Utilise une implémentation C pour les performances.
 
         Paramètres:
         - matrix (list): Matrice de contraintes actuelle
@@ -267,10 +269,5 @@ class AlgorithmX:
         Retourne:
         - new_matrix (list): Nouvelle matrice réduite.
         """
-        new_matrix = []
-        for r in matrix:
-            if r == selected_row:
-                continue
-            if all(r['row'][idx] == 0 for idx in columns_to_remove):
-                new_matrix.append(r)
-        return new_matrix
+        # Use C implementation for better performance
+        return cover_columns_c(matrix, columns_to_remove, selected_row)
